@@ -11,10 +11,15 @@ import {
   Zap,
   ArrowUpRight,
   ArrowDownRight,
-  RefreshCw
+  RefreshCw,
+  Activity,
+  Cpu,
+  Radio,
+  Crosshair,
+  Brain
 } from 'lucide-react';
-import { formatDate } from '@/lib/utils';
-import type { OutreachLog, Platform } from '@/lib/types';
+import { cn } from '@/lib/utils';
+import type { Platform } from '@/lib/types';
 
 interface ChannelStats {
   platform: string;
@@ -24,24 +29,148 @@ interface ChannelStats {
   successRate: number;
 }
 
-interface ABTestResult {
-  variantId: string;
-  variantName: string;
-  impressions: number;
-  engagements: number;
-  successRate: number;
-}
-
 interface DailyMetric {
   date: string;
   sent: number;
   success: number;
 }
 
+// Animated progress ring
+function ProgressRing({ value, size = 120, strokeWidth = 8, color = 'primary' }: {
+  value: number;
+  size?: number;
+  strokeWidth?: number;
+  color?: string;
+}) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (value / 100) * circumference;
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg className="transform -rotate-90" width={size} height={size}>
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={strokeWidth}
+          className="text-secondary"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          className={cn(
+            "transition-all duration-1000 ease-out",
+            color === 'primary' && "text-primary",
+            color === 'accent' && "text-accent",
+            color === 'blue' && "text-blue-400"
+          )}
+          style={{
+            filter: `drop-shadow(0 0 6px currentColor)`,
+          }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-2xl font-display font-bold">{Math.round(value)}%</span>
+      </div>
+    </div>
+  );
+}
+
+// Bar chart component
+function BarChart({ data, height = 200 }: { data: DailyMetric[]; height?: number }) {
+  const maxValue = Math.max(...data.map(d => d.sent), 1);
+
+  return (
+    <div className="flex items-end justify-between gap-1" style={{ height }}>
+      {data.map((d, i) => (
+        <div key={d.date} className="flex-1 flex flex-col items-center gap-2">
+          <div className="w-full relative" style={{ height: height - 30 }}>
+            <div className="absolute bottom-0 left-0 right-0 flex flex-col gap-0.5">
+              <div
+                className="w-full bg-green-500/60 rounded-t transition-all duration-500 ease-out"
+                style={{
+                  height: `${(d.success / maxValue) * (height - 30)}px`,
+                  animationDelay: `${i * 50}ms`,
+                }}
+              />
+              <div
+                className="w-full bg-red-500/40 transition-all duration-500 ease-out"
+                style={{
+                  height: `${((d.sent - d.success) / maxValue) * (height - 30)}px`,
+                  animationDelay: `${i * 50}ms`,
+                }}
+              />
+            </div>
+          </div>
+          <span className="text-[9px] font-mono text-muted-foreground whitespace-nowrap">
+            {new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Funnel visualization
+function FunnelChart({ stages }: { stages: { label: string; value: number; color: string }[] }) {
+  const maxValue = stages[0]?.value || 1;
+
+  return (
+    <div className="space-y-3">
+      {stages.map((stage, i) => (
+        <div key={stage.label} className="relative">
+          <div className="flex items-center gap-4">
+            <div className="w-24 text-right">
+              <span className="text-xs font-mono text-muted-foreground">{stage.label}</span>
+            </div>
+            <div className="flex-1 h-10 bg-secondary rounded-lg overflow-hidden relative">
+              <div
+                className={cn("h-full transition-all duration-1000 ease-out rounded-lg", stage.color)}
+                style={{
+                  width: `${(stage.value / maxValue) * 100}%`,
+                  animationDelay: `${i * 200}ms`,
+                }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-sm font-mono font-bold text-white drop-shadow-lg">
+                  {stage.value.toLocaleString()}
+                </span>
+              </div>
+            </div>
+            <div className="w-16 text-right">
+              <span className="text-xs font-mono text-muted-foreground">
+                {Math.round((stage.value / maxValue) * 100)}%
+              </span>
+            </div>
+          </div>
+          {i < stages.length - 1 && (
+            <div className="flex items-center gap-4 py-1">
+              <div className="w-24" />
+              <ArrowDownRight className="w-4 h-4 text-muted-foreground ml-4" />
+              <span className="text-[10px] font-mono text-muted-foreground">
+                {Math.round(((stages[i + 1]?.value || 0) / stage.value) * 100)}% conversion
+              </span>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function Analytics() {
   const [loading, setLoading] = useState(true);
   const [channelStats, setChannelStats] = useState<ChannelStats[]>([]);
-  const [abResults, setAbResults] = useState<ABTestResult[]>([]);
   const [dailyMetrics, setDailyMetrics] = useState<DailyMetric[]>([]);
   const [totalStats, setTotalStats] = useState({
     totalSent: 0,
@@ -57,7 +186,6 @@ export default function Analytics() {
   async function fetchAnalytics() {
     setLoading(true);
     try {
-      // Fetch all logs
       const { data: logs } = await supabase
         .from('outreach_logs')
         .select('*')
@@ -65,7 +193,7 @@ export default function Analytics() {
 
       if (!logs) return;
 
-      // Calculate channel stats
+      // Channel stats
       const channelMap = new Map<string, { total: number; success: number; failed: number }>();
       
       for (const log of logs) {
@@ -83,32 +211,7 @@ export default function Analytics() {
       }));
       setChannelStats(channels);
 
-      // Calculate A/B test results
-      const abLogs = logs.filter(l => l.action === 'ab_test' && l.metadata);
-      const variantMap = new Map<string, { name: string; impressions: number; successSum: number }>();
-      
-      for (const log of abLogs) {
-        const meta = log.metadata as Record<string, unknown>;
-        const variantId = meta.variantId as string;
-        const variantName = meta.variantName as string;
-        const successRate = (meta.successRate as number) || 0;
-        
-        const current = variantMap.get(variantId) || { name: variantName, impressions: 0, successSum: 0 };
-        current.impressions++;
-        current.successSum += successRate;
-        variantMap.set(variantId, current);
-      }
-
-      const abTests: ABTestResult[] = Array.from(variantMap.entries()).map(([id, stats]) => ({
-        variantId: id,
-        variantName: stats.name,
-        impressions: stats.impressions,
-        engagements: Math.round(stats.impressions * (stats.successSum / stats.impressions)),
-        successRate: stats.impressions > 0 ? (stats.successSum / stats.impressions) * 100 : 0,
-      }));
-      setAbResults(abTests);
-
-      // Calculate daily metrics (last 14 days)
+      // Daily metrics
       const dailyMap = new Map<string, { sent: number; success: number }>();
       const now = new Date();
       
@@ -134,7 +237,7 @@ export default function Analytics() {
       }));
       setDailyMetrics(daily);
 
-      // Total stats
+      // Totals
       const totalSent = logs.length;
       const totalSuccess = logs.filter(l => l.success).length;
       const leadsLogs = logs.filter(l => l.action === 'capture_lead');
@@ -147,353 +250,192 @@ export default function Analytics() {
       });
 
     } catch (error) {
-      console.error('Error fetching analytics:', error);
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
   }
 
-  // Simple bar chart component
-  function SimpleBarChart({ data, maxValue }: { data: DailyMetric[]; maxValue: number }) {
-    return (
-      <div className="flex items-end gap-1 h-40">
-        {data.map((d) => (
-          <div key={d.date} className="flex-1 flex flex-col items-center gap-1">
-            <div className="w-full flex flex-col gap-0.5">
-              <div 
-                className="w-full bg-green-500/60 rounded-t transition-all"
-                style={{ height: `${maxValue > 0 ? (d.success / maxValue) * 120 : 0}px` }}
-              />
-              <div 
-                className="w-full bg-red-500/40 rounded-b transition-all"
-                style={{ height: `${maxValue > 0 ? ((d.sent - d.success) / maxValue) * 120 : 0}px` }}
-              />
-            </div>
-            <span className="text-[10px] text-muted-foreground transform -rotate-45 origin-left">
-              {new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-            </span>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  // Pie chart segments
-  function PieChart({ data }: { data: ChannelStats[] }) {
-    const total = data.reduce((acc, d) => acc + d.total, 0);
-    const colors = ['#f59e0b', '#3b82f6', '#ef4444', '#10b981', '#8b5cf6'];
-    let currentAngle = 0;
-
-    return (
-      <div className="flex items-center gap-8">
-        <div className="relative w-32 h-32">
-          <svg viewBox="0 0 100 100" className="transform -rotate-90">
-            {data.map((d, i) => {
-              const angle = (d.total / total) * 360;
-              const startAngle = currentAngle;
-              currentAngle += angle;
-              
-              const x1 = 50 + 40 * Math.cos((startAngle * Math.PI) / 180);
-              const y1 = 50 + 40 * Math.sin((startAngle * Math.PI) / 180);
-              const x2 = 50 + 40 * Math.cos(((startAngle + angle) * Math.PI) / 180);
-              const y2 = 50 + 40 * Math.sin(((startAngle + angle) * Math.PI) / 180);
-              
-              const largeArc = angle > 180 ? 1 : 0;
-              
-              return (
-                <path
-                  key={d.platform}
-                  d={`M 50 50 L ${x1} ${y1} A 40 40 0 ${largeArc} 1 ${x2} ${y2} Z`}
-                  fill={colors[i % colors.length]}
-                  opacity={0.8}
-                />
-              );
-            })}
-          </svg>
-        </div>
-        <div className="space-y-2">
-          {data.map((d, i) => (
-            <div key={d.platform} className="flex items-center gap-2">
-              <div 
-                className="w-3 h-3 rounded-full" 
-                style={{ backgroundColor: colors[i % colors.length] }}
-              />
-              <span className="capitalize">{d.platform}</span>
-              <span className="text-muted-foreground">({d.total})</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  // Mock funnel data
+  const funnelData = [
+    { label: 'TARGETS', value: totalStats.totalSent, color: 'bg-gradient-to-r from-blue-500 to-cyan-500' },
+    { label: 'SENT', value: totalStats.totalSuccess, color: 'bg-gradient-to-r from-green-500 to-emerald-500' },
+    { label: 'ENGAGED', value: Math.floor(totalStats.totalSuccess * 0.4), color: 'bg-gradient-to-r from-amber-500 to-orange-500' },
+    { label: 'CONVERTED', value: Math.floor(totalStats.totalSuccess * 0.1), color: 'bg-gradient-to-r from-pink-500 to-rose-500' },
+  ];
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="relative">
+          <div className="w-20 h-20 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <Brain className="w-8 h-8 absolute inset-0 m-auto text-primary animate-pulse" />
+        </div>
       </div>
     );
   }
 
-  const maxDaily = Math.max(...dailyMetrics.map(d => d.sent), 1);
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between animate-slide-up">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
-          <p className="text-muted-foreground mt-1">
-            Track campaign performance and A/B test results
+          <h1 className="text-4xl font-display font-bold tracking-wider">
+            <span className="text-primary text-glow-green">INTEL</span>{' '}
+            <span className="text-foreground">CENTER</span>
+          </h1>
+          <p className="text-muted-foreground font-mono text-sm mt-2">
+            // CAMPAIGN ANALYTICS & PERFORMANCE METRICS
           </p>
         </div>
         <Button variant="outline" onClick={fetchAnalytics} className="gap-2">
           <RefreshCw className="w-4 h-4" />
-          Refresh
+          REFRESH
         </Button>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="animate-fade-in stagger-1">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Sent</p>
-                <p className="text-3xl font-bold">{totalStats.totalSent}</p>
+      {/* KPI Row */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {[
+          { label: 'TOTAL OPS', value: totalStats.totalSent, icon: Zap, color: 'text-blue-400' },
+          { label: 'SUCCESS', value: totalStats.totalSuccess, icon: Target, color: 'text-green-400' },
+          { label: 'RATE', value: `${totalStats.avgSuccessRate.toFixed(1)}%`, icon: TrendingUp, color: 'text-primary' },
+          { label: 'LEADS', value: totalStats.leadsCapured, icon: Crosshair, color: 'text-accent' },
+        ].map((stat, i) => (
+          <Card key={stat.label} className={cn("animate-slide-up", `stagger-${i + 1}`)}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-mono text-muted-foreground">{stat.label}</p>
+                  <p className={cn("text-3xl font-display font-bold mt-1", stat.color)}>
+                    {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
+                  </p>
+                </div>
+                <stat.icon className={cn("w-8 h-8 opacity-50", stat.color)} />
               </div>
-              <div className="p-3 rounded-xl bg-blue-500/20">
-                <Zap className="w-6 h-6 text-blue-400" />
-              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Daily Activity */}
+        <Card className="animate-slide-up stagger-5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="w-4 h-4 text-primary" />
+              DAILY OPERATIONS (14 DAYS)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4 mb-6">
+              <Badge variant="success">
+                <div className="w-2 h-2 rounded-full bg-green-500 mr-1" />
+                SUCCESS
+              </Badge>
+              <Badge variant="destructive">
+                <div className="w-2 h-2 rounded-full bg-red-500 mr-1" />
+                FAILED
+              </Badge>
             </div>
+            <BarChart data={dailyMetrics} height={220} />
           </CardContent>
         </Card>
 
-        <Card className="animate-fade-in stagger-2">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Success Rate</p>
-                <p className="text-3xl font-bold">{totalStats.avgSuccessRate.toFixed(1)}%</p>
-              </div>
-              <div className="p-3 rounded-xl bg-green-500/20">
-                <TrendingUp className="w-6 h-6 text-green-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="animate-fade-in stagger-3">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Leads Captured</p>
-                <p className="text-3xl font-bold">{totalStats.leadsCapured}</p>
-              </div>
-              <div className="p-3 rounded-xl bg-amber-500/20">
-                <Target className="w-6 h-6 text-amber-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="animate-fade-in stagger-4">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Channels Active</p>
-                <p className="text-3xl font-bold">{channelStats.length}</p>
-              </div>
-              <div className="p-3 rounded-xl bg-purple-500/20">
-                <BarChart3 className="w-6 h-6 text-purple-400" />
-              </div>
+        {/* Success Rate by Channel */}
+        <Card className="animate-slide-up stagger-5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Radio className="w-4 h-4 text-primary" />
+              CHANNEL PERFORMANCE
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-around">
+              {channelStats.slice(0, 3).map((channel) => (
+                <div key={channel.platform} className="text-center">
+                  <ProgressRing
+                    value={channel.successRate}
+                    size={100}
+                    color={
+                      channel.platform === 'email' ? 'blue' :
+                      channel.platform === 'linkedin' ? 'primary' : 'accent'
+                    }
+                  />
+                  <p className="text-xs font-mono text-muted-foreground mt-2 uppercase">
+                    {channel.platform}
+                  </p>
+                  <p className="text-sm font-mono text-foreground">
+                    {channel.success}/{channel.total}
+                  </p>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="channels">Channels</TabsTrigger>
-          <TabsTrigger value="abtests">A/B Tests</TabsTrigger>
-        </TabsList>
+      {/* Conversion Funnel */}
+      <Card className="animate-slide-up stagger-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-primary" />
+            CONVERSION FUNNEL
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FunnelChart stages={funnelData} />
+        </CardContent>
+      </Card>
 
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          {/* Daily Activity Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Daily Activity (Last 14 Days)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-4 mb-4">
-                <Badge variant="success" className="gap-1">
-                  <div className="w-2 h-2 rounded-full bg-green-500" />
-                  Success
-                </Badge>
-                <Badge variant="destructive" className="gap-1">
-                  <div className="w-2 h-2 rounded-full bg-red-500" />
-                  Failed
-                </Badge>
-              </div>
-              <SimpleBarChart data={dailyMetrics} maxValue={maxDaily} />
-            </CardContent>
-          </Card>
-
-          {/* Channel Distribution */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Channel Distribution</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {channelStats.length > 0 ? (
-                  <PieChart data={channelStats} />
-                ) : (
-                  <p className="text-muted-foreground text-center py-8">
-                    No data yet
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Top Performing</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {channelStats
-                  .sort((a, b) => b.successRate - a.successRate)
-                  .slice(0, 3)
-                  .map((channel, i) => (
-                    <div key={channel.platform} className="flex items-center gap-4">
-                      <div className="text-2xl">
+      {/* Channel Table */}
+      <Card className="animate-slide-up stagger-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-primary" />
+            DETAILED BREAKDOWN
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <table className="w-full">
+            <thead className="bg-secondary/50">
+              <tr>
+                <th className="text-left p-4 text-xs font-mono text-muted-foreground">CHANNEL</th>
+                <th className="text-right p-4 text-xs font-mono text-muted-foreground">TOTAL</th>
+                <th className="text-right p-4 text-xs font-mono text-muted-foreground">SUCCESS</th>
+                <th className="text-right p-4 text-xs font-mono text-muted-foreground">FAILED</th>
+                <th className="text-right p-4 text-xs font-mono text-muted-foreground">RATE</th>
+              </tr>
+            </thead>
+            <tbody>
+              {channelStats.map((channel) => (
+                <tr key={channel.platform} className="border-t border-primary/10">
+                  <td className="p-4">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">
                         {channel.platform === 'email' && '📧'}
                         {channel.platform === 'linkedin' && '💼'}
                         {channel.platform === 'reddit' && '🔴'}
                         {channel.platform === 'twitter' && '𝕏'}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium capitalize">{channel.platform}</span>
-                          <span className={channel.successRate >= 50 ? 'text-green-400' : 'text-amber-400'}>
-                            {channel.successRate.toFixed(1)}%
-                          </span>
-                        </div>
-                        <div className="h-2 bg-secondary rounded-full mt-1 overflow-hidden">
-                          <div 
-                            className="h-full bg-gradient-to-r from-amber-500 to-red-500"
-                            style={{ width: `${channel.successRate}%` }}
-                          />
-                        </div>
-                      </div>
-                      {channel.successRate >= 50 ? (
-                        <ArrowUpRight className="w-4 h-4 text-green-400" />
-                      ) : (
-                        <ArrowDownRight className="w-4 h-4 text-red-400" />
-                      )}
+                      </span>
+                      <span className="font-mono uppercase">{channel.platform}</span>
                     </div>
-                  ))}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Channels Tab */}
-        <TabsContent value="channels">
-          <Card>
-            <CardContent className="p-0">
-              <table className="w-full">
-                <thead className="bg-secondary/50">
-                  <tr>
-                    <th className="text-left p-4 font-medium text-muted-foreground">Channel</th>
-                    <th className="text-right p-4 font-medium text-muted-foreground">Total</th>
-                    <th className="text-right p-4 font-medium text-muted-foreground">Success</th>
-                    <th className="text-right p-4 font-medium text-muted-foreground">Failed</th>
-                    <th className="text-right p-4 font-medium text-muted-foreground">Success Rate</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {channelStats.map((channel) => (
-                    <tr key={channel.platform} className="border-t border-border">
-                      <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <span className="text-xl">
-                            {channel.platform === 'email' && '📧'}
-                            {channel.platform === 'linkedin' && '💼'}
-                            {channel.platform === 'reddit' && '🔴'}
-                            {channel.platform === 'twitter' && '𝕏'}
-                          </span>
-                          <span className="font-medium capitalize">{channel.platform}</span>
-                        </div>
-                      </td>
-                      <td className="p-4 text-right">{channel.total}</td>
-                      <td className="p-4 text-right text-green-400">{channel.success}</td>
-                      <td className="p-4 text-right text-red-400">{channel.failed}</td>
-                      <td className="p-4 text-right">
-                        <Badge variant={channel.successRate >= 50 ? 'success' : 'warning'}>
-                          {channel.successRate.toFixed(1)}%
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* A/B Tests Tab */}
-        <TabsContent value="abtests">
-          {abResults.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-16">
-                <Target className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p className="text-lg">No A/B tests yet</p>
-                <p className="text-sm text-muted-foreground">
-                  Run campaigns with multiple template variants to see results here
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {abResults.map((test) => (
-                <Card key={test.variantId}>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-base">{test.variantName}</CardTitle>
-                      <Badge variant={test.successRate >= 50 ? 'success' : 'warning'}>
-                        {test.successRate.toFixed(1)}% success
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Impressions</p>
-                        <p className="text-2xl font-bold">{test.impressions}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Engagements</p>
-                        <p className="text-2xl font-bold text-green-400">{test.engagements}</p>
-                      </div>
-                    </div>
-                    <div className="mt-4">
-                      <div className="h-3 bg-secondary rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-gradient-to-r from-amber-500 to-red-500 transition-all"
-                          style={{ width: `${test.successRate}%` }}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                  </td>
+                  <td className="p-4 text-right font-mono">{channel.total}</td>
+                  <td className="p-4 text-right font-mono text-green-400">{channel.success}</td>
+                  <td className="p-4 text-right font-mono text-red-400">{channel.failed}</td>
+                  <td className="p-4 text-right">
+                    <Badge variant={channel.successRate >= 50 ? 'success' : 'warning'}>
+                      {channel.successRate.toFixed(1)}%
+                    </Badge>
+                  </td>
+                </tr>
               ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
     </div>
   );
 }

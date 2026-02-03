@@ -1,302 +1,357 @@
-# 🦀 ClawBot
+# 🦀 ClawBot v2.0
+
+<div align="center">
+
+```
+ ██████╗██╗      █████╗ ██╗    ██╗██████╗  ██████╗ ████████╗
+██╔════╝██║     ██╔══██╗██║    ██║██╔══██╗██╔═══██╗╚══██╔══╝
+██║     ██║     ███████║██║ █╗ ██║██████╔╝██║   ██║   ██║   
+██║     ██║     ██╔══██║██║███╗██║██╔══██╗██║   ██║   ██║   
+╚██████╗███████╗██║  ██║╚███╔███╔╝██████╔╝╚██████╔╝   ██║   
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝ ╚═════╝  ╚═════╝    ╚═╝   
+```
 
 **AI-Powered Marketing Outreach for ProjectHunter.ai**
 
-ClawBot is a comprehensive multi-platform marketing automation bot that handles outreach across Email, LinkedIn, Reddit, Twitter/X, GitHub, and Discord. Built with TypeScript, powered by Supabase for real-time data, and featuring an AI agent for intelligent campaign orchestration.
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://typescriptlang.org)
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org)
+[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
+[![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com)
 
-![ClawBot Dashboard](https://projecthunter.ai/clawbot-preview.png)
+</div>
 
-## ✨ Features
+---
 
-### Core Outreach Skills
-- 📧 **Email Outreach** - SMTP-based campaigns with Nodemailer, rate limiting, and tracking
-- 💼 **LinkedIn Automation** - Posts and messages via API or browser automation (Puppeteer)
-- 🔴 **Reddit Marketing** - Posts, comments, and DMs via snoowrap
-- 𝕏 **Twitter/X Integration** - Tweets, threads, search, and engagement via Twitter API v2
+## ⚡ Features
 
-### Advanced Skills
-- 🚀 **Multi-Channel Poster** - Post to all platforms simultaneously with one command
-- 🧪 **A/B Testing** - Track variant performance to optimize messaging
-- 🎯 **Engagement & Lead Nurture** - Find relevant discussions and engage authentically
-- 🐙 **GitHub Outreach** - Star repos, find contributors as leads
-- 💬 **Discord Bot** - Post to AI community channels
+### 🎯 Multi-Platform Outreach
+- **📧 Email** - SMTP campaigns with Nodemailer
+- **💼 LinkedIn** - Posts & DMs via API/Puppeteer
+- **🔴 Reddit** - Posts, comments, DMs via snoowrap
+- **𝕏 Twitter** - Tweets, threads, engagement
+- **🐙 GitHub** - Star repos, find developers
+- **💬 Discord** - Community announcements
 
-### Dashboard & Analytics
-- 📊 **React Dashboard** - Beautiful UI for managing contacts, templates, and campaigns
-- 📈 **Real-time Analytics** - Track success rates, A/B test results, channel performance
-- 🔄 **Live Activity Feed** - Supabase real-time updates
-- 👥 **Contact Management** - CRM-like features with status tracking
+### 🤖 AI-Powered
+- **Natural Language Control** - "Run email outreach to pending contacts"
+- **Content Generation** - AI writes your posts and emails
+- **Personalization** - Context-aware message customization
+- **Sentiment Analysis** - Detect positive replies for follow-up
+- **A/B Testing** - Generate and test multiple variants
 
-### AI Agent
-- 🤖 **Natural Language Control** - Run campaigns with plain English commands
-- 🧠 **OpenAI Integration** - AI-powered content personalization and decisions
-- ⚡ **Tool Calling** - Agent executes multi-step campaigns automatically
+### 📊 Smart Automation
+- **Optimal Scheduling** - Post at peak engagement times
+- **Drip Sequences** - Automated email nurture flows
+- **Lead Capture** - Find and store developer contacts
+- **Engagement Monitoring** - Find relevant discussions
+- **Rate Limiting** - Stay under platform limits
+
+### 🖥️ Cyberpunk Dashboard
+- **Real-time Analytics** - Live activity feed
+- **Conversion Funnel** - Visualize your pipeline
+- **Campaign Control** - Launch and monitor missions
+- **Contact Management** - CRM-like features
+
+---
 
 ## 🚀 Quick Start
 
-### 1. Clone & Install
-
 ```bash
-cd Clawbot_feb3
+# Clone
+git clone https://github.com/jnase007/clawbot.git
+cd clawbot
 
-# Install backend dependencies
+# Install
 npm install
+cd dashboard && npm install && cd ..
 
-# Install dashboard dependencies
-cd dashboard
-npm install
-```
-
-### 2. Configure Environment
-
-```bash
+# Configure
 cp env.example .env
 # Edit .env with your credentials
-```
 
-**Required:**
-- `SUPABASE_URL` and `SUPABASE_ANON_KEY`
-- `OPENAI_API_KEY` for AI agent
-
-**Platform-specific:** See [Platform Setup](#platform-setup) below.
-
-### 3. Set Up Database
-
-```bash
+# Setup database
 npm run db:migrate
+# Copy SQL to Supabase Dashboard → SQL Editor
+
+# Run
+npm run cli status
 ```
 
-Copy the output SQL into Supabase Dashboard → SQL Editor → Run.
+---
 
-### 4. Start the Dashboard
-
-```bash
-cd dashboard
-npm run dev
-```
-
-Open http://localhost:3000
-
-## 📋 CLI Usage
+## 🎮 Usage
 
 ### AI Agent (Natural Language)
 
 ```bash
-# Run agent with a task
 npm run agent "Run email outreach to pending contacts"
-npm run agent "Post a LinkedIn update about our new AI marketplace"
-npm run agent "Run the Bounty of the Week campaign"
-npm run agent "Find Twitter discussions about AI agents and engage"
+npm run agent "Post a LinkedIn update about AI bounties"
+npm run agent "Find Twitter discussions about AI agents"
+npm run agent "Generate a thread about custom AI development"
 ```
 
-### Direct Commands
+### CLI Commands
 
 ```bash
+# Status
+npm run cli status
+
 # Email
 npm run cli email verify
-npm run cli email campaign -t <template-id> -l 50
+npm run cli email campaign -t <template-id>
 
 # LinkedIn
 npm run cli linkedin post "Check out ProjectHunter.ai!"
 npm run cli linkedin campaign -t <template-id>
 
 # Reddit
-npm run cli reddit verify
-npm run cli reddit post-campaign -t <template-id> -s "artificial,MachineLearning"
-
-# Twitter (via code)
-# postTweet(), postThread(), searchTweets()
+npm run cli reddit post -t <template-id> -s "artificial,MachineLearning"
 
 # Contacts
-npm run cli contacts add -p email -h user@example.com -n "John Doe"
+npm run cli contacts add -p email -h user@example.com -n "John"
 npm run cli contacts search "developer"
 
 # Templates
 npm run cli templates list -p email
-npm run cli templates create -p email -T email -n "Welcome" -c "Hey {{name}}!"
 
-# Stats & Logs
-npm run cli stats
+# Logs
 npm run cli logs -l 50
 ```
 
-## 🔧 Platform Setup
-
-### Email (SMTP)
+### Dashboard
 
 ```bash
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_app_password  # Gmail App Password
+cd dashboard
+npm run dev
+# Open http://localhost:3000
 ```
 
-### LinkedIn
+---
 
-**Option 1: API**
-```bash
-LINKEDIN_ACCESS_TOKEN=your_access_token
-```
-
-**Option 2: Browser Automation**
-```bash
-LINKEDIN_EMAIL=your_email
-LINKEDIN_PASSWORD=your_password
-```
-
-### Reddit
-
-1. Create app at [reddit.com/prefs/apps](https://reddit.com/prefs/apps) (script type)
-
-```bash
-REDDIT_CLIENT_ID=your_client_id
-REDDIT_CLIENT_SECRET=your_client_secret
-REDDIT_USER=your_username
-REDDIT_PASS=your_password
-```
-
-### Twitter/X
-
-1. Create app at [developer.twitter.com](https://developer.twitter.com)
-
-```bash
-TWITTER_API_KEY=your_api_key
-TWITTER_API_SECRET=your_api_secret
-TWITTER_ACCESS_TOKEN=your_access_token
-TWITTER_ACCESS_SECRET=your_access_secret
-```
-
-### GitHub
-
-1. Create PAT at [github.com/settings/tokens](https://github.com/settings/tokens)
-
-```bash
-GITHUB_TOKEN=your_github_pat
-```
-
-### Discord
-
-1. Create bot at [discord.com/developers](https://discord.com/developers/applications)
-
-```bash
-DISCORD_TOKEN=your_bot_token
-DISCORD_CHANNEL_ID=target_channel_id
-```
-
-## 📁 Project Structure
+## 🏗️ Architecture
 
 ```
 clawbot/
 ├── src/
-│   ├── agent/               # AI agent orchestrator
-│   ├── config/              # Environment configuration
-│   ├── db/                  # Supabase client & repository
-│   │   ├── migrate.ts       # Database migrations
-│   │   ├── repository.ts    # CRUD operations
-│   │   └── types.ts         # TypeScript types
-│   ├── skills/              # Platform-specific modules
-│   │   ├── email/           # Nodemailer integration
-│   │   ├── linkedin/        # LinkedIn API + Puppeteer
-│   │   ├── reddit/          # snoowrap integration
-│   │   ├── twitter/         # Twitter API v2
-│   │   ├── multi_poster/    # Cross-platform posting
-│   │   ├── engagement/      # Discussion engagement
-│   │   └── github_community/# GitHub + Discord
-│   ├── cli.ts               # Command-line interface
-│   └── index.ts             # Main exports
-├── dashboard/               # React dashboard
-│   ├── src/
-│   │   ├── components/      # UI components
-│   │   ├── pages/           # Dashboard pages
-│   │   │   ├── Dashboard    # Overview stats
-│   │   │   ├── Contacts     # Contact management
-│   │   │   ├── Templates    # Template CRUD
-│   │   │   ├── Campaigns    # Campaign management
-│   │   │   ├── Analytics    # Charts & A/B results
-│   │   │   └── Logs         # Activity feed
-│   │   └── lib/             # Utilities & Supabase
-│   └── ...
+│   ├── agent/                 # AI orchestrator
+│   ├── config/                # Environment config
+│   ├── db/                    # Supabase integration
+│   └── skills/
+│       ├── email/             # SMTP/Nodemailer
+│       ├── linkedin/          # API + Puppeteer
+│       ├── reddit/            # snoowrap
+│       ├── twitter/           # Twitter API v2
+│       ├── github_community/  # Octokit + Discord.js
+│       ├── multi_poster/      # Cross-platform + A/B
+│       ├── engagement/        # Discussion monitoring
+│       ├── ai_generator/      # Content generation
+│       ├── scheduler/         # Smart scheduling
+│       └── drip_sequences/    # Email nurturing
+├── dashboard/                 # React + Tailwind
+│   └── src/
+│       ├── components/        # UI components
+│       └── pages/             # Dashboard pages
 └── ...
 ```
 
-## 📝 Templates
+---
 
-Templates use Handlebars syntax:
+## 🔧 Configuration
 
-```handlebars
-Hey {{name}},
+### Required
 
-I noticed you're into {{interest}} - thought you'd love ProjectHunter.ai!
-
-We're a marketplace where developers can earn building custom AI agents.
-Bounties range from $500-$5K.
-
-Check it out: {{projecthunter_url}}
-
-Best,
-The ProjectHunter.ai Team
+```bash
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_anon_key
+OPENAI_API_KEY=your_openai_key
 ```
 
-### Available Variables
+### Platforms
 
-| Variable | Description |
-|----------|-------------|
-| `{{name}}` | Contact's name |
-| `{{email}}` | Contact's email |
-| `{{interest}}` | Custom field from notes |
-| `{{projecthunter_url}}` | Auto-filled URL |
-| `{{bounty_title}}` | Bounty title (multi-poster) |
-| `{{bounty_reward}}` | Reward amount |
+<details>
+<summary><strong>📧 Email (Gmail)</strong></summary>
 
-## 🧪 A/B Testing
+```bash
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your@gmail.com
+EMAIL_PASS=your_app_password  # Generate at Google Account → Security → App Passwords
+```
+</details>
 
-Create multiple template variants and track performance:
+<details>
+<summary><strong>💼 LinkedIn</strong></summary>
+
+```bash
+# Option 1: API
+LINKEDIN_ACCESS_TOKEN=your_token
+
+# Option 2: Browser
+LINKEDIN_EMAIL=your_email
+LINKEDIN_PASSWORD=your_password
+```
+</details>
+
+<details>
+<summary><strong>🔴 Reddit</strong></summary>
+
+Create app at [reddit.com/prefs/apps](https://reddit.com/prefs/apps) (script type)
+
+```bash
+REDDIT_CLIENT_ID=your_id
+REDDIT_CLIENT_SECRET=your_secret
+REDDIT_USER=your_username
+REDDIT_PASS=your_password
+```
+</details>
+
+<details>
+<summary><strong>𝕏 Twitter</strong></summary>
+
+Create app at [developer.twitter.com](https://developer.twitter.com)
+
+```bash
+TWITTER_API_KEY=your_key
+TWITTER_API_SECRET=your_secret
+TWITTER_ACCESS_TOKEN=your_token
+TWITTER_ACCESS_SECRET=your_secret
+```
+</details>
+
+<details>
+<summary><strong>🐙 GitHub</strong></summary>
+
+Create PAT at [github.com/settings/tokens](https://github.com/settings/tokens)
+
+```bash
+GITHUB_TOKEN=your_token
+```
+</details>
+
+<details>
+<summary><strong>💬 Discord</strong></summary>
+
+Create bot at [discord.com/developers](https://discord.com/developers/applications)
+
+```bash
+DISCORD_TOKEN=your_bot_token
+DISCORD_CHANNEL_ID=target_channel
+```
+</details>
+
+---
+
+## 🧪 Advanced Features
+
+### AI Content Generation
 
 ```typescript
-const variants = [
-  { id: 'v1', templateId: 'uuid-1', name: 'Emoji Version' },
-  { id: 'v2', templateId: 'uuid-2', name: 'Professional Version' },
-];
+import { generateContent, generateThread } from './skills/ai_generator';
 
-const { result, selectedVariant } = await generateAndPostAB(
-  ['linkedin', 'twitter'],
-  variants,
-  { bounty_title: 'AI Chatbot' }
+// Generate a post
+const post = await generateContent({
+  platform: 'linkedin',
+  type: 'post',
+  topic: 'Why AI agents are the future of automation',
+  tone: 'professional',
+});
+
+// Generate a Twitter thread
+const thread = await generateThread(
+  'How we built a $5K AI agent in 48 hours',
+  5  // number of tweets
 );
 ```
 
-View results in Dashboard → Analytics → A/B Tests.
+### Smart Scheduling
 
-## ⏱️ Rate Limits
+```typescript
+import { scheduleCampaign, getNextOptimalTime } from './skills/scheduler';
 
-| Platform | Default Limit | Config Variable |
-|----------|---------------|-----------------|
-| Email    | 1/second      | `EMAIL_RATE_LIMIT` |
-| LinkedIn | 50/day        | `LINKEDIN_DAILY_LIMIT` |
-| Reddit   | 10/minute     | `REDDIT_RATE_LIMIT` |
-| Twitter  | 50/day        | `TWITTER_DAILY_LIMIT` |
-| GitHub   | 5/day         | `GITHUB_DAILY_LIMIT` |
+// Get optimal posting time
+const nextTime = getNextOptimalTime('linkedin');
+// Returns: Next Tuesday at 9 AM (optimal for LinkedIn)
 
-## 🗄️ Database Schema
+// Schedule campaign across optimal times
+await scheduleCampaign({
+  platform: 'email',
+  templateId: 'template-uuid',
+  contactCount: 500,
+  spreadOverDays: 7,
+});
+```
 
-**Tables:**
-- `outreach_contacts` - Contact database with status tracking
-- `templates` - Message templates with variables
-- `outreach_logs` - Activity logs with metadata
-- `campaigns` - Campaign management
-- `approval_queue` - Human review queue (optional)
+### Drip Sequences
 
-## 🚀 Deployment
+```typescript
+import { addToSequence, processDripSteps } from './skills/drip_sequences';
 
-### Backend (VM/Server)
+// Add contact to nurture sequence
+await addToSequence(contactId, 'developer-onboarding');
+
+// Process pending drip steps (run via cron)
+await processDripSteps();
+```
+
+### A/B Testing
+
+```typescript
+import { generateAndPostAB } from './skills/multi_poster';
+
+const variants = [
+  { id: 'emoji', templateId: 'uuid-1', name: 'With Emojis' },
+  { id: 'formal', templateId: 'uuid-2', name: 'Formal Tone' },
+];
+
+const result = await generateAndPostAB(
+  ['linkedin', 'twitter'],
+  variants,
+  { topic: 'AI bounties' }
+);
+// Tracks which variant performs better
+```
+
+---
+
+## ⏰ Automation
+
+### Cron Jobs
 
 ```bash
-npm install
-npm run build
-node dist/index.js
+# Daily email outreach at 9 AM
+0 9 * * * cd /path/to/clawbot && npm run agent "Run email outreach"
 
-# Or with PM2
-pm2 start dist/index.js --name clawbot
+# Process drip sequences every hour
+0 * * * * cd /path/to/clawbot && npm run cli drip process
+
+# Weekly "Bounty of the Week" on Monday
+0 10 * * 1 cd /path/to/clawbot && npm run agent "Run Bounty of Week campaign"
+
+# Find Twitter discussions daily
+0 14 * * * cd /path/to/clawbot && npm run agent "Find AI discussions"
+```
+
+---
+
+## 📈 KPIs & Goals
+
+| Goal | How ClawBot Helps |
+|------|-------------------|
+| 500 bounties/month | Automated outreach to developers |
+| 100 hunters by Q2 | GitHub + Reddit developer targeting |
+| $50K GMV by Q3 | A/B tested campaigns for conversions |
+| Viral program | Drip sequences + engagement |
+
+---
+
+## 🚢 Deployment
+
+### Backend (Fly.io)
+
+```bash
+fly launch
+fly secrets set SUPABASE_URL=... OPENAI_API_KEY=...
+fly deploy
 ```
 
 ### Dashboard (Netlify)
@@ -305,61 +360,45 @@ pm2 start dist/index.js --name clawbot
 cd dashboard
 npm run build
 # Deploy dist/ to Netlify
+
+# Set env vars:
+# VITE_SUPABASE_URL
+# VITE_SUPABASE_ANON_KEY
 ```
 
-Environment variables in Netlify:
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
+---
 
-## ⏰ Cron Jobs
+## 📊 Rate Limits
 
-Schedule campaigns:
+| Platform | Limit | Config |
+|----------|-------|--------|
+| Email | 1/sec | `EMAIL_RATE_LIMIT` |
+| LinkedIn | 50/day | `LINKEDIN_DAILY_LIMIT` |
+| Reddit | 10/min | `REDDIT_RATE_LIMIT` |
+| Twitter | 50/day | `TWITTER_DAILY_LIMIT` |
+| GitHub | 5/day | `GITHUB_DAILY_LIMIT` |
 
-```bash
-# Daily email outreach at 9 AM
-0 9 * * * cd /path/to/clawbot && npm run agent "Run email outreach"
+---
 
-# Bounty of the Week on Mondays
-0 10 * * 1 cd /path/to/clawbot && npm run agent "Run Bounty of the Week campaign"
+## 🔒 Compliance
 
-# Find and engage Twitter discussions
-0 14 * * * cd /path/to/clawbot && npm run agent "Find AI discussions on Twitter"
-```
+- ✅ Opt-out tracking in contact status
+- ✅ Rate limiting to avoid bans
+- ✅ Approval queue for auto-engagement
+- ✅ Platform ToS compliance
 
-## 📊 KPI Tracking
+---
 
-Align with your roadmap goals:
-
-| Goal | How ClawBot Helps |
-|------|-------------------|
-| 500 bounties/month | Automated outreach to developers |
-| 100 hunters by Q2 | GitHub + Reddit developer targeting |
-| $50K GMV by Q3 | A/B tested campaigns for conversions |
-| Viral referral program | Lead nurture sequences |
-
-## 🔐 Compliance
-
-- **Opt-outs**: Track unsubscribes in contact status
-- **Rate Limiting**: Conservative limits avoid platform bans
-- **Approval Queue**: Human review before auto-engagement
-- **ToS Compliance**: Follow each platform's guidelines
-
-## 🐙 GitHub Repository
-
-```bash
-git init
-git add .
-git commit -m "Initial ClawBot setup"
-git remote add origin https://github.com/jnase007/clawbot.git
-git push -u origin main
-```
-
-## 📄 License
+## 📜 License
 
 MIT
 
 ---
 
-Built for [ProjectHunter.ai](https://projecthunter.ai) 🚀
+<div align="center">
+
+Built with 🦀 for [ProjectHunter.ai](https://projecthunter.ai)
 
 *"Automate 80% of your marketing, keep 100% of the human touch."*
+
+</div>

@@ -20,12 +20,106 @@ import {
 } from './skills/reddit/index.js';
 import type { Platform, TemplateType } from './db/types.js';
 
+// ============ ASCII ART & BRANDING ============
+
+const LOGO = `
+${chalk.green(`
+ ██████╗██╗      █████╗ ██╗    ██╗██████╗  ██████╗ ████████╗
+██╔════╝██║     ██╔══██╗██║    ██║██╔══██╗██╔═══██╗╚══██╔══╝
+██║     ██║     ███████║██║ █╗ ██║██████╔╝██║   ██║   ██║   
+██║     ██║     ██╔══██║██║███╗██║██╔══██╗██║   ██║   ██║   
+╚██████╗███████╗██║  ██║╚███╔███╔╝██████╔╝╚██████╔╝   ██║   
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝ ╚═════╝  ╚═════╝    ╚═╝   
+`)}
+${chalk.gray('━'.repeat(65))}
+${chalk.cyan('   🦀 AI-POWERED MARKETING OUTREACH FOR PROJECTHUNTER.AI')}
+${chalk.gray('━'.repeat(65))}
+`;
+
+const SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+
+class Spinner {
+  private interval: NodeJS.Timeout | null = null;
+  private frameIndex = 0;
+  private message: string;
+
+  constructor(message: string) {
+    this.message = message;
+  }
+
+  start() {
+    this.interval = setInterval(() => {
+      process.stdout.write(`\r${chalk.green(SPINNER_FRAMES[this.frameIndex])} ${chalk.cyan(this.message)}`);
+      this.frameIndex = (this.frameIndex + 1) % SPINNER_FRAMES.length;
+    }, 80);
+  }
+
+  stop(success = true) {
+    if (this.interval) {
+      clearInterval(this.interval);
+      const icon = success ? chalk.green('✓') : chalk.red('✗');
+      console.log(`\r${icon} ${this.message}`);
+    }
+  }
+
+  update(message: string) {
+    this.message = message;
+  }
+}
+
+function printHeader() {
+  console.clear();
+  console.log(LOGO);
+}
+
+function printSection(title: string) {
+  console.log();
+  console.log(chalk.gray('┌─') + chalk.cyan(` ${title} `) + chalk.gray('─'.repeat(50 - title.length)));
+}
+
+function printSuccess(message: string) {
+  console.log(chalk.green('  ✓ ') + message);
+}
+
+function printError(message: string) {
+  console.log(chalk.red('  ✗ ') + message);
+}
+
+function printInfo(label: string, value: string | number) {
+  console.log(chalk.gray('  │ ') + chalk.cyan(label + ':') + ' ' + chalk.white(value));
+}
+
+function printTable(headers: string[], rows: string[][]) {
+  const colWidths = headers.map((h, i) => 
+    Math.max(h.length, ...rows.map(r => String(r[i] || '').length)) + 2
+  );
+
+  console.log();
+  console.log(
+    chalk.gray('  ') +
+    headers.map((h, i) => chalk.cyan(h.padEnd(colWidths[i]))).join(chalk.gray(' │ '))
+  );
+  console.log(chalk.gray('  ' + '─'.repeat(colWidths.reduce((a, b) => a + b + 3, 0))));
+  
+  for (const row of rows) {
+    console.log(
+      chalk.gray('  ') +
+      row.map((cell, i) => String(cell || '').padEnd(colWidths[i])).join(chalk.gray(' │ '))
+    );
+  }
+}
+
+// ============ PROGRAM SETUP ============
+
 const program = new Command();
 
 program
   .name('clawbot')
   .description('🦀 ClawBot - AI Marketing Outreach for ProjectHunter.ai')
-  .version('1.0.0');
+  .version('2.0.0')
+  .hook('preAction', () => {
+    printHeader();
+  });
 
 // ============ AGENT COMMAND ============
 
@@ -34,26 +128,103 @@ program
   .description('Run the AI agent with a natural language message')
   .argument('<message>', 'Task for the agent to execute')
   .action(async (message: string) => {
-    console.log(chalk.cyan('\n🦀 ClawBot Agent\n'));
+    printSection('AI AGENT');
+    
+    const spinner = new Spinner('Initializing neural network...');
+    spinner.start();
+    
     try {
+      await new Promise(r => setTimeout(r, 500));
+      spinner.update('Processing your request...');
+      
       const result = await runAgent(message);
-      console.log(chalk.green('\n📋 Result:\n'));
-      console.log(result);
+      spinner.stop(true);
+      
+      console.log();
+      console.log(chalk.gray('┌─') + chalk.green(' RESPONSE ') + chalk.gray('─'.repeat(50)));
+      console.log(chalk.gray('│'));
+      result.split('\n').forEach(line => {
+        console.log(chalk.gray('│ ') + line);
+      });
+      console.log(chalk.gray('│'));
+      console.log(chalk.gray('└' + '─'.repeat(60)));
     } catch (error) {
-      console.error(chalk.red('Error:'), error);
+      spinner.stop(false);
+      printError(`Agent error: ${error}`);
       process.exit(1);
+    }
+  });
+
+// ============ STATUS COMMAND ============
+
+program
+  .command('status')
+  .description('Show system status and statistics')
+  .action(async () => {
+    printSection('SYSTEM STATUS');
+    
+    const spinner = new Spinner('Fetching system data...');
+    spinner.start();
+    
+    try {
+      const stats = await getOutreachStats();
+      spinner.stop(true);
+      
+      console.log();
+      console.log(chalk.green('  ● SYSTEM ONLINE'));
+      console.log();
+      
+      printInfo('Total Targets', stats.totalContacts);
+      printInfo('Email Contacts', stats.byPlatform.email);
+      printInfo('LinkedIn Contacts', stats.byPlatform.linkedin);
+      printInfo('Reddit Contacts', stats.byPlatform.reddit);
+      console.log();
+      printInfo('Recent Activity', `${stats.recentActivity} (7 days)`);
+      
+      // Status breakdown
+      console.log();
+      console.log(chalk.gray('  │ ') + chalk.cyan('By Status:'));
+      Object.entries(stats.byStatus).forEach(([status, count]) => {
+        if (count > 0) {
+          const bar = '█'.repeat(Math.min(20, Math.ceil((count / stats.totalContacts) * 20)));
+          console.log(chalk.gray('  │   ') + 
+            chalk.white(status.padEnd(12)) + 
+            chalk.green(bar) + 
+            chalk.gray(` ${count}`)
+          );
+        }
+      });
+      
+      console.log();
+      console.log(chalk.gray('└' + '─'.repeat(60)));
+    } catch (error) {
+      spinner.stop(false);
+      printError(`Error: ${error}`);
     }
   });
 
 // ============ EMAIL COMMANDS ============
 
-const email = program.command('email').description('Email outreach commands');
+const email = program.command('email').description('📧 Email outreach commands');
 
 email
   .command('verify')
   .description('Verify email SMTP configuration')
   .action(async () => {
+    printSection('EMAIL VERIFICATION');
+    
+    const spinner = new Spinner('Testing SMTP connection...');
+    spinner.start();
+    
     const ok = await verifyEmailConfig();
+    spinner.stop(ok);
+    
+    if (ok) {
+      printSuccess('Email configuration verified');
+    } else {
+      printError('Email configuration failed');
+    }
+    
     process.exit(ok ? 0 : 1);
   });
 
@@ -63,28 +234,49 @@ email
   .requiredOption('-t, --template <id>', 'Template UUID')
   .option('-l, --limit <number>', 'Max contacts', '50')
   .action(async (options) => {
-    console.log(chalk.cyan('\n📧 Starting Email Campaign\n'));
+    printSection('EMAIL CAMPAIGN');
+    
+    const spinner = new Spinner('Launching campaign...');
+    spinner.start();
+    
     const result = await runEmailOutreach(options.template, parseInt(options.limit));
-    console.log(chalk.green('\n✅ Campaign Complete'));
-    console.log(`   Sent: ${result.sent}`);
-    console.log(`   Failed: ${result.failed}`);
+    spinner.stop(result.failed === 0);
+    
+    console.log();
+    printInfo('Total', result.total);
+    printInfo('Sent', chalk.green(String(result.sent)));
+    printInfo('Failed', result.failed > 0 ? chalk.red(String(result.failed)) : '0');
+    
+    if (result.errors.length > 0) {
+      console.log();
+      console.log(chalk.red('  Errors:'));
+      result.errors.slice(0, 5).forEach(err => {
+        console.log(chalk.gray('    • ') + `${err.email}: ${err.error}`);
+      });
+    }
   });
 
 // ============ LINKEDIN COMMANDS ============
 
-const linkedin = program.command('linkedin').description('LinkedIn outreach commands');
+const linkedin = program.command('linkedin').description('💼 LinkedIn outreach commands');
 
 linkedin
   .command('post')
   .description('Post an update on LinkedIn')
   .argument('<content>', 'Post content')
   .action(async (content: string) => {
-    console.log(chalk.cyan('\n💼 Posting to LinkedIn\n'));
+    printSection('LINKEDIN POST');
+    
+    const spinner = new Spinner('Publishing to LinkedIn...');
+    spinner.start();
+    
     const result = await linkedinPost(content);
+    spinner.stop(result.success);
+    
     if (result.success) {
-      console.log(chalk.green('✅ Posted successfully'));
+      printSuccess('Posted successfully');
     } else {
-      console.error(chalk.red('❌ Failed:'), result.error);
+      printError(`Failed: ${result.error}`);
     }
   });
 
@@ -94,55 +286,62 @@ linkedin
   .requiredOption('-t, --template <id>', 'Template UUID')
   .option('-l, --limit <number>', 'Max contacts', '20')
   .action(async (options) => {
-    console.log(chalk.cyan('\n💼 Starting LinkedIn Campaign\n'));
+    printSection('LINKEDIN CAMPAIGN');
+    
+    const spinner = new Spinner('Launching LinkedIn campaign...');
+    spinner.start();
+    
     const result = await runLinkedInOutreach(options.template, parseInt(options.limit));
-    console.log(chalk.green('\n✅ Campaign Complete'));
-    console.log(`   Sent: ${result.sent}`);
-    console.log(`   Failed: ${result.failed}`);
+    spinner.stop(result.failed === 0);
+    
+    console.log();
+    printInfo('Sent', chalk.green(String(result.sent)));
+    printInfo('Failed', result.failed > 0 ? chalk.red(String(result.failed)) : '0');
   });
 
 // ============ REDDIT COMMANDS ============
 
-const reddit = program.command('reddit').description('Reddit outreach commands');
+const reddit = program.command('reddit').description('🔴 Reddit outreach commands');
 
 reddit
   .command('verify')
   .description('Verify Reddit API configuration')
   .action(async () => {
+    printSection('REDDIT VERIFICATION');
+    
+    const spinner = new Spinner('Testing Reddit API...');
+    spinner.start();
+    
     const ok = await verifyRedditConfig();
+    spinner.stop(ok);
+    
     process.exit(ok ? 0 : 1);
   });
 
 reddit
-  .command('post-campaign')
-  .description('Post to multiple subreddits')
+  .command('post')
+  .description('Post to subreddits')
   .requiredOption('-t, --template <id>', 'Template UUID')
   .requiredOption('-s, --subreddits <list>', 'Comma-separated subreddit names')
   .action(async (options) => {
-    console.log(chalk.cyan('\n🔴 Starting Reddit Post Campaign\n'));
+    printSection('REDDIT CAMPAIGN');
+    
     const subreddits = options.subreddits.split(',').map((s: string) => s.trim());
+    
+    const spinner = new Spinner(`Posting to ${subreddits.length} subreddits...`);
+    spinner.start();
+    
     const result = await runRedditPostCampaign(options.template, subreddits);
-    console.log(chalk.green('\n✅ Campaign Complete'));
-    console.log(`   Posted: ${result.sent}`);
-    console.log(`   Failed: ${result.failed}`);
-  });
-
-reddit
-  .command('message-campaign')
-  .description('Send Reddit DMs to pending contacts')
-  .requiredOption('-t, --template <id>', 'Template UUID')
-  .option('-l, --limit <number>', 'Max messages', '20')
-  .action(async (options) => {
-    console.log(chalk.cyan('\n🔴 Starting Reddit Message Campaign\n'));
-    const result = await runRedditMessageOutreach(options.template, parseInt(options.limit));
-    console.log(chalk.green('\n✅ Campaign Complete'));
-    console.log(`   Sent: ${result.sent}`);
-    console.log(`   Failed: ${result.failed}`);
+    spinner.stop(result.failed === 0);
+    
+    console.log();
+    printInfo('Posted', chalk.green(String(result.sent)));
+    printInfo('Failed', result.failed > 0 ? chalk.red(String(result.failed)) : '0');
   });
 
 // ============ CONTACTS COMMANDS ============
 
-const contacts = program.command('contacts').description('Manage outreach contacts');
+const contacts = program.command('contacts').description('👥 Manage outreach contacts');
 
 contacts
   .command('add')
@@ -152,7 +351,13 @@ contacts
   .option('-n, --name <name>', 'Contact name')
   .option('-t, --tags <tags>', 'Comma-separated tags')
   .action(async (options) => {
+    printSection('ADD CONTACT');
+    
     const tags = options.tags ? options.tags.split(',').map((t: string) => t.trim()) : [];
+    
+    const spinner = new Spinner('Adding contact...');
+    spinner.start();
+    
     const contact = await addContact(
       options.platform as Platform,
       options.handle,
@@ -160,7 +365,9 @@ contacts
       undefined,
       tags
     );
-    console.log(chalk.green('✅ Contact added:'), contact.id);
+    
+    spinner.stop(true);
+    printSuccess(`Contact added: ${contact.id}`);
   });
 
 contacts
@@ -169,91 +376,121 @@ contacts
   .argument('<query>', 'Search query')
   .option('-p, --platform <platform>', 'Filter by platform')
   .action(async (query: string, options) => {
+    printSection('SEARCH RESULTS');
+    
+    const spinner = new Spinner('Searching...');
+    spinner.start();
+    
     const results = await searchContacts(query, options.platform);
-    console.log(chalk.cyan(`\n📋 Found ${results.length} contacts:\n`));
-    results.forEach((c) => {
-      console.log(`  ${c.name || c.handle} (${c.platform}) - ${c.status}`);
-    });
+    spinner.stop(true);
+    
+    if (results.length === 0) {
+      printInfo('Results', 'No contacts found');
+    } else {
+      printTable(
+        ['Name', 'Handle', 'Platform', 'Status'],
+        results.slice(0, 10).map(c => [
+          c.name || '-',
+          c.handle,
+          c.platform,
+          c.status
+        ])
+      );
+      
+      if (results.length > 10) {
+        console.log(chalk.gray(`  ... and ${results.length - 10} more`));
+      }
+    }
   });
 
 // ============ TEMPLATES COMMANDS ============
 
-const templates = program.command('templates').description('Manage message templates');
+const templates = program.command('templates').description('📝 Manage message templates');
 
 templates
   .command('list')
   .description('List templates for a platform')
   .requiredOption('-p, --platform <platform>', 'Platform (email, linkedin, reddit)')
   .action(async (options) => {
+    printSection('TEMPLATES');
+    
+    const spinner = new Spinner('Loading templates...');
+    spinner.start();
+    
     const tpls = await getTemplatesByPlatform(options.platform as Platform);
-    console.log(chalk.cyan(`\n📝 Templates for ${options.platform}:\n`));
-    tpls.forEach((t) => {
-      console.log(`  ${chalk.yellow(t.id)}`);
-      console.log(`    Name: ${t.name}`);
-      console.log(`    Type: ${t.type}`);
-      console.log(`    Variables: ${t.variables.join(', ') || 'none'}`);
-      console.log();
-    });
-  });
-
-templates
-  .command('create')
-  .description('Create a new template')
-  .requiredOption('-p, --platform <platform>', 'Platform (email, linkedin, reddit)')
-  .requiredOption('-T, --type <type>', 'Type (email, message, post, comment)')
-  .requiredOption('-n, --name <name>', 'Template name')
-  .requiredOption('-c, --content <content>', 'Template content (use {{var}} for variables)')
-  .option('-s, --subject <subject>', 'Subject line (for email)')
-  .action(async (options) => {
-    const template = await createTemplate(
-      options.platform as Platform,
-      options.type as TemplateType,
-      options.name,
-      options.content,
-      options.subject
-    );
-    console.log(chalk.green('✅ Template created:'), template.id);
-  });
-
-// ============ STATS COMMAND ============
-
-program
-  .command('stats')
-  .description('Show outreach statistics')
-  .action(async () => {
-    const stats = await getOutreachStats();
-    console.log(chalk.cyan('\n📊 Outreach Statistics\n'));
-    console.log(`  Total Contacts: ${stats.totalContacts}`);
-    console.log(`  Recent Activity: ${stats.recentActivity} (last 7 days)`);
-    console.log();
-    console.log('  By Platform:');
-    Object.entries(stats.byPlatform).forEach(([p, count]) => {
-      console.log(`    ${p}: ${count}`);
-    });
-    console.log();
-    console.log('  By Status:');
-    Object.entries(stats.byStatus).forEach(([s, count]) => {
-      if (count > 0) console.log(`    ${s}: ${count}`);
-    });
+    spinner.stop(true);
+    
+    if (tpls.length === 0) {
+      printInfo('Templates', 'None found');
+    } else {
+      tpls.forEach(t => {
+        console.log();
+        console.log(chalk.gray('  ┌─ ') + chalk.cyan(t.name));
+        console.log(chalk.gray('  │  ') + chalk.yellow('ID: ') + t.id);
+        console.log(chalk.gray('  │  ') + chalk.yellow('Type: ') + t.type);
+        console.log(chalk.gray('  │  ') + chalk.yellow('Vars: ') + (t.variables.join(', ') || 'none'));
+        console.log(chalk.gray('  └──'));
+      });
+    }
   });
 
 // ============ LOGS COMMAND ============
 
 program
   .command('logs')
-  .description('Show recent activity logs')
+  .description('📜 Show recent activity logs')
   .option('-l, --limit <number>', 'Number of logs', '20')
   .option('-p, --platform <platform>', 'Filter by platform')
   .action(async (options) => {
+    printSection('ACTIVITY LOGS');
+    
+    const spinner = new Spinner('Fetching logs...');
+    spinner.start();
+    
     const logs = await getRecentLogs(parseInt(options.limit), options.platform);
-    console.log(chalk.cyan('\n📜 Recent Logs\n'));
-    logs.forEach((log) => {
-      const status = log.success ? chalk.green('✓') : chalk.red('✗');
-      const time = new Date(log.created_at).toLocaleString();
-      console.log(`  ${status} [${log.platform}] ${log.action} - ${time}`);
-      if (log.error) console.log(`    ${chalk.red(log.error)}`);
-    });
+    spinner.stop(true);
+    
+    if (logs.length === 0) {
+      printInfo('Logs', 'No activity yet');
+    } else {
+      logs.forEach(log => {
+        const icon = log.success ? chalk.green('✓') : chalk.red('✗');
+        const platform = {
+          email: '📧',
+          linkedin: '💼',
+          reddit: '🔴',
+          twitter: '𝕏',
+        }[log.platform] || '📌';
+        
+        const time = new Date(log.created_at).toLocaleTimeString();
+        
+        console.log(
+          chalk.gray('  ') +
+          icon + ' ' +
+          platform + ' ' +
+          chalk.white(log.action.padEnd(25)) +
+          chalk.gray(time)
+        );
+        
+        if (log.error) {
+          console.log(chalk.gray('       ') + chalk.red(log.error));
+        }
+      });
+    }
   });
 
-// Parse and run
+// ============ PARSE & RUN ============
+
 program.parse();
+
+// Show help if no args
+if (!process.argv.slice(2).length) {
+  printHeader();
+  console.log(chalk.cyan('  Usage:') + ' clawbot <command> [options]');
+  console.log();
+  console.log(chalk.cyan('  Quick Start:'));
+  console.log(chalk.gray('    $ ') + 'clawbot agent "Run email outreach"');
+  console.log(chalk.gray('    $ ') + 'clawbot status');
+  console.log(chalk.gray('    $ ') + 'clawbot --help');
+  console.log();
+}

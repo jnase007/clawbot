@@ -3,23 +3,26 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const badgeVariants = cva(
-  'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+  'inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-mono font-semibold tracking-wider uppercase transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
   {
     variants: {
       variant: {
         default:
-          'border-transparent bg-primary text-primary-foreground',
+          'border-primary/30 bg-primary/10 text-primary',
         secondary:
-          'border-transparent bg-secondary text-secondary-foreground',
+          'border-secondary bg-secondary text-secondary-foreground',
         destructive:
-          'border-transparent bg-destructive text-destructive-foreground',
-        outline: 'text-foreground',
+          'border-red-500/30 bg-red-500/10 text-red-400',
+        outline: 
+          'border-primary/30 text-foreground',
         success:
-          'border-transparent bg-green-500/20 text-green-400 border-green-500/30',
+          'border-green-500/30 bg-green-500/10 text-green-400',
         warning:
-          'border-transparent bg-amber-500/20 text-amber-400 border-amber-500/30',
+          'border-amber-500/30 bg-amber-500/10 text-amber-400',
         info:
-          'border-transparent bg-blue-500/20 text-blue-400 border-blue-500/30',
+          'border-blue-500/30 bg-blue-500/10 text-blue-400',
+        neon:
+          'border-primary bg-primary/20 text-primary glow-green animate-pulse-glow',
       },
     },
     defaultVariants: {
