@@ -233,13 +233,13 @@ export default function ClientDashboard() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Link to="/strategy">
+          <Link to="/dashboard/strategy">
             <Button variant="outline" className="gap-2">
               <Brain className="w-4 h-4" />
               Generate Strategy
             </Button>
           </Link>
-          <Link to="/campaigns">
+          <Link to="/dashboard/campaigns">
             <Button className="btn-gradient gap-2">
               <Rocket className="w-4 h-4" />
               New Campaign
@@ -282,7 +282,7 @@ export default function ClientDashboard() {
               Client Goals
             </CardTitle>
             {goals.length === 0 && (
-              <Link to="/strategy">
+              <Link to="/dashboard/strategy">
                 <Button size="sm" variant="outline" className="gap-1">
                   <Sparkles className="w-3 h-3" />
                   Generate
@@ -420,7 +420,7 @@ export default function ClientDashboard() {
             <Rocket className="w-5 h-5 text-primary" />
             Active Campaigns
           </CardTitle>
-          <Link to="/campaigns">
+          <Link to="/dashboard/campaigns">
             <Button size="sm" variant="outline" className="gap-1">
               View All
               <ArrowRight className="w-3 h-3" />
@@ -468,7 +468,7 @@ export default function ClientDashboard() {
             <div className="text-center py-8">
               <Rocket className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
               <p className="text-muted-foreground">No campaigns yet</p>
-              <Link to="/campaigns">
+              <Link to="/dashboard/campaigns">
                 <Button size="sm" className="mt-3">
                   Create Campaign
                 </Button>
@@ -486,13 +486,13 @@ export default function ClientDashboard() {
             Ready Templates ({templates.length})
           </CardTitle>
           <div className="flex items-center gap-2">
-            <Link to="/strategy">
+            <Link to="/dashboard/strategy">
               <Button size="sm" variant="outline" className="gap-1">
                 <Sparkles className="w-3 h-3" />
                 Generate More
               </Button>
             </Link>
-            <Link to="/templates">
+            <Link to="/dashboard/templates">
               <Button size="sm" variant="outline" className="gap-1">
                 View All
                 <ArrowRight className="w-3 h-3" />
@@ -528,7 +528,7 @@ export default function ClientDashboard() {
             <div className="text-center py-8">
               <FileText className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
               <p className="text-muted-foreground">No templates yet</p>
-              <Link to="/strategy">
+              <Link to="/dashboard/strategy">
                 <Button size="sm" className="mt-3 gap-1">
                   <Sparkles className="w-3 h-3" />
                   Generate with AI
@@ -550,13 +550,13 @@ export default function ClientDashboard() {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <Link to="/strategy">
+              <Link to="/dashboard/strategy">
                 <Button variant="outline" className="gap-2">
                   <Brain className="w-4 h-4" />
                   AI Strategy
                 </Button>
               </Link>
-              <Link to="/campaigns">
+              <Link to="/dashboard/campaigns">
                 <Button className="btn-gradient gap-2">
                   <Rocket className="w-4 h-4" />
                   Launch Campaign

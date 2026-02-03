@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
+import Home from './pages/Home';
 import ClientDashboard from './pages/ClientDashboard';
 import Contacts from './pages/Contacts';
 import Templates from './pages/Templates';
@@ -13,7 +14,11 @@ import Inbox from './pages/Inbox';
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Layout />}>
+      {/* Homepage - standalone layout */}
+      <Route path="/" element={<Home />} />
+      
+      {/* Dashboard - with sidebar layout */}
+      <Route path="/dashboard" element={<Layout />}>
         <Route index element={<ClientDashboard />} />
         <Route path="contacts" element={<Contacts />} />
         <Route path="templates" element={<Templates />} />

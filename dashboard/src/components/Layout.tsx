@@ -1,4 +1,4 @@
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { 
@@ -176,15 +176,15 @@ function NotificationsDropdown() {
 }
 
 const navItems = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/strategy', icon: Brain, label: 'AI Strategy', highlight: true },
-  { to: '/contacts', icon: Users, label: 'Contacts' },
-  { to: '/templates', icon: FileText, label: 'Templates' },
-  { to: '/sequences', icon: Workflow, label: 'Sequences', isNew: true },
-  { to: '/campaigns', icon: Rocket, label: 'Campaigns' },
-  { to: '/inbox', icon: Inbox, label: 'Inbox', isNew: true },
-  { to: '/analytics', icon: BarChart3, label: 'Analytics' },
-  { to: '/logs', icon: ScrollText, label: 'Activity' },
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/dashboard/strategy', icon: Brain, label: 'AI Strategy', highlight: true },
+  { to: '/dashboard/contacts', icon: Users, label: 'Contacts' },
+  { to: '/dashboard/templates', icon: FileText, label: 'Templates' },
+  { to: '/dashboard/sequences', icon: Workflow, label: 'Sequences', isNew: true },
+  { to: '/dashboard/campaigns', icon: Rocket, label: 'Campaigns' },
+  { to: '/dashboard/inbox', icon: Inbox, label: 'Inbox', isNew: true },
+  { to: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
+  { to: '/dashboard/logs', icon: ScrollText, label: 'Activity' },
 ];
 
 export default function Layout() {
@@ -211,16 +211,18 @@ export default function Layout() {
       >
         {/* Logo */}
         <div className="p-5 border-b border-border">
-          {collapsed ? (
-            <Logo size="sm" showText={false} />
-          ) : (
-            <div>
-              <Logo size="md" showText={true} />
-              <p className="text-[10px] text-muted-foreground mt-2 px-1">
-                Agency AI Outreach Engine
-              </p>
-            </div>
-          )}
+          <Link to="/" className="block hover:opacity-80 transition-opacity">
+            {collapsed ? (
+              <Logo size="sm" showText={false} />
+            ) : (
+              <div>
+                <Logo size="md" showText={true} />
+                <p className="text-[10px] text-muted-foreground mt-2 px-1">
+                  Agency AI Outreach Engine
+                </p>
+              </div>
+            )}
+          </Link>
         </div>
 
         {/* Current Client Indicator */}
