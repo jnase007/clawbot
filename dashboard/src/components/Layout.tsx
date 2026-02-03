@@ -16,7 +16,9 @@ import {
   CheckCircle,
   AlertTriangle,
   Zap,
-  X
+  X,
+  Workflow,
+  Inbox
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { ThemeToggle } from './ThemeToggle';
@@ -178,7 +180,9 @@ const navItems = [
   { to: '/strategy', icon: Brain, label: 'AI Strategy', highlight: true },
   { to: '/contacts', icon: Users, label: 'Contacts' },
   { to: '/templates', icon: FileText, label: 'Templates' },
+  { to: '/sequences', icon: Workflow, label: 'Sequences', isNew: true },
   { to: '/campaigns', icon: Rocket, label: 'Campaigns' },
+  { to: '/inbox', icon: Inbox, label: 'Inbox', isNew: true },
   { to: '/analytics', icon: BarChart3, label: 'Analytics' },
   { to: '/logs', icon: ScrollText, label: 'Activity' },
 ];
