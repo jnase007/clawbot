@@ -434,6 +434,102 @@ templates
     }
   });
 
+// ============ AGENT BUILDER COMMANDS ============
+
+const agentBuilder = program.command('agent').description('🤖 Build AI agents');
+
+agentBuilder
+  .command('templates')
+  .description('List available agent templates')
+  .action(async () => {
+    printSection('AGENT TEMPLATES');
+    
+    const { listTemplates } = await import('./skills/agent_builder/index.js');
+    const templates = listTemplates();
+    
+    templates.forEach(t => {
+      console.log();
+      console.log(chalk.gray('  ┌─ ') + chalk.cyan(t.name));
+      console.log(chalk.gray('  │  ') + t.description);
+      console.log(chalk.gray('  └──'));
+    });
+  });
+
+agentBuilder
+  .command('create')
+  .description('Generate an agent from a template')
+  .requiredOption('-t, --template <name>', 'Template name')
+  .requiredOption('-n, --name <name>', 'Agent name')
+  .option('-o, --output <dir>', 'Output directory', './generated_agents')
+  .action(async (options) => {
+    printSection('GENERATE AGENT');
+    
+    const spinner = new Spinner('Generating agent architecture...');
+    spinner.start();
+    
+    try {
+      const { generateFromTemplate, saveAgent } = await import('./skills/agent_builder/index.js');
+      
+      spinner.update('Building system prompt...');
+      await new Promise(r => setTimeout(r, 500));
+      
+      spinner.update('Generating tools...');
+      const agent = await generateFromTemplate(options.template, { name: options.name });
+      
+      spinner.update('Writing files...');
+      const dir = await saveAgent(agent, options.output);
+      
+      spinner.stop(true);
+      
+      console.log();
+      printSuccess(`Agent generated: ${agent.name}`);
+      printInfo('ID', agent.id);
+      printInfo('Location', dir);
+      printInfo('Tools', agent.tools.length.toString());
+      
+    } catch (error) {
+      spinner.stop(false);
+      printError(`Error: ${error}`);
+    }
+  });
+
+agentBuilder
+  .command('from-bounty')
+  .description('Generate an agent from a bounty description')
+  .argument('<description>', 'Bounty description')
+  .option('-o, --output <dir>', 'Output directory', './generated_agents')
+  .action(async (description: string, options) => {
+    printSection('GENERATE FROM BOUNTY');
+    
+    const spinner = new Spinner('Analyzing bounty requirements...');
+    spinner.start();
+    
+    try {
+      const { generateAgentFromBounty, saveAgent } = await import('./skills/agent_builder/index.js');
+      
+      spinner.update('Extracting capabilities...');
+      await new Promise(r => setTimeout(r, 500));
+      
+      spinner.update('Generating agent code...');
+      const agent = await generateAgentFromBounty(description);
+      
+      spinner.update('Writing files...');
+      const dir = await saveAgent(agent, options.output);
+      
+      spinner.stop(true);
+      
+      console.log();
+      printSuccess(`Agent generated: ${agent.name}`);
+      printInfo('ID', agent.id);
+      printInfo('Location', dir);
+      printInfo('Tools', agent.tools.length.toString());
+      
+    } catch (error) {
+      spinner.stop(false);
+      printError(`Error: ${error}`);
+    }
+  });
+
 // ============ LOGS COMMAND ============
 
 program

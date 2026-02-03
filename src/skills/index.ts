@@ -17,6 +17,7 @@ export * from './github_community/index.js';
 export * from './ai_generator/index.js';
 export * from './scheduler/index.js';
 export * from './drip_sequences/index.js';
+export * from './agent_builder/index.js';
 
 // Skill metadata
 export { emailSkillMetadata } from './email/index.js';
@@ -29,3 +30,4 @@ export { githubCommunitySkillMetadata } from './github_community/index.js';
 export { aiGeneratorSkillMetadata } from './ai_generator/index.js';
 export { schedulerSkillMetadata } from './scheduler/index.js';
 export { dripSequencesSkillMetadata } from './drip_sequences/index.js';
+export { agentBuilderSkillMetadata } from './agent_builder/index.js';
