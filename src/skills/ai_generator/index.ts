@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { config } from '../../config/index.js';
 import { logAction } from '../../db/repository.js';
+import type { Platform } from '../../db/types.js';
 
 let openai: OpenAI | null = null;
 
@@ -90,7 +91,7 @@ Return JSON with:
     const result = JSON.parse(response.choices[0].message.content || '{}');
 
     await logAction(
-      platform,
+      platform as Platform,
       'ai_generate_content',
       true,
       undefined,
@@ -107,7 +108,7 @@ Return JSON with:
     };
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-    await logAction(platform, 'ai_generate_content', false, undefined, undefined, { topic }, undefined, errorMsg);
+    await logAction(platform as Platform, 'ai_generate_content', false, undefined, undefined, { topic }, undefined, errorMsg);
     throw error;
   }
 }

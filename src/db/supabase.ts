@@ -1,12 +1,15 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { config } from '../config/index.js';
-import type { Database } from './types.js';
 
-let supabase: SupabaseClient<Database> | null = null;
+// Use any type for flexibility with dynamic tables
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyDatabase = any;
 
-export function getSupabaseClient(): SupabaseClient<Database> {
+let supabase: SupabaseClient<AnyDatabase> | null = null;
+
+export function getSupabaseClient(): SupabaseClient<AnyDatabase> {
   if (!supabase) {
-    supabase = createClient<Database>(
+    supabase = createClient(
       config.SUPABASE_URL,
       config.SUPABASE_SERVICE_KEY || config.SUPABASE_ANON_KEY,
       {

@@ -1,4 +1,4 @@
-export type Platform = 'email' | 'linkedin' | 'reddit';
+export type Platform = 'email' | 'linkedin' | 'reddit' | 'twitter' | 'github' | 'discord';
 export type ContactStatus = 'pending' | 'sent' | 'engaged' | 'replied' | 'unsubscribed' | 'bounced';
 export type TemplateType = 'post' | 'message' | 'email' | 'comment';
 

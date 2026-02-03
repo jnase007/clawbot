@@ -551,12 +551,15 @@ program
     } else {
       logs.forEach(log => {
         const icon = log.success ? chalk.green('✓') : chalk.red('✗');
-        const platform = {
+        const platformIcons: Record<string, string> = {
           email: '📧',
           linkedin: '💼',
           reddit: '🔴',
           twitter: '𝕏',
-        }[log.platform] || '📌';
+          github: '🐙',
+          discord: '💬',
+        };
+        const platform = platformIcons[log.platform] || '📌';
         
         const time = new Date(log.created_at).toLocaleTimeString();
         

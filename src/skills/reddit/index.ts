@@ -7,6 +7,12 @@ import type { OutreachContact, Template } from '../../db/types.js';
 
 let reddit: Snoowrap | null = null;
 
+// Helper to break snoowrap's circular type reference
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function resolvePromise<T>(promise: any): Promise<T> {
+  return promise as Promise<T>;
+}
+
 /**
  * Initialize Reddit client
  */
@@ -65,21 +71,19 @@ export async function submitPost(
     const client = getRedditClient();
     const sub = client.getSubreddit(subreddit);
 
-    let submission;
+    let submission: { name: string; permalink: string };
     if (isLink) {
-      submission = await sub.submitLink({
-        title,
-        url: content,
-      });
+      submission = await resolvePromise<{ name: string; permalink: string }>(
+        sub.submitLink({ subredditName: subreddit, title, url: content })
+      );
     } else {
-      submission = await sub.submitSelfpost({
-        title,
-        text: content,
-      });
+      submission = await resolvePromise<{ name: string; permalink: string }>(
+        sub.submitSelfpost({ subredditName: subreddit, title, text: content })
+      );
     }
 
-    const id = (submission as unknown as { name: string }).name;
-    const url = `https://reddit.com${(submission as unknown as { permalink: string }).permalink}`;
+    const id = submission.name;
+    const url = `https://reddit.com${submission.permalink}`;
 
     await logAction('reddit', 'submit_post', true, undefined, undefined, {
       subreddit,
@@ -112,9 +116,9 @@ export async function commentOnPost(
     
     // Get the submission and comment
     const submission = client.getSubmission(postId);
-    const reply = await submission.reply(comment);
+    const reply = await resolvePromise<{ name: string }>(submission.reply(comment));
 
-    const id = (reply as unknown as { name: string }).name;
+    const id = reply.name;
 
     await logAction('reddit', 'comment', true, undefined, undefined, {
       postId,
@@ -367,7 +371,7 @@ export async function runRedditMessageOutreach(
 export async function verifyRedditConfig(): Promise<boolean> {
   try {
     const client = getRedditClient();
-    const me = await client.getMe();
+    const me = await resolvePromise<{ name: string }>(client.getMe());
     console.log(`✅ Reddit authenticated as u/${me.name}`);
     return true;
   } catch (error) {

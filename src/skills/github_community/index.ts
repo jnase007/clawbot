@@ -228,11 +228,11 @@ export async function postToDiscord(
     const targetChannel = channelId || discordConfig.channelId;
     
     const channel = await client.channels.fetch(targetChannel);
-    if (!channel || !channel.isTextBased()) {
+    if (!channel || !channel.isTextBased() || !('send' in channel)) {
       return { success: false, error: 'Invalid channel' };
     }
 
-    const sent = await channel.send(message);
+    const sent = await (channel as { send: (msg: string) => Promise<{ id: string }> }).send(message);
 
     await logAction('discord' as any, 'post_message', true, undefined, undefined, {
       channelId: targetChannel,
