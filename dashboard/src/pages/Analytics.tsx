@@ -279,38 +279,39 @@ export default function Analytics() {
       {/* Header */}
       <div className="flex items-center justify-between animate-slide-up">
         <div>
-          <h1 className="text-4xl font-display font-bold tracking-wider">
-            <span className="text-primary text-glow-green">INTEL</span>{' '}
-            <span className="text-foreground">CENTER</span>
+          <h1 className="text-3xl font-display font-bold">
+            Analytics
           </h1>
-          <p className="text-muted-foreground font-mono text-sm mt-2">
-            // CAMPAIGN ANALYTICS & PERFORMANCE METRICS
+          <p className="text-muted-foreground mt-1">
+            Track your campaign performance and metrics
           </p>
         </div>
         <Button variant="outline" onClick={fetchAnalytics} className="gap-2">
           <RefreshCw className="w-4 h-4" />
-          REFRESH
+          Refresh
         </Button>
       </div>
 
       {/* KPI Row */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
-          { label: 'TOTAL OPS', value: totalStats.totalSent, icon: Zap, color: 'text-blue-400' },
-          { label: 'SUCCESS', value: totalStats.totalSuccess, icon: Target, color: 'text-green-400' },
-          { label: 'RATE', value: `${totalStats.avgSuccessRate.toFixed(1)}%`, icon: TrendingUp, color: 'text-primary' },
-          { label: 'LEADS', value: totalStats.leadsCapured, icon: Crosshair, color: 'text-accent' },
+          { label: 'Total Sent', value: totalStats.totalSent, icon: Zap, color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
+          { label: 'Successful', value: totalStats.totalSuccess, icon: Target, color: 'text-green-500', bgColor: 'bg-green-500/10' },
+          { label: 'Success Rate', value: `${totalStats.avgSuccessRate.toFixed(1)}%`, icon: TrendingUp, color: 'text-primary', bgColor: 'bg-primary/10' },
+          { label: 'Leads Captured', value: totalStats.leadsCapured, icon: Crosshair, color: 'text-accent', bgColor: 'bg-accent/10' },
         ].map((stat, i) => (
-          <Card key={stat.label} className={cn("animate-slide-up", `stagger-${i + 1}`)}>
+          <Card key={stat.label} className={cn("card-hover animate-slide-up", `stagger-${i + 1}`)}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-mono text-muted-foreground">{stat.label}</p>
+                  <p className="text-sm text-muted-foreground">{stat.label}</p>
                   <p className={cn("text-3xl font-display font-bold mt-1", stat.color)}>
                     {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
                   </p>
                 </div>
-                <stat.icon className={cn("w-8 h-8 opacity-50", stat.color)} />
+                <div className={cn("p-3 rounded-xl", stat.bgColor)}>
+                  <stat.icon className={cn("w-5 h-5", stat.color)} />
+                </div>
               </div>
             </CardContent>
           </Card>

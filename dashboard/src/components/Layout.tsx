@@ -9,99 +9,69 @@ import {
   ScrollText,
   ExternalLink,
   BarChart3,
-  Zap,
   Settings,
   ChevronLeft,
-  Terminal,
-  Cpu,
-  Activity
+  Activity,
+  Sparkles
 } from 'lucide-react';
 
 const navItems = [
-  { to: '/', icon: LayoutDashboard, label: 'Command Center' },
-  { to: '/contacts', icon: Users, label: 'Targets' },
-  { to: '/templates', icon: FileText, label: 'Payloads' },
-  { to: '/campaigns', icon: Rocket, label: 'Missions' },
-  { to: '/analytics', icon: BarChart3, label: 'Intel' },
-  { to: '/logs', icon: ScrollText, label: 'Logs' },
+  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/contacts', icon: Users, label: 'Contacts' },
+  { to: '/templates', icon: FileText, label: 'Templates' },
+  { to: '/campaigns', icon: Rocket, label: 'Campaigns' },
+  { to: '/analytics', icon: BarChart3, label: 'Analytics' },
+  { to: '/logs', icon: ScrollText, label: 'Activity' },
 ];
-
 
 export default function Layout() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [systemStatus, setSystemStatus] = useState({ cpu: 23, mem: 45, active: true });
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
-      setSystemStatus({
-        cpu: 20 + Math.random() * 15,
-        mem: 40 + Math.random() * 20,
-        active: true,
-      });
-    }, 1000);
+    }, 60000);
     return () => clearInterval(timer);
   }, []);
 
   return (
-    <div className="min-h-screen cyber-grid hex-pattern relative overflow-hidden">
-      {/* Matrix background effect */}
-      <div className="matrix-bg" />
-      
+    <div className="min-h-screen bg-pattern">
       {/* Sidebar */}
       <aside 
         className={cn(
-          "fixed left-0 top-0 h-full bg-card/90 backdrop-blur-xl border-r border-primary/20 z-50 transition-all duration-300",
-          collapsed ? "w-20" : "w-72"
+          "fixed left-0 top-0 h-full bg-card/95 backdrop-blur-xl border-r border-border z-50 transition-all duration-300",
+          collapsed ? "w-20" : "w-64"
         )}
       >
-        {/* Logo Section */}
-        <div className="p-4 border-b border-primary/20">
+        {/* Logo */}
+        <div className="p-5 border-b border-border">
           <div className="flex items-center gap-3">
             <div className="relative">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center glow-green animate-pulse-glow">
-                <Cpu className="w-6 h-6 text-background" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-white" />
               </div>
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-background animate-pulse" />
             </div>
             {!collapsed && (
-              <div className="animate-slide-in-left">
-                <h1 className="font-display font-bold text-xl text-primary text-glow-green">
-                  CLAWBOT
+              <div className="animate-fade-in">
+                <h1 className="font-display font-bold text-lg gradient-text">
+                  ClawBot
                 </h1>
-                <p className="text-[10px] text-muted-foreground font-mono">
-                  v2.0.0 // OPERATIONAL
+                <p className="text-[10px] text-muted-foreground">
+                  Marketing Automation
                 </p>
               </div>
             )}
           </div>
         </div>
 
-        {/* System Status */}
+        {/* Status */}
         {!collapsed && (
-          <div className="p-4 border-b border-primary/10">
-            <div className="space-y-2 text-xs font-mono">
-              <div className="flex items-center justify-between text-muted-foreground">
-                <span>SYSTEM STATUS</span>
-                <span className="text-primary animate-pulse">● ONLINE</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Activity className="w-3 h-3 text-primary" />
-                <div className="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-primary transition-all duration-500"
-                    style={{ width: `${systemStatus.cpu}%` }}
-                  />
-                </div>
-                <span className="text-[10px] text-muted-foreground w-8">
-                  {systemStatus.cpu.toFixed(0)}%
-                </span>
-              </div>
-              <div className="text-[10px] text-muted-foreground">
-                {currentTime.toLocaleTimeString()} UTC
-              </div>
+          <div className="px-5 py-4 border-b border-border">
+            <div className="flex items-center gap-2 text-xs">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse-soft" />
+              <span className="text-muted-foreground">System Online</span>
             </div>
           </div>
         )}
@@ -115,30 +85,24 @@ export default function Layout() {
                   to={item.to}
                   className={({ isActive }) =>
                     cn(
-                      'flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group relative overflow-hidden',
+                      'flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 group',
                       collapsed ? 'justify-center' : '',
                       isActive 
-                        ? 'bg-primary/10 text-primary glow-green' 
+                        ? 'bg-primary/10 text-primary' 
                         : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
                     )
                   }
                 >
                   {({ isActive }) => (
                     <>
-                      {isActive && (
-                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r" />
-                      )}
                       <item.icon className={cn(
-                        "w-5 h-5 transition-transform group-hover:scale-110",
-                        isActive && "animate-pulse-glow"
+                        "w-5 h-5 transition-transform group-hover:scale-105",
+                        isActive && "text-primary"
                       )} />
                       {!collapsed && (
-                        <span className="font-medium text-sm tracking-wide">
+                        <span className="font-medium text-sm">
                           {item.label}
                         </span>
-                      )}
-                      {isActive && !collapsed && (
-                        <Zap className="w-3 h-3 ml-auto text-primary animate-pulse" />
                       )}
                     </>
                   )}
@@ -151,17 +115,17 @@ export default function Layout() {
         {/* Collapse Toggle */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-card border border-primary/30 rounded-full flex items-center justify-center text-primary hover:bg-primary hover:text-background transition-colors"
+          className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-card border border-border rounded-full flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition-colors"
         >
           <ChevronLeft className={cn(
-            "w-4 h-4 transition-transform",
+            "w-3 h-3 transition-transform",
             collapsed && "rotate-180"
           )} />
         </button>
 
         {/* Footer */}
         <div className={cn(
-          "absolute bottom-0 left-0 right-0 p-4 border-t border-primary/10",
+          "absolute bottom-0 left-0 right-0 p-4 border-t border-border",
           collapsed && "p-2"
         )}>
           <a
@@ -169,15 +133,15 @@ export default function Layout() {
             target="_blank"
             rel="noopener noreferrer"
             className={cn(
-              "flex items-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 text-sm text-muted-foreground hover:text-primary transition-colors group",
+              "flex items-center gap-2 px-4 py-2.5 rounded-lg bg-secondary/50 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors group",
               collapsed && "justify-center px-2"
             )}
           >
-            <Terminal className="w-4 h-4 group-hover:animate-pulse" />
+            <Activity className="w-4 h-4" />
             {!collapsed && (
               <>
-                <span className="font-mono text-xs">projecthunter.ai</span>
-                <ExternalLink className="w-3 h-3 ml-auto" />
+                <span className="text-xs">projecthunter.ai</span>
+                <ExternalLink className="w-3 h-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
               </>
             )}
           </a>
@@ -186,27 +150,28 @@ export default function Layout() {
 
       {/* Main Content */}
       <main className={cn(
-        "min-h-screen transition-all duration-300 relative z-10",
-        collapsed ? "ml-20" : "ml-72"
+        "min-h-screen transition-all duration-300",
+        collapsed ? "ml-20" : "ml-64"
       )}>
         {/* Top Bar */}
-        <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-primary/10 px-8 py-4">
+        <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border px-8 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
-                <span className="text-primary">$</span>
-                <span>clawbot</span>
-                <span className="text-primary">/</span>
-                <span className="text-foreground">
-                  {location.pathname === '/' ? 'dashboard' : location.pathname.slice(1)}
-                </span>
-                <span className="cursor" />
-              </div>
+            <div>
+              <h2 className="text-lg font-display font-semibold capitalize">
+                {location.pathname === '/' ? 'Dashboard' : location.pathname.slice(1)}
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                {currentTime.toLocaleDateString('en-US', { 
+                  weekday: 'long', 
+                  month: 'short', 
+                  day: 'numeric' 
+                })}
+              </p>
             </div>
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-xs font-mono">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-muted-foreground">All systems operational</span>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 text-green-500 text-xs">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse-soft" />
+                <span>Connected</span>
               </div>
               <button className="p-2 rounded-lg hover:bg-secondary transition-colors">
                 <Settings className="w-4 h-4 text-muted-foreground" />

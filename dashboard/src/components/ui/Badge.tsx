@@ -1,44 +1,29 @@
 import * as React from 'react';
-import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
-const badgeVariants = cva(
-  'inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-mono font-semibold tracking-wider uppercase transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-  {
-    variants: {
-      variant: {
-        default:
-          'border-primary/30 bg-primary/10 text-primary',
-        secondary:
-          'border-secondary bg-secondary text-secondary-foreground',
-        destructive:
-          'border-red-500/30 bg-red-500/10 text-red-400',
-        outline: 
-          'border-primary/30 text-foreground',
-        success:
-          'border-green-500/30 bg-green-500/10 text-green-400',
-        warning:
-          'border-amber-500/30 bg-amber-500/10 text-amber-400',
-        info:
-          'border-blue-500/30 bg-blue-500/10 text-blue-400',
-        neon:
-          'border-primary bg-primary/20 text-primary glow-green animate-pulse-glow',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-    },
-  }
-);
+export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning' | 'info';
+}
 
-export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {}
-
-function Badge({ className, variant, ...props }: BadgeProps) {
+function Badge({ className, variant = 'default', ...props }: BadgeProps) {
   return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
+    <div
+      className={cn(
+        'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors',
+        {
+          'bg-primary/10 text-primary': variant === 'default',
+          'bg-secondary text-secondary-foreground': variant === 'secondary',
+          'bg-destructive/10 text-destructive': variant === 'destructive',
+          'border border-border text-muted-foreground': variant === 'outline',
+          'bg-green-500/10 text-green-500': variant === 'success',
+          'bg-amber-500/10 text-amber-500': variant === 'warning',
+          'bg-blue-500/10 text-blue-500': variant === 'info',
+        },
+        className
+      )}
+      {...props}
+    />
   );
 }
 
-export { Badge, badgeVariants };
+export { Badge };

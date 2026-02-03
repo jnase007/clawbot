@@ -7,15 +7,17 @@ import {
   Send,
   Activity,
   Target,
-  Crosshair,
+  Users,
   Radio,
-  Cpu,
   ArrowUpRight,
   ArrowDownRight,
-  Rocket
+  Rocket,
+  Mail,
+  MessageSquare,
+  TrendingUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { OutreachLog, Platform } from '@/lib/types';
+import type { OutreachLog } from '@/lib/types';
 
 interface Stats {
   totalContacts: number;
@@ -25,13 +27,13 @@ interface Stats {
   totalSent: number;
 }
 
-// Animated counter component
+// Animated counter
 function AnimatedNumber({ value, suffix = '' }: { value: number; suffix?: string }) {
   const [displayValue, setDisplayValue] = useState(0);
 
   useEffect(() => {
-    const duration = 1500;
-    const steps = 60;
+    const duration = 1000;
+    const steps = 40;
     const increment = value / steps;
     let current = 0;
     const timer = setInterval(() => {
@@ -47,19 +49,6 @@ function AnimatedNumber({ value, suffix = '' }: { value: number; suffix?: string
   }, [value]);
 
   return <span>{displayValue.toLocaleString()}{suffix}</span>;
-}
-
-// Live activity indicator
-function LivePulse() {
-  return (
-    <div className="flex items-center gap-2">
-      <div className="relative">
-        <div className="w-2 h-2 bg-green-500 rounded-full" />
-        <div className="absolute inset-0 w-2 h-2 bg-green-500 rounded-full animate-ping" />
-      </div>
-      <span className="text-xs font-mono text-green-500">LIVE</span>
-    </div>
-  );
 }
 
 export default function Dashboard() {
@@ -148,69 +137,78 @@ export default function Dashboard() {
 
   const kpiCards = [
     {
-      title: 'TOTAL TARGETS',
+      title: 'Total Contacts',
       value: stats.totalContacts,
-      icon: Crosshair,
+      icon: Users,
       color: 'text-primary',
-      glowClass: 'glow-green',
+      bgColor: 'bg-primary/10',
       trend: '+12%',
       trendUp: true,
     },
     {
-      title: 'MISSIONS SENT',
+      title: 'Messages Sent',
       value: stats.totalSent,
       icon: Send,
-      color: 'text-blue-400',
-      glowClass: 'glow-blue',
+      color: 'text-blue-500',
+      bgColor: 'bg-blue-500/10',
       trend: '+8%',
       trendUp: true,
     },
     {
-      title: 'SUCCESS RATE',
+      title: 'Success Rate',
       value: stats.successRate,
       suffix: '%',
       icon: Target,
-      color: 'text-accent',
-      glowClass: 'glow-pink',
+      color: 'text-green-500',
+      bgColor: 'bg-green-500/10',
       trend: '+5%',
       trendUp: true,
     },
     {
-      title: 'ACTIVE OPS',
+      title: 'Active This Week',
       value: stats.recentActivity,
-      icon: Radio,
-      color: 'text-orange-400',
+      icon: Activity,
+      color: 'text-accent',
+      bgColor: 'bg-accent/10',
       trend: '7 days',
       trendUp: true,
     },
   ];
 
   const platformCards = [
-    { platform: 'email' as Platform, icon: '📧', label: 'EMAIL', count: stats.byPlatform.email, color: 'from-blue-500/20 to-cyan-500/20', borderColor: 'border-blue-500/30' },
-    { platform: 'linkedin' as Platform, icon: '💼', label: 'LINKEDIN', count: stats.byPlatform.linkedin, color: 'from-sky-500/20 to-blue-500/20', borderColor: 'border-sky-500/30' },
-    { platform: 'reddit' as Platform, icon: '🔴', label: 'REDDIT', count: stats.byPlatform.reddit, color: 'from-orange-500/20 to-red-500/20', borderColor: 'border-orange-500/30' },
+    { platform: 'email', icon: Mail, label: 'Email', count: stats.byPlatform.email, color: 'text-blue-400', bgColor: 'bg-blue-500/10' },
+    { platform: 'linkedin', icon: MessageSquare, label: 'LinkedIn', count: stats.byPlatform.linkedin, color: 'text-sky-400', bgColor: 'bg-sky-500/10' },
+    { platform: 'reddit', icon: Radio, label: 'Reddit', count: stats.byPlatform.reddit, color: 'text-orange-400', bgColor: 'bg-orange-500/10' },
   ];
+
+  const getPlatformIcon = (platform: string) => {
+    const icons: Record<string, string> = {
+      email: '📧',
+      linkedin: '💼',
+      reddit: '🔴',
+      twitter: '𝕏',
+      github: '🐙',
+      discord: '💬',
+    };
+    return icons[platform] || '📌';
+  };
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="animate-slide-up">
-          <h1 className="text-4xl font-display font-bold tracking-wider">
-            <span className="text-primary text-glow-green">COMMAND</span>{' '}
-            <span className="text-foreground">CENTER</span>
+          <h1 className="text-3xl font-display font-bold">
+            Welcome back
           </h1>
-          <p className="text-muted-foreground font-mono text-sm mt-2">
-            // PROJECTHUNTER.AI OUTREACH OPERATIONS
+          <p className="text-muted-foreground mt-1">
+            Here's what's happening with your outreach campaigns
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <LivePulse />
-          <Button className="gap-2 glow-green font-mono">
-            <Rocket className="w-4 h-4" />
-            LAUNCH MISSION
-          </Button>
-        </div>
+        <Button className="btn-gradient gap-2">
+          <Rocket className="w-4 h-4" />
+          New Campaign
+        </Button>
       </div>
 
       {/* KPI Grid */}
@@ -219,18 +217,17 @@ export default function Dashboard() {
           <Card 
             key={card.title} 
             className={cn(
-              "card-hover border-primary/20 animate-slide-up overflow-hidden relative",
+              "card-hover animate-slide-up",
               `stagger-${i + 1}`
             )}
           >
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-accent opacity-50" />
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-xs font-mono text-muted-foreground tracking-wider">
+                  <p className="text-sm text-muted-foreground">
                     {card.title}
                   </p>
-                  <p className={cn("text-4xl font-display font-bold mt-2", card.color)}>
+                  <p className={cn("text-3xl font-display font-bold mt-2", card.color)}>
                     <AnimatedNumber value={card.value} suffix={card.suffix} />
                   </p>
                   <div className="flex items-center gap-1 mt-2">
@@ -240,18 +237,15 @@ export default function Dashboard() {
                       <ArrowDownRight className="w-3 h-3 text-red-500" />
                     )}
                     <span className={cn(
-                      "text-xs font-mono",
+                      "text-xs",
                       card.trendUp ? "text-green-500" : "text-red-500"
                     )}>
                       {card.trend}
                     </span>
                   </div>
                 </div>
-                <div className={cn(
-                  "p-3 rounded-xl bg-primary/10 border border-primary/20",
-                  card.glowClass
-                )}>
-                  <card.icon className={cn("w-6 h-6", card.color)} />
+                <div className={cn("p-3 rounded-xl", card.bgColor)}>
+                  <card.icon className={cn("w-5 h-5", card.color)} />
                 </div>
               </div>
             </CardContent>
@@ -265,58 +259,30 @@ export default function Dashboard() {
           <Card 
             key={platform.platform} 
             className={cn(
-              "card-hover border overflow-hidden animate-slide-up",
-              platform.borderColor,
+              "card-hover animate-slide-up",
               `stagger-${i + 3}`
             )}
           >
-            <div className={cn(
-              "absolute inset-0 bg-gradient-to-br opacity-50",
-              platform.color
-            )} />
-            <CardContent className="p-6 relative">
+            <CardContent className="p-6">
               <div className="flex items-center gap-4">
-                <div className="text-4xl animate-float">{platform.icon}</div>
+                <div className={cn("p-3 rounded-xl", platform.bgColor)}>
+                  <platform.icon className={cn("w-5 h-5", platform.color)} />
+                </div>
                 <div className="flex-1">
-                  <p className="text-xs font-mono text-muted-foreground tracking-wider">
+                  <p className="text-sm text-muted-foreground">
                     {platform.label}
                   </p>
-                  <p className="text-3xl font-display font-bold text-foreground">
+                  <p className="text-2xl font-display font-bold">
                     <AnimatedNumber value={platform.count} />
                   </p>
-                  <p className="text-xs text-muted-foreground">targets acquired</p>
                 </div>
                 <div className="text-right">
-                  <div className="w-16 h-16 relative">
-                    <svg className="w-full h-full -rotate-90">
-                      <circle
-                        cx="32"
-                        cy="32"
-                        r="28"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                        className="text-secondary"
-                      />
-                      <circle
-                        cx="32"
-                        cy="32"
-                        r="28"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                        strokeDasharray={`${(platform.count / Math.max(stats.totalContacts, 1)) * 176} 176`}
-                        className="text-primary transition-all duration-1000"
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-xs font-mono text-primary">
-                        {stats.totalContacts > 0 
-                          ? Math.round((platform.count / stats.totalContacts) * 100)
-                          : 0}%
-                      </span>
-                    </div>
-                  </div>
+                  <p className="text-lg font-semibold text-muted-foreground">
+                    {stats.totalContacts > 0 
+                      ? Math.round((platform.count / stats.totalContacts) * 100)
+                      : 0}%
+                  </p>
+                  <p className="text-xs text-muted-foreground">of total</p>
                 </div>
               </div>
             </CardContent>
@@ -325,27 +291,29 @@ export default function Dashboard() {
       </div>
 
       {/* Activity Feed */}
-      <Card className="gradient-border animate-slide-up stagger-6">
+      <Card className="animate-slide-up stagger-6">
         <CardHeader className="flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2 font-display tracking-wider">
-            <Activity className="w-5 h-5 text-primary" />
-            LIVE ACTIVITY FEED
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-primary" />
+            Recent Activity
           </CardTitle>
-          <LivePulse />
+          <div className="flex items-center gap-2 text-xs">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse-soft" />
+            <span className="text-muted-foreground">Live</span>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="relative">
-                <div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                <Cpu className="w-6 h-6 absolute inset-0 m-auto text-primary animate-pulse" />
-              </div>
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-16 rounded-lg shimmer" />
+              ))}
             </div>
           ) : recentLogs.length === 0 ? (
             <div className="text-center py-12">
-              <Radio className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50 animate-pulse" />
-              <p className="text-muted-foreground font-mono">NO ACTIVE TRANSMISSIONS</p>
-              <p className="text-xs text-muted-foreground mt-1">Launch a mission to see activity here</p>
+              <Activity className="w-12 h-12 mx-auto mb-4 text-muted-foreground/30" />
+              <p className="text-muted-foreground">No activity yet</p>
+              <p className="text-xs text-muted-foreground mt-1">Launch a campaign to see activity here</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -353,31 +321,26 @@ export default function Dashboard() {
                 <div
                   key={log.id}
                   className={cn(
-                    "flex items-center gap-4 p-4 rounded-lg bg-secondary/30 border border-primary/10 hover:border-primary/30 transition-all",
-                    i === 0 && "animate-slide-in-left border-primary/30 glow-green"
+                    "flex items-center gap-4 p-4 rounded-lg bg-secondary/30 border border-border hover:border-primary/20 transition-all",
+                    i === 0 && "animate-slide-in-left"
                   )}
                 >
                   <div className={cn(
                     "w-10 h-10 rounded-lg flex items-center justify-center text-lg",
-                    log.success ? "bg-green-500/20" : "bg-red-500/20"
+                    log.success ? "bg-green-500/10" : "bg-red-500/10"
                   )}>
-                    {log.platform === 'email' && '📧'}
-                    {log.platform === 'linkedin' && '💼'}
-                    {log.platform === 'reddit' && '🔴'}
+                    {getPlatformIcon(log.platform)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-mono text-sm text-foreground truncate">
-                      {log.action.replace(/_/g, ' ').toUpperCase()}
+                    <p className="text-sm font-medium truncate">
+                      {log.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                     </p>
-                    <p className="text-xs text-muted-foreground font-mono">
+                    <p className="text-xs text-muted-foreground">
                       {new Date(log.created_at).toLocaleString()}
                     </p>
                   </div>
-                  <Badge 
-                    variant={log.success ? 'success' : 'destructive'}
-                    className="font-mono text-xs"
-                  >
-                    {log.success ? '✓ SUCCESS' : '✗ FAILED'}
+                  <Badge variant={log.success ? 'success' : 'destructive'}>
+                    {log.success ? 'Success' : 'Failed'}
                   </Badge>
                 </div>
               ))}

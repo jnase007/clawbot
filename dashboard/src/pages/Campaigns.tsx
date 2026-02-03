@@ -104,42 +104,43 @@ export default function Campaigns() {
       {/* Header */}
       <div className="flex items-center justify-between animate-slide-up">
         <div>
-          <h1 className="text-4xl font-display font-bold tracking-wider">
-            <span className="text-primary text-glow-green">MISSION</span>{' '}
-            <span className="text-foreground">CONTROL</span>
+          <h1 className="text-3xl font-display font-bold">
+            Campaigns
           </h1>
-          <p className="text-muted-foreground font-mono text-sm mt-2">
-            // OUTREACH CAMPAIGN OPERATIONS
+          <p className="text-muted-foreground mt-1">
+            Manage and launch your outreach campaigns
           </p>
         </div>
-        <Button onClick={() => setShowModal(true)} className="gap-2 glow-green">
+        <Button onClick={() => setShowModal(true)} className="btn-gradient gap-2">
           <Rocket className="w-4 h-4" />
-          NEW MISSION
+          New Campaign
         </Button>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: 'ACTIVE', value: stats.running, icon: Radio, color: 'text-green-400', pulse: true },
-          { label: 'COMPLETED', value: stats.completed, icon: CheckCircle, color: 'text-blue-400' },
-          { label: 'SENT', value: stats.totalSent, icon: Target, color: 'text-primary' },
-          { label: 'SUCCESS', value: `${stats.successRate.toFixed(1)}%`, icon: Crosshair, color: 'text-accent' },
+          { label: 'Active', value: stats.running, icon: Radio, color: 'text-green-500', bgColor: 'bg-green-500/10', pulse: true },
+          { label: 'Completed', value: stats.completed, icon: CheckCircle, color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
+          { label: 'Total Sent', value: stats.totalSent, icon: Target, color: 'text-primary', bgColor: 'bg-primary/10' },
+          { label: 'Success Rate', value: `${stats.successRate.toFixed(1)}%`, icon: Crosshair, color: 'text-accent', bgColor: 'bg-accent/10' },
         ].map((stat, i) => (
-          <Card key={stat.label} className={cn("animate-slide-up", `stagger-${i + 1}`)}>
+          <Card key={stat.label} className={cn("card-hover animate-slide-up", `stagger-${i + 1}`)}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-mono text-muted-foreground">{stat.label}</p>
+                  <p className="text-sm text-muted-foreground">{stat.label}</p>
                   <p className={cn("text-3xl font-display font-bold mt-1", stat.color)}>
                     {stat.value}
                   </p>
                 </div>
-                <stat.icon className={cn(
-                  "w-8 h-8 opacity-50",
-                  stat.color,
-                  stat.pulse && "animate-pulse"
-                )} />
+                <div className={cn("p-3 rounded-xl", stat.bgColor)}>
+                  <stat.icon className={cn(
+                    "w-5 h-5",
+                    stat.color,
+                    stat.pulse && "animate-pulse-soft"
+                  )} />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -176,7 +177,7 @@ export default function Campaigns() {
               className={cn(
                 "card-hover animate-slide-up overflow-hidden",
                 `stagger-${Math.min(i + 1, 5)}`,
-                campaign.status === 'running' && "border-primary/50 glow-green"
+                campaign.status === 'running' && "border-primary/30"
               )}
             >
               <CardContent className="p-6">
@@ -199,7 +200,7 @@ export default function Campaigns() {
                     <div className="flex items-center gap-3">
                       <h3 className="font-display text-lg tracking-wide">{campaign.name}</h3>
                       <Badge variant={
-                        campaign.status === 'running' ? 'neon' :
+                        campaign.status === 'running' ? 'success' :
                         campaign.status === 'completed' ? 'info' :
                         campaign.status === 'scheduled' ? 'warning' :
                         'secondary'
@@ -309,7 +310,7 @@ export default function Campaigns() {
                         className={cn(
                           "p-4 rounded-lg border transition-all text-center",
                           newCampaign.platform === p 
-                            ? "border-primary bg-primary/10 glow-green" 
+                            ? "border-primary bg-primary/10" 
                             : "border-border hover:border-primary/50"
                         )}
                       >
@@ -348,7 +349,7 @@ export default function Campaigns() {
                   >
                     ABORT
                   </Button>
-                  <Button type="submit" className="flex-1 glow-green">
+                  <Button type="submit" className="flex-1 btn-gradient">
                     <Rocket className="w-4 h-4 mr-2" />
                     LAUNCH
                   </Button>
