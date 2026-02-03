@@ -1,6 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
+import ClientDashboard from './pages/ClientDashboard';
 import Contacts from './pages/Contacts';
 import Templates from './pages/Templates';
 import Logs from './pages/Logs';
@@ -12,7 +12,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
-        <Route index element={<Dashboard />} />
+        <Route index element={<ClientDashboard />} />
         <Route path="contacts" element={<Contacts />} />
         <Route path="templates" element={<Templates />} />
         <Route path="campaigns" element={<Campaigns />} />
