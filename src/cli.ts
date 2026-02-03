@@ -436,7 +436,7 @@ templates
 
 // ============ AGENT BUILDER COMMANDS ============
 
-const agentBuilder = program.command('agent').description('🤖 Build AI agents');
+const agentBuilder = program.command('build').description('🤖 Build AI agents');
 
 agentBuilder
   .command('templates')
