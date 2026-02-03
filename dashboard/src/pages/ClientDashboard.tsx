@@ -22,8 +22,7 @@ import {
   Mail,
   Radio,
   ArrowRight,
-  Zap,
-  Settings
+  Zap
 } from 'lucide-react';
 import { cn, getPlatformIcon, formatDate } from '@/lib/utils';
 import type { Template, Campaign } from '@/lib/types';
@@ -240,10 +239,12 @@ export default function ClientDashboard() {
               Generate Strategy
             </Button>
           </Link>
-          <Button className="btn-gradient gap-2">
-            <Play className="w-4 h-4" />
-            Start Automation
-          </Button>
+          <Link to="/campaigns">
+            <Button className="btn-gradient gap-2">
+              <Rocket className="w-4 h-4" />
+              New Campaign
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -541,7 +542,7 @@ export default function ClientDashboard() {
       {/* Quick Actions Footer */}
       <Card className="animate-slide-up stagger-6 bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
         <CardContent className="p-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
               <h3 className="font-display font-bold text-lg">Ready to launch?</h3>
               <p className="text-sm text-muted-foreground mt-1">
@@ -549,14 +550,18 @@ export default function ClientDashboard() {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="outline" className="gap-2">
-                <Settings className="w-4 h-4" />
-                Configure
-              </Button>
-              <Button className="btn-gradient gap-2">
-                <Rocket className="w-4 h-4" />
-                Launch Automation
-              </Button>
+              <Link to="/strategy">
+                <Button variant="outline" className="gap-2">
+                  <Brain className="w-4 h-4" />
+                  AI Strategy
+                </Button>
+              </Link>
+              <Link to="/campaigns">
+                <Button className="btn-gradient gap-2">
+                  <Rocket className="w-4 h-4" />
+                  Launch Campaign
+                </Button>
+              </Link>
             </div>
           </div>
         </CardContent>
