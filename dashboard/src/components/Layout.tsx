@@ -26,14 +26,6 @@ const navItems = [
   { to: '/logs', icon: ScrollText, label: 'Logs' },
 ];
 
-// ASCII Art Logo
-const LOGO_ASCII = `
- ██████╗██╗      █████╗ ██╗    ██╗
-██╔════╝██║     ██╔══██╗██║    ██║
-██║     ██║     ███████║██║ █╗ ██║
-██║     ██║     ██╔══██║██║███╗██║
-╚██████╗███████╗██║  ██║╚███╔███╔╝
- ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝ `;
 
 export default function Layout() {
   const location = useLocation();
@@ -117,7 +109,7 @@ export default function Layout() {
         {/* Navigation */}
         <nav className="p-3 flex-1">
           <ul className="space-y-1">
-            {navItems.map((item, i) => (
+            {navItems.map((item) => (
               <li key={item.to}>
                 <NavLink
                   to={item.to}

@@ -2,24 +2,21 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import { Button } from '@/components/ui/Button';
 import { 
   BarChart3, 
   TrendingUp, 
   Target,
   Zap,
-  ArrowUpRight,
   ArrowDownRight,
   RefreshCw,
   Activity,
-  Cpu,
   Radio,
   Crosshair,
   Brain
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Platform } from '@/lib/types';
+import type { OutreachLog } from '@/lib/types';
 
 interface ChannelStats {
   platform: string;
@@ -193,10 +190,12 @@ export default function Analytics() {
 
       if (!logs) return;
 
+      const typedLogs = logs as OutreachLog[];
+
       // Channel stats
       const channelMap = new Map<string, { total: number; success: number; failed: number }>();
       
-      for (const log of logs) {
+      for (const log of typedLogs) {
         const current = channelMap.get(log.platform) || { total: 0, success: 0, failed: 0 };
         current.total++;
         if (log.success) current.success++;
@@ -222,7 +221,7 @@ export default function Analytics() {
         dailyMap.set(dateStr, { sent: 0, success: 0 });
       }
 
-      for (const log of logs) {
+      for (const log of typedLogs) {
         const dateStr = log.created_at.split('T')[0];
         if (dailyMap.has(dateStr)) {
           const current = dailyMap.get(dateStr)!;
@@ -238,9 +237,9 @@ export default function Analytics() {
       setDailyMetrics(daily);
 
       // Totals
-      const totalSent = logs.length;
-      const totalSuccess = logs.filter(l => l.success).length;
-      const leadsLogs = logs.filter(l => l.action === 'capture_lead');
+      const totalSent = typedLogs.length;
+      const totalSuccess = typedLogs.filter(l => l.success).length;
+      const leadsLogs = typedLogs.filter(l => l.action === 'capture_lead');
       
       setTotalStats({
         totalSent,

@@ -4,19 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { 
-  TrendingUp, 
-  Users, 
-  Mail, 
   Send,
   Activity,
-  Zap,
   Target,
   Crosshair,
   Radio,
   Cpu,
   ArrowUpRight,
   ArrowDownRight,
-  Play,
   Rocket
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -24,7 +19,7 @@ import type { OutreachLog, Platform } from '@/lib/types';
 
 interface Stats {
   totalContacts: number;
-  byPlatform: Record<Platform, number>;
+  byPlatform: Record<string, number>;
   recentActivity: number;
   successRate: number;
   totalSent: number;
@@ -70,7 +65,7 @@ function LivePulse() {
 export default function Dashboard() {
   const [stats, setStats] = useState<Stats>({
     totalContacts: 0,
-    byPlatform: { email: 0, linkedin: 0, reddit: 0 },
+    byPlatform: { email: 0, linkedin: 0, reddit: 0, twitter: 0, github: 0, discord: 0 },
     recentActivity: 0,
     successRate: 0,
     totalSent: 0,
@@ -109,11 +104,19 @@ export default function Dashboard() {
       const now = new Date();
       const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       
-      const byPlatform: Record<Platform, number> = { email: 0, linkedin: 0, reddit: 0 };
+      const byPlatform: Record<string, number> = { email: 0, linkedin: 0, reddit: 0, twitter: 0, github: 0, discord: 0 };
       let recentActivity = 0;
 
-      contacts.forEach((c) => {
-        byPlatform[c.platform as Platform]++;
+      interface ContactRow {
+        platform: string;
+        status: string;
+        last_contacted: string | null;
+      }
+
+      (contacts as ContactRow[]).forEach((c) => {
+        if (byPlatform[c.platform] !== undefined) {
+          byPlatform[c.platform]++;
+        }
         if (c.last_contacted && new Date(c.last_contacted) > weekAgo) {
           recentActivity++;
         }

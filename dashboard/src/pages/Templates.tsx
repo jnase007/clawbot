@@ -4,16 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import { 
   FileText, 
   Plus, 
   Copy,
-  Edit,
   Trash2,
   Eye
 } from 'lucide-react';
-import { cn, getPlatformIcon } from '@/lib/utils';
+import { getPlatformIcon } from '@/lib/utils';
 import type { Template, Platform, TemplateType } from '@/lib/types';
 
 export default function Templates() {
@@ -79,7 +78,7 @@ export default function Templates() {
         content: newTemplate.content,
         variables,
         is_active: true,
-      });
+      } as unknown as never);
 
       if (error) throw error;
 

@@ -4,12 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import { 
   Search, 
-  Plus, 
   Mail, 
-  Filter,
   MoreHorizontal,
   UserPlus
 } from 'lucide-react';
@@ -69,7 +67,7 @@ export default function Contacts() {
         tags: newContact.tags ? newContact.tags.split(',').map((t) => t.trim()) : [],
         notes: {},
         last_contacted: null,
-      });
+      } as unknown as never);
 
       if (error) throw error;
 

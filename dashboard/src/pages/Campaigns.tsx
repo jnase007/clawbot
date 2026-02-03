@@ -8,36 +8,15 @@ import {
   Rocket, 
   Play, 
   Pause, 
-  Clock,
   CheckCircle,
-  XCircle,
   Zap,
-  Plus,
   Target,
   Radio,
   Crosshair,
   ArrowRight,
-  Calendar,
-  Timer
 } from 'lucide-react';
 import { cn, getPlatformIcon, formatDate } from '@/lib/utils';
-import type { Template, Platform } from '@/lib/types';
-
-interface Campaign {
-  id: string;
-  name: string;
-  platform: Platform;
-  template_id: string;
-  status: 'draft' | 'scheduled' | 'running' | 'paused' | 'completed';
-  scheduled_at: string | null;
-  started_at: string | null;
-  completed_at: string | null;
-  total_contacts: number;
-  sent_count: number;
-  success_count: number;
-  error_count: number;
-  created_at: string;
-}
+import type { Template, Platform, Campaign } from '@/lib/types';
 
 // Animated progress bar
 function ProgressBar({ value, max, className }: { value: number; max: number; className?: string }) {
@@ -102,7 +81,7 @@ export default function Campaigns() {
         sent_count: 0,
         success_count: 0,
         error_count: 0,
-      });
+      } as unknown as never);
 
       setNewCampaign({ name: '', platform: 'email', template_id: '' });
       setShowModal(false);

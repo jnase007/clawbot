@@ -1,6 +1,7 @@
-export type Platform = 'email' | 'linkedin' | 'reddit';
+export type Platform = 'email' | 'linkedin' | 'reddit' | 'twitter' | 'github' | 'discord';
 export type ContactStatus = 'pending' | 'sent' | 'engaged' | 'replied' | 'unsubscribed' | 'bounced';
 export type TemplateType = 'post' | 'message' | 'email' | 'comment';
+export type CampaignStatus = 'draft' | 'scheduled' | 'running' | 'paused' | 'completed' | 'failed';
 
 export interface OutreachContact {
   id: string;
@@ -42,23 +43,43 @@ export interface OutreachLog {
   created_at: string;
 }
 
+export interface Campaign {
+  id: string;
+  name: string;
+  platform: Platform;
+  template_id: string | null;
+  status: CampaignStatus;
+  total_contacts: number;
+  sent_count: number;
+  success_count: number;
+  error_count: number;
+  settings: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
       outreach_contacts: {
         Row: OutreachContact;
-        Insert: Omit<OutreachContact, 'id' | 'created_at' | 'updated_at'>;
+        Insert: Partial<Omit<OutreachContact, 'id' | 'created_at' | 'updated_at'>>;
         Update: Partial<Omit<OutreachContact, 'id' | 'created_at'>>;
       };
       templates: {
         Row: Template;
-        Insert: Omit<Template, 'id' | 'created_at' | 'updated_at'>;
+        Insert: Partial<Omit<Template, 'id' | 'created_at' | 'updated_at'>>;
         Update: Partial<Omit<Template, 'id' | 'created_at'>>;
       };
       outreach_logs: {
         Row: OutreachLog;
-        Insert: Omit<OutreachLog, 'id' | 'created_at'>;
+        Insert: Partial<Omit<OutreachLog, 'id' | 'created_at'>>;
         Update: Partial<Omit<OutreachLog, 'id' | 'created_at'>>;
+      };
+      campaigns: {
+        Row: Campaign;
+        Insert: Partial<Omit<Campaign, 'id' | 'created_at' | 'updated_at'>>;
+        Update: Partial<Omit<Campaign, 'id' | 'created_at'>>;
       };
     };
   };
