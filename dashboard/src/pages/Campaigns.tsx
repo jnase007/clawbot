@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
+import { useClient } from '@/components/ClientProvider';
 import { 
   Rocket, 
   Play, 
@@ -14,6 +15,7 @@ import {
   Radio,
   Crosshair,
   ArrowRight,
+  Building2,
 } from 'lucide-react';
 import { cn, getPlatformIcon, formatDate } from '@/lib/utils';
 import type { Template, Platform, Campaign } from '@/lib/types';
@@ -33,6 +35,7 @@ function ProgressBar({ value, max, className }: { value: number; max: number; cl
 }
 
 export default function Campaigns() {
+  const { currentClientId } = useClient();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,15 +47,22 @@ export default function Campaigns() {
   });
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (currentClientId) {
+      fetchData();
+    } else {
+      setCampaigns([]);
+      setTemplates([]);
+      setLoading(false);
+    }
+  }, [currentClientId]);
 
   async function fetchData() {
+    if (!currentClientId) return;
     setLoading(true);
     try {
       const [c, t] = await Promise.all([
-        supabase.from('campaigns').select('*').order('created_at', { ascending: false }),
-        supabase.from('templates').select('*').eq('is_active', true),
+        supabase.from('campaigns').select('*').eq('client_id', currentClientId).order('created_at', { ascending: false }),
+        supabase.from('templates').select('*').eq('client_id', currentClientId).eq('is_active', true),
       ]);
       setCampaigns(c.data || []);
       setTemplates(t.data || []);
@@ -65,14 +75,17 @@ export default function Campaigns() {
 
   async function createCampaign(e: React.FormEvent) {
     e.preventDefault();
+    if (!currentClientId) return;
     try {
       const { count } = await supabase
         .from('outreach_contacts')
         .select('*', { count: 'exact', head: true })
+        .eq('client_id', currentClientId)
         .eq('platform', newCampaign.platform)
         .eq('status', 'pending');
 
       await supabase.from('campaigns').insert({
+        client_id: currentClientId,
         name: newCampaign.name,
         platform: newCampaign.platform,
         template_id: newCampaign.template_id,
@@ -89,6 +102,21 @@ export default function Campaigns() {
     } catch (error) {
       console.error(error);
     }
+  }
+
+  // Show message if no client selected
+  if (!currentClientId) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+          <Building2 className="w-10 h-10 text-primary" />
+        </div>
+        <h2 className="text-2xl font-display font-bold mb-2">Select a Client</h2>
+        <p className="text-muted-foreground max-w-md">
+          Choose a client from the dropdown above to manage their campaigns.
+        </p>
+      </div>
+    );
   }
 
   const stats = {

@@ -5,17 +5,20 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/Tabs';
+import { useClient } from '@/components/ClientProvider';
 import { 
   FileText, 
   Plus, 
   Copy,
   Trash2,
-  Eye
+  Eye,
+  Building2
 } from 'lucide-react';
 import { getPlatformIcon } from '@/lib/utils';
 import type { Template, Platform, TemplateType } from '@/lib/types';
 
 export default function Templates() {
+  const { currentClientId } = useClient();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [platform, setPlatform] = useState<Platform | 'all'>('all');
@@ -32,15 +35,22 @@ export default function Templates() {
   });
 
   useEffect(() => {
-    fetchTemplates();
-  }, [platform]);
+    if (currentClientId) {
+      fetchTemplates();
+    } else {
+      setTemplates([]);
+      setLoading(false);
+    }
+  }, [platform, currentClientId]);
 
   async function fetchTemplates() {
+    if (!currentClientId) return;
     setLoading(true);
     try {
       let query = supabase
         .from('templates')
         .select('*')
+        .eq('client_id', currentClientId)
         .order('created_at', { ascending: false });
 
       if (platform !== 'all') {
@@ -59,6 +69,7 @@ export default function Templates() {
 
   async function createTemplate(e: React.FormEvent) {
     e.preventDefault();
+    if (!currentClientId) return;
     try {
       // Extract variables from content
       const variableRegex = /\{\{(\w+)\}\}/g;
@@ -71,6 +82,7 @@ export default function Templates() {
       }
 
       const { error } = await supabase.from('templates').insert({
+        client_id: currentClientId,
         platform: newTemplate.platform,
         type: newTemplate.type,
         name: newTemplate.name,
@@ -88,6 +100,21 @@ export default function Templates() {
     } catch (error) {
       console.error('Error creating template:', error);
     }
+  }
+
+  // Show message if no client selected
+  if (!currentClientId) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+          <Building2 className="w-10 h-10 text-primary" />
+        </div>
+        <h2 className="text-2xl font-display font-bold mb-2">Select a Client</h2>
+        <p className="text-muted-foreground max-w-md">
+          Choose a client from the dropdown above to manage their templates.
+        </p>
+      </div>
+    );
   }
 
   async function deleteTemplate(id: string) {

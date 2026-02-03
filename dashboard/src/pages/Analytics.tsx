@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { useClient } from '@/components/ClientProvider';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -13,7 +14,8 @@ import {
   Activity,
   Radio,
   Crosshair,
-  Brain
+  Brain,
+  Building2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { OutreachLog } from '@/lib/types';
@@ -166,6 +168,7 @@ function FunnelChart({ stages }: { stages: { label: string; value: number; color
 }
 
 export default function Analytics() {
+  const { currentClientId } = useClient();
   const [loading, setLoading] = useState(true);
   const [channelStats, setChannelStats] = useState<ChannelStats[]>([]);
   const [dailyMetrics, setDailyMetrics] = useState<DailyMetric[]>([]);
@@ -177,15 +180,21 @@ export default function Analytics() {
   });
 
   useEffect(() => {
-    fetchAnalytics();
-  }, []);
+    if (currentClientId) {
+      fetchAnalytics();
+    } else {
+      setLoading(false);
+    }
+  }, [currentClientId]);
 
   async function fetchAnalytics() {
+    if (!currentClientId) return;
     setLoading(true);
     try {
       const { data: logs } = await supabase
         .from('outreach_logs')
         .select('*')
+        .eq('client_id', currentClientId)
         .order('created_at', { ascending: false });
 
       if (!logs) return;
@@ -262,6 +271,21 @@ export default function Analytics() {
     { label: 'ENGAGED', value: Math.floor(totalStats.totalSuccess * 0.4), color: 'bg-gradient-to-r from-amber-500 to-orange-500' },
     { label: 'CONVERTED', value: Math.floor(totalStats.totalSuccess * 0.1), color: 'bg-gradient-to-r from-pink-500 to-rose-500' },
   ];
+
+  // Show message if no client selected
+  if (!currentClientId) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+          <Building2 className="w-10 h-10 text-primary" />
+        </div>
+        <h2 className="text-2xl font-display font-bold mb-2">Select a Client</h2>
+        <p className="text-muted-foreground max-w-md">
+          Choose a client from the dropdown above to view their analytics.
+        </p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

@@ -4,23 +4,31 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import { Button } from '@/components/ui/Button';
+import { useClient } from '@/components/ClientProvider';
 import { 
   ScrollText, 
   RefreshCw,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  Building2
 } from 'lucide-react';
 import { getPlatformIcon, formatDate } from '@/lib/utils';
 import type { OutreachLog, Platform } from '@/lib/types';
 
 export default function Logs() {
+  const { currentClientId } = useClient();
   const [logs, setLogs] = useState<OutreachLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [platform, setPlatform] = useState<Platform | 'all'>('all');
 
   useEffect(() => {
-    fetchLogs();
+    if (currentClientId) {
+      fetchLogs();
+    } else {
+      setLogs([]);
+      setLoading(false);
+    }
 
     // Subscribe to realtime updates
     const subscription = supabase
@@ -28,7 +36,8 @@ export default function Logs() {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'outreach_logs' },
         (payload) => {
           const newLog = payload.new as OutreachLog;
-          if (platform === 'all' || newLog.platform === platform) {
+          // Only add if it matches current client and platform filter
+          if (newLog.client_id === currentClientId && (platform === 'all' || newLog.platform === platform)) {
             setLogs((prev) => [newLog, ...prev.slice(0, 99)]);
           }
         }
@@ -38,14 +47,16 @@ export default function Logs() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [platform]);
+  }, [platform, currentClientId]);
 
   async function fetchLogs() {
+    if (!currentClientId) return;
     setLoading(true);
     try {
       let query = supabase
         .from('outreach_logs')
         .select('*')
+        .eq('client_id', currentClientId)
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -61,6 +72,21 @@ export default function Logs() {
     } finally {
       setLoading(false);
     }
+  }
+
+  // Show message if no client selected
+  if (!currentClientId) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+          <Building2 className="w-10 h-10 text-primary" />
+        </div>
+        <h2 className="text-2xl font-display font-bold mb-2">Select a Client</h2>
+        <p className="text-muted-foreground max-w-md">
+          Choose a client from the dropdown above to view their activity logs.
+        </p>
+      </div>
+    );
   }
 
   const stats = {

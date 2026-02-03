@@ -5,16 +5,19 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/Tabs';
+import { useClient } from '@/components/ClientProvider';
 import { 
   Search, 
   Mail, 
   MoreHorizontal,
-  UserPlus
+  UserPlus,
+  Building2
 } from 'lucide-react';
 import { cn, getPlatformIcon, getStatusColor, formatDate } from '@/lib/utils';
 import type { OutreachContact, Platform } from '@/lib/types';
 
 export default function Contacts() {
+  const { currentClientId } = useClient();
   const [contacts, setContacts] = useState<OutreachContact[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -30,15 +33,22 @@ export default function Contacts() {
   });
 
   useEffect(() => {
-    fetchContacts();
-  }, [platform]);
+    if (currentClientId) {
+      fetchContacts();
+    } else {
+      setContacts([]);
+      setLoading(false);
+    }
+  }, [platform, currentClientId]);
 
   async function fetchContacts() {
+    if (!currentClientId) return;
     setLoading(true);
     try {
       let query = supabase
         .from('outreach_contacts')
         .select('*')
+        .eq('client_id', currentClientId)
         .order('created_at', { ascending: false });
 
       if (platform !== 'all') {
@@ -57,8 +67,10 @@ export default function Contacts() {
 
   async function addContact(e: React.FormEvent) {
     e.preventDefault();
+    if (!currentClientId) return;
     try {
       const { error } = await supabase.from('outreach_contacts').insert({
+        client_id: currentClientId,
         platform: newContact.platform,
         handle: newContact.handle,
         name: newContact.name || null,
@@ -77,6 +89,21 @@ export default function Contacts() {
     } catch (error) {
       console.error('Error adding contact:', error);
     }
+  }
+
+  // Show message if no client selected
+  if (!currentClientId) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+          <Building2 className="w-10 h-10 text-primary" />
+        </div>
+        <h2 className="text-2xl font-display font-bold mb-2">Select a Client</h2>
+        <p className="text-muted-foreground max-w-md">
+          Choose a client from the dropdown above to manage their contacts.
+        </p>
+      </div>
+    );
   }
 
   const filteredContacts = contacts.filter((c) => {
