@@ -3,8 +3,30 @@ export type ContactStatus = 'pending' | 'sent' | 'engaged' | 'replied' | 'unsubs
 export type TemplateType = 'post' | 'message' | 'email' | 'comment';
 export type CampaignStatus = 'draft' | 'scheduled' | 'running' | 'paused' | 'completed' | 'failed';
 
+// Client (Agency Multi-Tenant)
+export interface Client {
+  id: string;
+  name: string;
+  slug: string | null;
+  description: string | null;
+  website: string | null;
+  industry: string | null;
+  target_audience: string | null;
+  goals: string | null;
+  preferred_channels: Platform[];
+  tone: 'professional' | 'casual' | 'bold' | 'friendly';
+  compliance_notes: string | null;
+  logo_url: string | null;
+  primary_color: string;
+  status: 'active' | 'paused' | 'churned';
+  monthly_budget: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface OutreachContact {
   id: string;
+  client_id: string | null;
   platform: Platform;
   handle: string;
   name: string | null;
@@ -19,6 +41,7 @@ export interface OutreachContact {
 
 export interface Template {
   id: string;
+  client_id: string | null;
   platform: Platform;
   type: TemplateType;
   name: string;
@@ -32,6 +55,7 @@ export interface Template {
 
 export interface OutreachLog {
   id: string;
+  client_id: string | null;
   contact_id: string | null;
   platform: Platform;
   action: string;
@@ -45,6 +69,7 @@ export interface OutreachLog {
 
 export interface Campaign {
   id: string;
+  client_id: string | null;
   name: string;
   platform: Platform;
   template_id: string | null;
@@ -58,9 +83,39 @@ export interface Campaign {
   updated_at: string;
 }
 
+export interface ClientStrategy {
+  id: string;
+  client_id: string;
+  name: string;
+  status: 'draft' | 'active' | 'completed' | 'archived';
+  duration_days: number;
+  executive_summary: string | null;
+  target_persona: Record<string, unknown> | null;
+  channel_strategy: Record<string, unknown> | null;
+  content_calendar: Record<string, unknown> | null;
+  sample_templates: Record<string, unknown> | null;
+  kpi_targets: Record<string, unknown> | null;
+  compliance_guardrails: string[] | null;
+  skills_config: Record<string, unknown> | null;
+  schedule_config: Record<string, unknown> | null;
+  total_outreach: number;
+  total_responses: number;
+  total_meetings: number;
+  total_conversions: number;
+  started_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
+      clients: {
+        Row: Client;
+        Insert: Partial<Omit<Client, 'id' | 'created_at' | 'updated_at'>>;
+        Update: Partial<Omit<Client, 'id' | 'created_at'>>;
+      };
       outreach_contacts: {
         Row: OutreachContact;
         Insert: Partial<Omit<OutreachContact, 'id' | 'created_at' | 'updated_at'>>;
@@ -80,6 +135,11 @@ export interface Database {
         Row: Campaign;
         Insert: Partial<Omit<Campaign, 'id' | 'created_at' | 'updated_at'>>;
         Update: Partial<Omit<Campaign, 'id' | 'created_at'>>;
+      };
+      client_strategies: {
+        Row: ClientStrategy;
+        Insert: Partial<Omit<ClientStrategy, 'id' | 'created_at' | 'updated_at'>>;
+        Update: Partial<Omit<ClientStrategy, 'id' | 'created_at'>>;
       };
     };
   };

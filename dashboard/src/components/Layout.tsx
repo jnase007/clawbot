@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { Outlet, NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { 
@@ -11,10 +11,12 @@ import {
   BarChart3,
   Settings,
   ChevronLeft,
-  Activity
+  Sparkles
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { ThemeToggle } from './ThemeToggle';
+import { ClientSelector } from './ClientSelector';
+import { useClient } from './ClientProvider';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -26,9 +28,9 @@ const navItems = [
 ];
 
 export default function Layout() {
-  const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const { currentClient } = useClient();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -51,16 +53,29 @@ export default function Layout() {
           {collapsed ? (
             <Logo size="sm" showText={false} />
           ) : (
-            <Logo size="md" showText={true} />
+            <div>
+              <Logo size="md" showText={true} />
+              <p className="text-[10px] text-muted-foreground mt-2 px-1">
+                Agency AI Outreach Engine
+              </p>
+            </div>
           )}
         </div>
 
-        {/* Status */}
-        {!collapsed && (
-          <div className="px-5 py-4 border-b border-border">
-            <div className="flex items-center gap-2 text-xs">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse-soft" />
-              <span className="text-muted-foreground">System Online</span>
+        {/* Current Client Indicator */}
+        {!collapsed && currentClient && (
+          <div className="px-5 py-3 border-b border-border">
+            <div className="flex items-center gap-2">
+              <div 
+                className="w-6 h-6 rounded flex items-center justify-center text-white text-xs font-bold"
+                style={{ backgroundColor: currentClient.primary_color || '#3B82F6' }}
+              >
+                {currentClient.name.charAt(0)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium truncate">{currentClient.name}</p>
+                <p className="text-[10px] text-muted-foreground">Active Client</p>
+              </div>
             </div>
           </div>
         )}
@@ -114,9 +129,14 @@ export default function Layout() {
 
         {/* Footer */}
         <div className={cn(
-          "absolute bottom-0 left-0 right-0 p-4 border-t border-border",
-          collapsed && "p-2"
+          "absolute bottom-0 left-0 right-0 border-t border-border",
+          collapsed ? "p-2" : "p-4"
         )}>
+          {!collapsed && (
+            <p className="text-[10px] text-muted-foreground text-center mb-3">
+              Internal Tool · Powered by ClawBot
+            </p>
+          )}
           <a
             href="https://projecthunter.ai"
             target="_blank"
@@ -126,7 +146,7 @@ export default function Layout() {
               collapsed && "justify-center px-2"
             )}
           >
-            <Activity className="w-4 h-4" />
+            <Sparkles className="w-4 h-4" />
             {!collapsed && (
               <>
                 <span className="text-xs">projecthunter.ai</span>
@@ -145,22 +165,22 @@ export default function Layout() {
         {/* Top Bar */}
         <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border px-8 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-display font-semibold capitalize">
-                {location.pathname === '/' ? 'Dashboard' : location.pathname.slice(1)}
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                {currentTime.toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  month: 'short', 
-                  day: 'numeric' 
-                })}
-              </p>
+            <div className="flex items-center gap-6">
+              <ClientSelector />
+              <div className="hidden md:block">
+                <p className="text-xs text-muted-foreground">
+                  {currentTime.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 text-green-500 text-xs">
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 text-green-500 text-xs">
                 <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse-soft" />
-                <span>Connected</span>
+                <span>Online</span>
               </div>
               <ThemeToggle />
               <button className="p-2 rounded-lg hover:bg-secondary transition-colors">

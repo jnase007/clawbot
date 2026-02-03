@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { useClient } from '@/components/ClientProvider';
 import { 
   Send,
   Activity,
@@ -14,7 +15,9 @@ import {
   Rocket,
   Mail,
   MessageSquare,
-  TrendingUp
+  TrendingUp,
+  Building2,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { OutreachLog } from '@/lib/types';
@@ -51,7 +54,28 @@ function AnimatedNumber({ value, suffix = '' }: { value: number; suffix?: string
   return <span>{displayValue.toLocaleString()}{suffix}</span>;
 }
 
+// No client selected overlay
+function NoClientOverlay() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+      <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+        <Building2 className="w-10 h-10 text-primary" />
+      </div>
+      <h2 className="text-2xl font-display font-bold mb-2">Select a Client</h2>
+      <p className="text-muted-foreground max-w-md mb-6">
+        Choose a client from the dropdown above to view their outreach data, 
+        campaigns, and analytics.
+      </p>
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Sparkles className="w-4 h-4" />
+        <span>Your agency's AI-powered outreach engine</span>
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
+  const { currentClient, currentClientId } = useClient();
   const [stats, setStats] = useState<Stats>({
     totalContacts: 0,
     byPlatform: { email: 0, linkedin: 0, reddit: 0, twitter: 0, github: 0, discord: 0 },
@@ -63,28 +87,29 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchData();
-    
-    const subscription = supabase
-      .channel('dashboard-logs')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'outreach_logs' }, 
-        (payload) => {
-          setRecentLogs((prev) => [payload.new as OutreachLog, ...prev.slice(0, 9)]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+    if (currentClientId) {
+      fetchData();
+    } else {
+      setLoading(false);
+    }
+  }, [currentClientId]);
 
   async function fetchData() {
+    if (!currentClientId) return;
+    
     setLoading(true);
     try {
+      // Build queries with client filter
+      let contactsQuery = supabase.from('outreach_contacts').select('platform, status, last_contacted');
+      let logsQuery = supabase.from('outreach_logs').select('*').order('created_at', { ascending: false }).limit(10);
+      
+      // Apply client filter
+      contactsQuery = contactsQuery.eq('client_id', currentClientId);
+      logsQuery = logsQuery.eq('client_id', currentClientId);
+
       const [contactsRes, logsRes] = await Promise.all([
-        supabase.from('outreach_contacts').select('platform, status, last_contacted'),
-        supabase.from('outreach_logs').select('*').order('created_at', { ascending: false }).limit(10),
+        contactsQuery,
+        logsQuery,
       ]);
 
       const contacts = contactsRes.data || [];
@@ -113,11 +138,13 @@ export default function Dashboard() {
 
       const { count: totalSent } = await supabase
         .from('outreach_logs')
-        .select('*', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true })
+        .eq('client_id', currentClientId);
 
       const { count: successCount } = await supabase
         .from('outreach_logs')
         .select('*', { count: 'exact', head: true })
+        .eq('client_id', currentClientId)
         .eq('success', true);
 
       setStats({
@@ -133,6 +160,11 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
+  }
+
+  // Show overlay if no client selected
+  if (!currentClientId) {
+    return <NoClientOverlay />;
   }
 
   const kpiCards = [
@@ -199,10 +231,10 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <div className="animate-slide-up">
           <h1 className="text-3xl font-display font-bold">
-            Welcome back
+            {currentClient?.name || 'Dashboard'}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Here's what's happening with your outreach campaigns
+            {currentClient?.goals || 'Outreach performance and metrics'}
           </p>
         </div>
         <Button className="btn-gradient gap-2">
@@ -210,6 +242,30 @@ export default function Dashboard() {
           New Campaign
         </Button>
       </div>
+
+      {/* Client Quick Info */}
+      {currentClient && (
+        <Card className="animate-slide-up gradient-border">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Industry:</span>
+                <Badge variant="secondary">{currentClient.industry || 'Not set'}</Badge>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Tone:</span>
+                <Badge variant="secondary" className="capitalize">{currentClient.tone}</Badge>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Channels:</span>
+                {currentClient.preferred_channels?.map(ch => (
+                  <Badge key={ch} variant="outline" className="capitalize">{ch}</Badge>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* KPI Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -312,7 +368,7 @@ export default function Dashboard() {
           ) : recentLogs.length === 0 ? (
             <div className="text-center py-12">
               <Activity className="w-12 h-12 mx-auto mb-4 text-muted-foreground/30" />
-              <p className="text-muted-foreground">No activity yet</p>
+              <p className="text-muted-foreground">No activity yet for this client</p>
               <p className="text-xs text-muted-foreground mt-1">Launch a campaign to see activity here</p>
             </div>
           ) : (
