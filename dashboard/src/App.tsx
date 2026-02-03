@@ -6,6 +6,7 @@ import Templates from './pages/Templates';
 import Logs from './pages/Logs';
 import Campaigns from './pages/Campaigns';
 import Analytics from './pages/Analytics';
+import Strategy from './pages/Strategy';
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
         <Route path="templates" element={<Templates />} />
         <Route path="campaigns" element={<Campaigns />} />
         <Route path="analytics" element={<Analytics />} />
+        <Route path="strategy" element={<Strategy />} />
         <Route path="logs" element={<Logs />} />
       </Route>
     </Routes>

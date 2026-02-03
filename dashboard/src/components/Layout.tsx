@@ -11,7 +11,8 @@ import {
   BarChart3,
   Settings,
   ChevronLeft,
-  Sparkles
+  Sparkles,
+  Brain
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { ThemeToggle } from './ThemeToggle';
@@ -20,6 +21,7 @@ import { useClient } from './ClientProvider';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/strategy', icon: Brain, label: 'AI Strategy', highlight: true },
   { to: '/contacts', icon: Users, label: 'Contacts' },
   { to: '/templates', icon: FileText, label: 'Templates' },
   { to: '/campaigns', icon: Rocket, label: 'Campaigns' },
