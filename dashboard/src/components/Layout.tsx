@@ -11,9 +11,10 @@ import {
   BarChart3,
   Settings,
   ChevronLeft,
-  Activity,
-  Sparkles
+  Activity
 } from 'lucide-react';
+import { Logo } from './Logo';
+import { ThemeToggle } from './ThemeToggle';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -47,23 +48,11 @@ export default function Layout() {
       >
         {/* Logo */}
         <div className="p-5 border-b border-border">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-            </div>
-            {!collapsed && (
-              <div className="animate-fade-in">
-                <h1 className="font-display font-bold text-lg gradient-text">
-                  ClawBot
-                </h1>
-                <p className="text-[10px] text-muted-foreground">
-                  Marketing Automation
-                </p>
-              </div>
-            )}
-          </div>
+          {collapsed ? (
+            <Logo size="sm" showText={false} />
+          ) : (
+            <Logo size="md" showText={true} />
+          )}
         </div>
 
         {/* Status */}
@@ -173,6 +162,7 @@ export default function Layout() {
                 <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse-soft" />
                 <span>Connected</span>
               </div>
+              <ThemeToggle />
               <button className="p-2 rounded-lg hover:bg-secondary transition-colors">
                 <Settings className="w-4 h-4 text-muted-foreground" />
               </button>
