@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Logo } from '@/components/Logo';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { AiDemoWidget } from '@/components/AiDemoWidget';
+import { RoiCalculator } from '@/components/RoiCalculator';
 import { 
   Rocket, 
   Brain, 
@@ -215,6 +217,30 @@ export default function Home() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Interactive Demo Section */}
+      <section id="demo" className="py-20 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm mb-4">
+              <Sparkles className="w-4 h-4" />
+              <span>Try It Live</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
+              Experience AI Marketing in Action
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              See how our AI agents create personalized content for any platform. 
+              Generate a sample post right now—no signup required.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <AiDemoWidget />
+            <RoiCalculator />
           </div>
         </div>
       </section>
