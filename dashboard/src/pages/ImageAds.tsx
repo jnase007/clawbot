@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { 
   Image, Sparkles, Download, Copy, Check, Loader2,
-  Wand2, Palette, Maximize2, RefreshCw, Info, Lightbulb
+  Wand2, Palette, Maximize2, RefreshCw, Info, Lightbulb,
+  CheckCircle
 } from 'lucide-react';
 import { useClient } from '@/components/ClientProvider';
 import { CLIENT_PRESETS } from '@/lib/types';
+import { supabase } from '@/lib/supabase';
 
 type AdSize = 'square' | 'landscape' | 'portrait' | 'story';
 type Platform = 'meta' | 'google' | 'linkedin';
@@ -80,7 +82,7 @@ function getSuggestedStyle(industry?: string | null): string {
 }
 
 export default function ImageAds() {
-  const { currentClient } = useClient();
+  const { currentClient, currentClientId } = useClient();
   const [prompt, setPrompt] = useState('');
   const [brandName, setBrandName] = useState('');
   const [selectedSize, setSelectedSize] = useState<AdSize>('square');
@@ -89,11 +91,48 @@ export default function ImageAds() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [copied, setCopied] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [saved, setSaved] = useState(false);
 
   // Get client context
   const presetKey = getPresetKey(currentClient?.name);
   const preset = presetKey ? CLIENT_PRESETS[presetKey] : null;
   const suggestedConcepts = presetKey ? clientAdConcepts[presetKey] : [];
+
+  // Load saved images from database
+  useEffect(() => {
+    async function loadImages() {
+      if (!currentClientId) {
+        setLoadingHistory(false);
+        return;
+      }
+
+      try {
+        const { data } = await supabase
+          .from('generated_images')
+          .select('*')
+          .eq('client_id', currentClientId)
+          .order('created_at', { ascending: false })
+          .limit(20) as { data: any[] | null };
+
+        if (data && data.length > 0) {
+          const images: GeneratedImage[] = data.map((row: any) => ({
+            url: row.image_url,
+            prompt: row.prompt,
+            size: row.size as AdSize,
+            platform: row.platform as Platform,
+          }));
+          setGeneratedImages(images);
+        }
+      } catch (err) {
+        console.log('Error loading image history:', err);
+      } finally {
+        setLoadingHistory(false);
+      }
+    }
+
+    loadImages();
+  }, [currentClientId]);
 
   // Auto-fill from client when it changes
   useEffect(() => {
@@ -121,6 +160,7 @@ export default function ImageAds() {
     setIsGenerating(true);
     setError(null);
     setGeneratedPrompt(null);
+    setSaved(false);
     
     try {
       const response = await fetch('/api/generate-image', {
@@ -153,6 +193,26 @@ export default function ImageAds() {
           platform: selectedPlatform,
         }));
         setGeneratedImages(prev => [...newImages, ...prev]);
+
+        // Save to database
+        if (currentClientId) {
+          try {
+            for (const img of data.images) {
+              await (supabase.from('generated_images' as any) as any).insert({
+                client_id: currentClientId,
+                image_url: img.url,
+                prompt: img.prompt,
+                size: selectedSize,
+                platform: selectedPlatform,
+                style,
+                brand_name: brandName || currentClient?.name,
+              });
+            }
+            setSaved(true);
+          } catch (saveErr) {
+            console.log('Auto-save failed:', saveErr);
+          }
+        }
       } else {
         throw new Error('No images returned');
       }
@@ -388,6 +448,15 @@ export default function ImageAds() {
                 <h2 className="text-lg font-semibold text-white flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-pink-400" />
                   Generated Images
+                  {saved && currentClientId && (
+                    <span className="flex items-center gap-1 text-sm font-normal text-green-400 ml-2">
+                      <CheckCircle className="w-4 h-4" />
+                      Auto-saved
+                    </span>
+                  )}
+                  {loadingHistory && (
+                    <Loader2 className="w-4 h-4 animate-spin text-gray-400 ml-2" />
+                  )}
                 </h2>
                 {generatedImages.length > 0 && (
                   <button 

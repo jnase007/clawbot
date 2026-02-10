@@ -3,10 +3,12 @@ import {
   FileText, Sparkles, Copy, Check, Download,
   Linkedin, Facebook, Search, PenTool, Loader2,
   Lightbulb, TrendingUp, HelpCircle, BarChart3,
-  AlertCircle, RefreshCw, Clock, ChevronDown, Info
+  AlertCircle, RefreshCw, Clock, ChevronDown, Info,
+  CheckCircle
 } from 'lucide-react';
 import { useClient } from '@/components/ClientProvider';
 import { CLIENT_PRESETS } from '@/lib/types';
+import { supabase } from '@/lib/supabase';
 
 type ContentType = 'blog' | 'meta' | 'google' | 'linkedin';
 
@@ -48,7 +50,7 @@ function getPresetKey(clientName?: string | null): string | null {
 }
 
 export default function ContentStudio() {
-  const { currentClient } = useClient();
+  const { currentClient, currentClientId } = useClient();
   const [activeTab, setActiveTab] = useState<ContentType>('blog');
   const [topic, setTopic] = useState('');
   const [audience, setAudience] = useState('');
@@ -60,10 +62,48 @@ export default function ContentStudio() {
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<ContentHistory[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(true);
 
   // Get client-specific defaults
   const presetKey = getPresetKey(currentClient?.name);
   const preset = presetKey ? CLIENT_PRESETS[presetKey] : null;
+
+  // Load content history from database
+  useEffect(() => {
+    async function loadHistory() {
+      if (!currentClientId) {
+        setLoadingHistory(false);
+        return;
+      }
+
+      try {
+        const { data } = await supabase
+          .from('generated_content')
+          .select('*')
+          .eq('client_id', currentClientId)
+          .order('created_at', { ascending: false })
+          .limit(20) as { data: any[] | null };
+
+        if (data) {
+          const historyItems: ContentHistory[] = data.map((row: any) => ({
+            id: row.id,
+            type: row.content_type as ContentType,
+            topic: row.topic,
+            content: row.content_data,
+            createdAt: row.created_at,
+          }));
+          setHistory(historyItems);
+        }
+      } catch (err) {
+        console.log('Error loading history:', err);
+      } finally {
+        setLoadingHistory(false);
+      }
+    }
+
+    loadHistory();
+  }, [currentClientId]);
 
   // Suggested topics based on client
   const getSuggestedTopics = () => {
@@ -95,6 +135,7 @@ export default function ContentStudio() {
     setIsGenerating(true);
     setError(null);
     setGeneratedContent(null);
+    setSaved(false);
     
     try {
       const response = await fetch(API_URL, {
@@ -119,15 +160,50 @@ export default function ContentStudio() {
       result.generatedAt = new Date().toISOString();
       setGeneratedContent(result);
 
-      // Add to history
-      const historyItem: ContentHistory = {
-        id: Date.now().toString(),
-        type: activeTab,
-        topic,
-        content: result,
-        createdAt: new Date().toISOString(),
-      };
-      setHistory(prev => [historyItem, ...prev.slice(0, 9)]); // Keep last 10
+// Save to database
+        if (currentClientId) {
+          try {
+            const insertData = {
+              client_id: currentClientId,
+              content_type: activeTab,
+              topic: topic.trim(),
+              audience,
+              tone,
+              keywords: keywords.split(',').map(k => k.trim()).filter(k => k),
+              content_data: result,
+            };
+            const { data: savedRow } = await (supabase
+              .from('generated_content')
+              .insert(insertData as any)
+              .select('id, created_at')
+              .single()) as { data: any };
+
+          if (savedRow) {
+            // Add to history
+            const historyItem: ContentHistory = {
+              id: savedRow.id,
+              type: activeTab,
+              topic,
+              content: result,
+              createdAt: savedRow.created_at,
+            };
+            setHistory(prev => [historyItem, ...prev.slice(0, 19)]);
+            setSaved(true);
+          }
+        } catch (saveErr) {
+          console.log('Auto-save failed, content still available:', saveErr);
+        }
+      } else {
+        // No client selected, just add to local history
+        const historyItem: ContentHistory = {
+          id: Date.now().toString(),
+          type: activeTab,
+          topic,
+          content: result,
+          createdAt: new Date().toISOString(),
+        };
+        setHistory(prev => [historyItem, ...prev.slice(0, 9)]);
+      }
 
     } catch (err) {
       console.error('Generation error:', err);
@@ -193,26 +269,38 @@ export default function ContentStudio() {
         </div>
 
         {/* History Dropdown */}
-        {showHistory && history.length > 0 && (
+        {showHistory && (
           <div className="mb-6 bg-slate-800/80 rounded-xl border border-slate-700 p-4">
             <h3 className="text-white font-semibold mb-3">Recent Generations</h3>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {history.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => loadFromHistory(item)}
-                  className="w-full text-left p-3 bg-slate-700/50 rounded-lg hover:bg-slate-600/50 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-white font-medium truncate">{item.topic}</span>
-                    <span className="text-xs text-gray-400 uppercase">{item.type}</span>
-                  </div>
-                  <span className="text-xs text-gray-500">
-                    {new Date(item.createdAt).toLocaleString()}
-                  </span>
-                </button>
-              ))}
-            </div>
+            {loadingHistory ? (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="w-6 h-6 animate-spin text-purple-400" />
+              </div>
+            ) : history.length === 0 ? (
+              <div className="text-center py-6 text-gray-400">
+                <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p>No content generated yet</p>
+                <p className="text-sm">Generated content will appear here</p>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {history.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => loadFromHistory(item)}
+                    className="w-full text-left p-3 bg-slate-700/50 rounded-lg hover:bg-slate-600/50 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-white font-medium truncate">{item.topic}</span>
+                      <span className="text-xs text-gray-400 uppercase">{item.type}</span>
+                    </div>
+                    <span className="text-xs text-gray-500">
+                      {new Date(item.createdAt).toLocaleString()}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -363,7 +451,15 @@ export default function ContentStudio() {
                   <Check className="w-5 h-5 text-green-400" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-white">Content Generated Successfully</h2>
+                  <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                    Content Generated Successfully
+                    {saved && currentClientId && (
+                      <span className="flex items-center gap-1 text-sm font-normal text-green-400">
+                        <CheckCircle className="w-4 h-4" />
+                        Auto-saved
+                      </span>
+                    )}
+                  </h2>
                   <p className="text-sm text-gray-400">
                     {generatedContent.generatedAt && new Date(generatedContent.generatedAt).toLocaleString()}
                   </p>
