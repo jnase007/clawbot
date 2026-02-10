@@ -34,8 +34,132 @@ export const handler: Handler = async (event: HandlerEvent) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
     const body = JSON.parse(event.body || '{}');
+    
+    // Handle new format from Discovery page
+    if (body.clientName && body.discoveryData) {
+      const { clientName, industry, websiteUrl, discoveryData } = body;
+      
+      // Find or create client
+      let client;
+      const { data: existingClients } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('name', clientName.trim())
+        .limit(1);
+      
+      if (existingClients && existingClients.length > 0) {
+        client = existingClients[0];
+      } else {
+        // Create new client
+        const { data: newClient, error: clientError } = await supabase
+          .from('clients')
+          .insert({
+            name: clientName.trim(),
+            company: clientName.trim(),
+            industry: industry || 'General',
+            website: websiteUrl,
+            stage: 'discovery',
+            status: 'prospect',
+          })
+          .select()
+          .single();
+        
+        if (clientError) throw clientError;
+        client = newClient;
+      }
+      
+      // Save or update discovery
+      const discoveryPayload: any = {
+        client_id: client.id,
+        business_description: discoveryData.businessDescription || '',
+        target_audience: discoveryData.targetAudience || '',
+        unique_value_proposition: discoveryData.uniqueValueProposition || '',
+        current_marketing_channels: Array.isArray(discoveryData.currentMarketingChannels) 
+          ? discoveryData.currentMarketingChannels 
+          : [],
+        current_monthly_budget: discoveryData.currentMonthlyBudget || null,
+        current_pain_points: Array.isArray(discoveryData.currentPainPoints) 
+          ? discoveryData.currentPainPoints 
+          : [],
+        competitors: Array.isArray(discoveryData.competitors) 
+          ? discoveryData.competitors 
+          : [],
+        competitor_analysis: discoveryData.competitorAnalysis || '',
+        primary_goals: Array.isArray(discoveryData.primaryGoals) 
+          ? discoveryData.primaryGoals 
+          : [],
+        success_metrics: Array.isArray(discoveryData.successMetrics) 
+          ? discoveryData.successMetrics 
+          : [],
+        timeline: discoveryData.timeline || '',
+        existing_tools: Array.isArray(discoveryData.existingTools) 
+          ? discoveryData.existingTools 
+          : [],
+        social_presence: discoveryData.socialProfiles || '',
+        discovery_notes: discoveryData.discoveryNotes || '',
+        website_analysis: discoveryData.websiteAnalysis || null,
+        tone: discoveryData.tone || '',
+        keywords: Array.isArray(discoveryData.keywords) 
+          ? discoveryData.keywords 
+          : [],
+      };
+      
+      // Check if discovery already exists
+      const { data: existingDiscovery } = await supabase
+        .from('client_discoveries')
+        .select('id')
+        .eq('client_id', client.id)
+        .limit(1)
+        .single();
+      
+      let discovery;
+      if (existingDiscovery) {
+        // Update existing discovery
+        const { data: updatedDiscovery, error: updateError } = await supabase
+          .from('client_discoveries')
+          .update(discoveryPayload)
+          .eq('client_id', client.id)
+          .select()
+          .single();
+        
+        if (updateError) throw updateError;
+        discovery = updatedDiscovery;
+      } else {
+        // Create new discovery
+        const { data: newDiscovery, error: discoveryError } = await supabase
+          .from('client_discoveries')
+          .insert(discoveryPayload)
+          .select()
+          .single();
+        
+        if (discoveryError) throw discoveryError;
+        discovery = newDiscovery;
+      }
+      
+      // Update client stage and website if needed
+      await supabase
+        .from('clients')
+        .update({ 
+          stage: 'strategy',
+          industry: industry || client.industry,
+          website: websiteUrl || client.website,
+        })
+        .eq('id', client.id);
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ 
+          success: true,
+          client,
+          discovery,
+          message: 'Discovery saved successfully' 
+        }),
+      };
+    }
+    
+    // Handle legacy format with action field
     const { action, data } = body;
-
     let result;
 
     switch (action) {
@@ -161,7 +285,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
         return {
           statusCode: 400,
           headers,
-          body: JSON.stringify({ error: 'Invalid action' }),
+          body: JSON.stringify({ error: 'Invalid action or missing required fields' }),
         };
     }
 

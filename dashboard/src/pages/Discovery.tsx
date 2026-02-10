@@ -131,12 +131,16 @@ export default function Discovery() {
       });
 
       if (response.ok) {
+        const result = await response.json();
         setSaved(true);
         success('Discovery auto-saved');
         refreshClients();
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Auto-save failed:', errorData);
       }
     } catch (err) {
-      console.log('Auto-save failed:', err);
+      console.error('Auto-save failed:', err);
     }
   }, [discovery, clientName, saving, success, refreshClients]);
 
@@ -296,10 +300,11 @@ export default function Discovery() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save discovery');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.message || errorData.error || 'Failed to save discovery');
       }
 
-      await response.json();
+      const result = await response.json();
       setSaved(true);
       refreshClients();
       removeToast(loadingId);
