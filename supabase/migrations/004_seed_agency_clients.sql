@@ -1,8 +1,10 @@
 -- Seed Brandastic Agency Clients
 -- Run this in Supabase SQL Editor to add your clients
 
--- First, ensure the clients table has the new marketing fields
+-- First, ensure the clients table has the new fields
 ALTER TABLE clients 
+ADD COLUMN IF NOT EXISTS banner_url text,
+ADD COLUMN IF NOT EXISTS secondary_color text,
 ADD COLUMN IF NOT EXISTS target_job_titles text[] DEFAULT '{}',
 ADD COLUMN IF NOT EXISTS target_industries text[] DEFAULT '{}',
 ADD COLUMN IF NOT EXISTS target_locations text[] DEFAULT '{}',

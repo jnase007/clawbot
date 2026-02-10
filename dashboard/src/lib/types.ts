@@ -17,7 +17,9 @@ export interface Client {
   tone: 'professional' | 'casual' | 'bold' | 'friendly';
   compliance_notes: string | null;
   logo_url: string | null;
+  banner_url: string | null;
   primary_color: string;
+  secondary_color: string | null;
   status: 'active' | 'paused' | 'churned';
   monthly_budget: number | null;
   created_at: string;

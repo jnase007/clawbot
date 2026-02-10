@@ -226,45 +226,101 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="animate-slide-up">
-          <h1 className="text-3xl font-display font-bold">
-            {currentClient?.name || 'Dashboard'}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {currentClient?.goals || 'Outreach performance and metrics'}
-          </p>
-        </div>
-        <Button className="btn-gradient gap-2">
-          <Rocket className="w-4 h-4" />
-          New Campaign
-        </Button>
-      </div>
-
-      {/* Client Quick Info */}
+    <div className="space-y-6">
+      {/* Client Branded Header */}
       {currentClient && (
-        <Card className="animate-slide-up gradient-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Industry:</span>
-                <Badge variant="secondary">{currentClient.industry || 'Not set'}</Badge>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Tone:</span>
-                <Badge variant="secondary" className="capitalize">{currentClient.tone}</Badge>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Channels:</span>
-                {currentClient.preferred_channels?.map(ch => (
-                  <Badge key={ch} variant="outline" className="capitalize">{ch}</Badge>
-                ))}
-              </div>
+        <div className="animate-slide-up">
+          {/* Banner (if available) */}
+          {currentClient.banner_url && (
+            <div 
+              className="h-32 md:h-40 rounded-xl bg-cover bg-center mb-4 relative overflow-hidden"
+              style={{ backgroundImage: `url(${currentClient.banner_url})` }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent" />
             </div>
-          </CardContent>
-        </Card>
+          )}
+          
+          {/* Client Info Card */}
+          <Card className={cn(
+            "gradient-border overflow-hidden",
+            currentClient.banner_url && "-mt-16 relative z-10 mx-4"
+          )}>
+            <CardContent className="p-4 md:p-6">
+              <div className="flex flex-col md:flex-row md:items-center gap-4">
+                {/* Logo */}
+                {currentClient.logo_url ? (
+                  <img 
+                    src={currentClient.logo_url} 
+                    alt={currentClient.name}
+                    className="w-16 h-16 md:w-20 md:h-20 rounded-xl object-cover border-2 border-border"
+                  />
+                ) : (
+                  <div 
+                    className="w-16 h-16 md:w-20 md:h-20 rounded-xl flex items-center justify-center text-2xl font-bold text-white"
+                    style={{ backgroundColor: currentClient.primary_color || '#3B82F6' }}
+                  >
+                    {currentClient.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                
+                {/* Name & Details */}
+                <div className="flex-1">
+                  <h1 className="text-2xl md:text-3xl font-display font-bold">
+                    {currentClient.name}
+                  </h1>
+                  <p className="text-muted-foreground mt-1">
+                    {currentClient.industry || 'Marketing Client'}
+                  </p>
+                  {currentClient.website && (
+                    <a 
+                      href={currentClient.website.startsWith('http') ? currentClient.website : `https://${currentClient.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline inline-flex items-center gap-1 mt-1"
+                    >
+                      {currentClient.website.replace(/^https?:\/\//, '')}
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                  )}
+                </div>
+                
+                {/* Quick Actions */}
+                <div className="flex gap-2">
+                  <Button className="btn-gradient gap-2">
+                    <Rocket className="w-4 h-4" />
+                    New Campaign
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Quick Stats */}
+              <div className="flex items-center gap-4 flex-wrap mt-4 pt-4 border-t border-border">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Industry:</span>
+                  <Badge variant="secondary">{currentClient.industry || 'Not set'}</Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Tone:</span>
+                  <Badge variant="secondary" className="capitalize">{currentClient.tone}</Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Channels:</span>
+                  {currentClient.preferred_channels?.slice(0, 3).map(ch => (
+                    <Badge key={ch} variant="outline" className="capitalize">{ch}</Badge>
+                  ))}
+                </div>
+                {currentClient.goals && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Goal:</span>
+                    <span className="text-sm truncate max-w-[200px]">{currentClient.goals}</span>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* KPI Grid */}

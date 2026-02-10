@@ -38,18 +38,26 @@ export function ClientSelector() {
       >
         {currentClient ? (
           <>
-            <div 
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
-              style={{ backgroundColor: currentClient.primary_color || '#3B82F6' }}
-            >
-              {currentClient.name.charAt(0).toUpperCase()}
-            </div>
+            {currentClient.logo_url ? (
+              <img 
+                src={currentClient.logo_url} 
+                alt={currentClient.name}
+                className="w-8 h-8 rounded-lg object-cover"
+              />
+            ) : (
+              <div 
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
+                style={{ backgroundColor: currentClient.primary_color || '#3B82F6' }}
+              >
+                {currentClient.name.charAt(0).toUpperCase()}
+              </div>
+            )}
             <div className="flex-1 text-left">
               <p className="text-sm font-medium truncate max-w-[120px]">
                 {currentClient.name}
               </p>
               <p className="text-[10px] text-muted-foreground">
-                {currentClient.industry || 'Client'}
+                {currentClient.industry || 'Active Client'}
               </p>
             </div>
           </>
@@ -94,12 +102,20 @@ export function ClientSelector() {
                       : "hover:bg-secondary"
                   )}
                 >
-                  <div 
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold shrink-0"
-                    style={{ backgroundColor: client.primary_color || '#3B82F6' }}
-                  >
-                    {client.name.charAt(0).toUpperCase()}
-                  </div>
+                  {client.logo_url ? (
+                    <img 
+                      src={client.logo_url} 
+                      alt={client.name}
+                      className="w-8 h-8 rounded-lg object-cover shrink-0"
+                    />
+                  ) : (
+                    <div 
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold shrink-0"
+                      style={{ backgroundColor: client.primary_color || '#3B82F6' }}
+                    >
+                      {client.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{client.name}</p>
                     <p className="text-[10px] text-muted-foreground truncate">
