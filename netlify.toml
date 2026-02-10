@@ -1,10 +1,19 @@
 [build]
-  base = "dashboard"
-  publish = "dist"
-  command = "npm run build"
+  publish = "dashboard/dist"
+  command = "cd dashboard && npm install && npm run build"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["@anthropic-ai/sdk"]
 
 [build.environment]
   NODE_VERSION = "18"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
 
 [[redirects]]
   from = "/*"
