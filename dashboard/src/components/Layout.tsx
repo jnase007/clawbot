@@ -21,7 +21,8 @@ import {
   Inbox,
   Target,
   PenTool,
-  UserCircle
+  UserCircle,
+  Wrench
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { ThemeToggle } from './ThemeToggle';
@@ -191,6 +192,7 @@ const navItems = [
   { to: '/dashboard/inbox', icon: Inbox, label: 'Inbox' },
   { to: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
   { to: '/dashboard/logs', icon: ScrollText, label: 'Activity' },
+  { to: '/dashboard/setup', icon: Wrench, label: 'Setup', isNew: true },
 ];
 
 export default function Layout() {

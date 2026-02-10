@@ -13,6 +13,7 @@ import Inbox from './pages/Inbox';
 import ApolloLeads from './pages/ApolloLeads';
 import ContentStudio from './pages/ContentStudio';
 import ClientWorkflow from './pages/ClientWorkflow';
+import Setup from './pages/Setup';
 
 export default function App() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="analytics" element={<Analytics />} />
         <Route path="strategy" element={<Strategy />} />
         <Route path="logs" element={<Logs />} />
+        <Route path="setup" element={<Setup />} />
       </Route>
     </Routes>
   );
