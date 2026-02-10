@@ -398,6 +398,78 @@ export async function bulkEnrich(emails: string[]): Promise<{
   return { enriched, failed };
 }
 
+/**
+ * Search for healthcare/dental marketing leaders (Brandastic's target audience)
+ */
+export async function searchHealthcareMarketingLeads(options?: {
+  includeKeywords?: string[];
+  limit?: number;
+}): Promise<ApolloContact[]> {
+  const keywords = options?.includeKeywords || ['healthcare', 'dental', 'medical', 'hospital'];
+  const limit = options?.limit || 50;
+
+  const searchBody = {
+    page: 1,
+    per_page: limit,
+    person_titles: ['Marketing Director', 'CMO', 'Chief Marketing Officer', 'Marketing Manager', 'VP Marketing', 'Director of Marketing', 'Head of Marketing'],
+    person_seniorities: ['c_suite', 'vp', 'director', 'manager'],
+    organization_locations: ['United States'],
+    q_organization_keyword_tags: keywords,
+  };
+
+  const result = await apolloRequest<ApolloSearchResult>('/mixed_people/api_search', 'POST', searchBody);
+
+  await logAction(
+    'email' as Platform,
+    'apollo_search_healthcare_leads',
+    true,
+    undefined,
+    undefined,
+    { total: result.total_entries, keywords }
+  );
+
+  return result.people || [];
+}
+
+/**
+ * Import healthcare marketing leads directly to ClawBot
+ */
+export async function importHealthcareLeads(options?: {
+  limit?: number;
+  keywords?: string[];
+  tags?: string[];
+}): Promise<{
+  found: number;
+  imported: number;
+  leads: ApolloContact[];
+}> {
+  console.log('\n🏥 Searching for healthcare marketing leaders...');
+
+  const leads = await searchHealthcareMarketingLeads({
+    includeKeywords: options?.keywords || ['healthcare', 'dental', 'medical'],
+    limit: options?.limit || 50,
+  });
+
+  console.log(`   Found ${leads.length} leads`);
+
+  if (leads.length === 0) {
+    return { found: 0, imported: 0, leads: [] };
+  }
+
+  const result = await importLeadsToContacts(leads, {
+    platform: 'email',
+    tags: options?.tags || ['apollo', 'healthcare', 'marketing_leader'],
+  });
+
+  console.log(`   Imported ${result.imported} contacts`);
+
+  return {
+    found: leads.length,
+    imported: result.imported,
+    leads,
+  };
+}
+
 // Skill metadata
 export const apolloSkillMetadata = {
   name: 'apollo',
@@ -446,5 +518,7 @@ export default {
   quickImportFromCompany,
   enrichContact,
   bulkEnrich,
+  searchHealthcareMarketingLeads,
+  importHealthcareLeads,
   apolloSkillMetadata,
 };

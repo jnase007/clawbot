@@ -637,6 +637,67 @@ apollo
   });
 
 apollo
+  .command('healthcare')
+  .description('Search healthcare/dental marketing leaders (Brandastic target)')
+  .option('-l, --limit <number>', 'Max results', '25')
+  .option('-k, --keywords <keywords>', 'Industry keywords', 'healthcare,dental,medical')
+  .option('-i, --import', 'Import leads to contacts')
+  .action(async (options) => {
+    printSection('HEALTHCARE MARKETING LEADERS');
+    
+    const spinner = new Spinner('Searching for CMOs, Marketing Directors in healthcare/dental...');
+    spinner.start();
+    
+    try {
+      const { searchHealthcareMarketingLeads, importLeadsToContacts } = await import('./skills/apollo/index.js');
+      
+      const keywords = options.keywords.split(',').map((k: string) => k.trim());
+      
+      const leads = await searchHealthcareMarketingLeads({
+        includeKeywords: keywords,
+        limit: parseInt(options.limit),
+      });
+      
+      spinner.stop(true);
+      
+      if (leads.length === 0) {
+        printInfo('Results', 'No leads found');
+      } else {
+        printTable(
+          ['Name', 'Title', 'Company', 'Has Email'],
+          leads.slice(0, 20).map(l => [
+            l.first_name || '-',
+            (l.title || '').substring(0, 30),
+            ((l.organization as any)?.name || '').substring(0, 25),
+            l.email ? '✅' : '❌',
+          ])
+        );
+        
+        console.log();
+        printInfo('Total Found', leads.length.toString());
+        
+        if (options.import) {
+          const spinner2 = new Spinner('Importing leads to contacts...');
+          spinner2.start();
+          
+          const result = await importLeadsToContacts(leads, {
+            platform: 'email',
+            tags: ['apollo', 'healthcare', 'marketing_leader'],
+          });
+          
+          spinner2.stop(true);
+          printSuccess(`Imported ${result.imported} contacts`);
+        } else {
+          console.log(chalk.gray('\n  Tip: Add --import to save these leads to contacts'));
+        }
+      }
+    } catch (error) {
+      spinner.stop(false);
+      printError(`Error: ${error}`);
+    }
+  });
+
+apollo
   .command('enrich')
   .description('Enrich a contact with Apollo data')
   .argument('<email>', 'Email to enrich')
