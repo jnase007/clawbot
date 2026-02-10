@@ -530,6 +530,144 @@ agentBuilder
     }
   });
 
+// ============ APOLLO COMMANDS ============
+
+const apollo = program.command('apollo').description('🎯 Apollo.io lead generation');
+
+apollo
+  .command('search')
+  .description('Search for leads')
+  .requiredOption('-d, --domain <domain>', 'Company domain to search')
+  .option('-t, --titles <titles>', 'Comma-separated job titles')
+  .option('-s, --seniority <levels>', 'Seniority levels (c_suite,vp,director,manager)', 'c_suite,vp,director,manager')
+  .option('-l, --limit <number>', 'Max results', '25')
+  .action(async (options) => {
+    printSection('APOLLO LEAD SEARCH');
+    
+    const spinner = new Spinner(`Searching for leads at ${options.domain}...`);
+    spinner.start();
+    
+    try {
+      const { searchByCompany } = await import('./skills/apollo/index.js');
+      
+      const titles = options.titles ? options.titles.split(',').map((t: string) => t.trim()) : undefined;
+      const seniority = options.seniority.split(',').map((s: string) => s.trim());
+      
+      const leads = await searchByCompany([options.domain], {
+        titles,
+        seniorityLevels: seniority,
+        limit: parseInt(options.limit),
+      });
+      
+      spinner.stop(true);
+      
+      if (leads.length === 0) {
+        printInfo('Results', 'No leads found');
+      } else {
+        printTable(
+          ['Name', 'Title', 'Email', 'Company'],
+          leads.slice(0, 15).map(l => [
+            l.name || `${l.first_name} ${l.last_name}`,
+            (l.title || '').substring(0, 25),
+            l.email || '-',
+            (l.organization_name || '').substring(0, 20),
+          ])
+        );
+        
+        if (leads.length > 15) {
+          console.log(chalk.gray(`  ... and ${leads.length - 15} more`));
+        }
+        
+        console.log();
+        printInfo('Total Found', leads.length.toString());
+      }
+    } catch (error) {
+      spinner.stop(false);
+      printError(`Error: ${error}`);
+    }
+  });
+
+apollo
+  .command('import')
+  .description('Search and import leads to contacts')
+  .requiredOption('-d, --domain <domain>', 'Company domain')
+  .option('-t, --titles <titles>', 'Comma-separated job titles')
+  .option('-s, --seniority <levels>', 'Seniority levels', 'c_suite,vp,director,manager')
+  .option('-l, --limit <number>', 'Max leads to import', '50')
+  .option('-p, --platform <platform>', 'Platform for contacts (email, linkedin)', 'email')
+  .action(async (options) => {
+    printSection('APOLLO IMPORT');
+    
+    const spinner = new Spinner(`Importing leads from ${options.domain}...`);
+    spinner.start();
+    
+    try {
+      const { quickImportFromCompany } = await import('./skills/apollo/index.js');
+      
+      const titles = options.titles ? options.titles.split(',').map((t: string) => t.trim()) : undefined;
+      const seniority = options.seniority.split(',').map((s: string) => s.trim());
+      
+      const result = await quickImportFromCompany(options.domain, {
+        titles,
+        seniorityLevels: seniority,
+        limit: parseInt(options.limit),
+        platform: options.platform,
+      });
+      
+      spinner.stop(true);
+      
+      console.log();
+      printInfo('Leads Found', result.found.toString());
+      printInfo('Imported', chalk.green(result.imported.toString()));
+      
+      if (result.leads.length > 0) {
+        console.log();
+        console.log(chalk.cyan('  Sample leads imported:'));
+        result.leads.slice(0, 5).forEach(lead => {
+          console.log(chalk.gray('    • ') + 
+            chalk.white(lead.name || lead.email) + 
+            chalk.gray(` - ${lead.title || 'No title'}`)
+          );
+        });
+      }
+    } catch (error) {
+      spinner.stop(false);
+      printError(`Error: ${error}`);
+    }
+  });
+
+apollo
+  .command('enrich')
+  .description('Enrich a contact with Apollo data')
+  .argument('<email>', 'Email to enrich')
+  .action(async (email: string) => {
+    printSection('APOLLO ENRICH');
+    
+    const spinner = new Spinner(`Enriching ${email}...`);
+    spinner.start();
+    
+    try {
+      const { enrichContact } = await import('./skills/apollo/index.js');
+      
+      const contact = await enrichContact(email);
+      spinner.stop(!!contact);
+      
+      if (contact) {
+        console.log();
+        printInfo('Name', contact.name || `${contact.first_name} ${contact.last_name}`);
+        printInfo('Title', contact.title || '-');
+        printInfo('Company', contact.organization_name || '-');
+        printInfo('LinkedIn', contact.linkedin_url || '-');
+        printInfo('Location', [contact.city, contact.state, contact.country].filter(Boolean).join(', ') || '-');
+      } else {
+        printError('No data found for this email');
+      }
+    } catch (error) {
+      spinner.stop(false);
+      printError(`Error: ${error}`);
+    }
+  });
+
 // ============ LOGS COMMAND ============
 
 program

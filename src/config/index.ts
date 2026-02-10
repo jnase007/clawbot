@@ -13,6 +13,9 @@ const envSchema = z.object({
   OPENAI_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
   
+  // Apollo.io (Lead Generation)
+  APOLLO_API_KEY: z.string().optional(),
+  
   // Email
   EMAIL_HOST: z.string().default('smtp.gmail.com'),
   EMAIL_PORT: z.coerce.number().default(587),
