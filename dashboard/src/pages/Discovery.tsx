@@ -1,48 +1,55 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { pdf } from '@react-pdf/renderer';
 import { DiscoveryPDF } from '@/components/pdf/DiscoveryPDF';
+import { useClient } from '@/components/ClientProvider';
 import { 
-  ClipboardList, Building2, Target, Users, 
-  Wrench, ChevronRight, ChevronLeft, Check, Sparkles,
-  Save, AlertCircle, Loader2, FileDown
+  ClipboardList, Building2, Globe, Sparkles, Send,
+  Save, AlertCircle, Loader2, FileDown, MessageSquare,
+  Check, ChevronDown, ChevronRight, RefreshCw,
+  Target, Users, Wrench, BarChart3, Lightbulb, X
 } from 'lucide-react';
-
-const API_URL = '/api/save-discovery';
+import { Card, CardContent } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
 
 interface DiscoveryData {
-  // Business Overview
   businessDescription: string;
   targetAudience: string;
   uniqueValueProposition: string;
-  
-  // Current State
+  industry: string;
   currentMarketingChannels: string[];
   currentMonthlyBudget: string;
   currentPainPoints: string[];
-  
-  // Competitors
   competitors: string[];
   competitorAnalysis: string;
-  
-  // Goals
   primaryGoals: string[];
   successMetrics: string[];
   timeline: string;
-  
-  // Technical
   existingTools: string[];
   websiteUrl: string;
   socialProfiles: string;
-  
-  // Notes
   discoveryNotes: string;
+  websiteAnalysis?: {
+    strengths: string[];
+    weaknesses: string[];
+    opportunities: string[];
+  };
+  tone: string;
+  keywords: string[];
+}
+
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
 }
 
 const initialData: DiscoveryData = {
   businessDescription: '',
   targetAudience: '',
   uniqueValueProposition: '',
+  industry: '',
   currentMarketingChannels: [],
   currentMonthlyBudget: '',
   currentPainPoints: [],
@@ -55,73 +62,225 @@ const initialData: DiscoveryData = {
   websiteUrl: '',
   socialProfiles: '',
   discoveryNotes: '',
+  tone: '',
+  keywords: [],
 };
-
-const marketingChannels = [
-  'Google Ads', 'Facebook Ads', 'Instagram', 'LinkedIn', 'Twitter/X',
-  'Email Marketing', 'SEO', 'Content Marketing', 'Referrals', 'Events',
-  'Direct Mail', 'Radio/TV', 'Print Ads', 'Influencer Marketing'
-];
-
-const commonPainPoints = [
-  'Low lead volume', 'High cost per lead', 'Poor lead quality',
-  'Inconsistent branding', 'No marketing strategy', 'Limited budget',
-  'No time for marketing', 'Outdated website', 'Low online visibility',
-  'Poor social media presence', 'No email list', 'Competition'
-];
-
-const commonGoals = [
-  'Increase new patients/customers', 'Reduce cost per acquisition',
-  'Improve brand awareness', 'Generate more leads', 'Increase revenue',
-  'Expand to new markets', 'Launch new services', 'Improve retention',
-  'Build online presence', 'Automate marketing'
-];
-
-const commonTools = [
-  'Google Analytics', 'HubSpot', 'Mailchimp', 'Salesforce', 'WordPress',
-  'Squarespace', 'Wix', 'Hootsuite', 'Buffer', 'Canva', 'Monday.com',
-  'Asana', 'Slack', 'QuickBooks', 'Practice Management Software'
-];
-
-const steps = [
-  { id: 1, title: 'Business Overview', icon: Building2, description: 'Tell us about your business' },
-  { id: 2, title: 'Current State', icon: ClipboardList, description: 'Where are you now?' },
-  { id: 3, title: 'Competition', icon: Users, description: 'Who are your competitors?' },
-  { id: 4, title: 'Goals & Metrics', icon: Target, description: 'What do you want to achieve?' },
-  { id: 5, title: 'Technical Setup', icon: Wrench, description: 'Tools and platforms' },
-  { id: 6, title: 'Review & Submit', icon: Check, description: 'Review your discovery' },
-];
 
 export default function Discovery() {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(1);
-  const [data, setData] = useState<DiscoveryData>(initialData);
+  const { currentClient, refreshClients } = useClient();
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Basic inputs
   const [clientName, setClientName] = useState('');
-  const [industry] = useState('Healthcare');
-  const [isSaving, setIsSaving] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [websiteUrl, setWebsiteUrl] = useState('');
+  
+  // States
+  const [discovery, setDiscovery] = useState<DiscoveryData | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [savedClientId, setSavedClientId] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Chat refinement
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [refining, setRefining] = useState(false);
+  
+  // Sections expansion
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(
+    new Set(['overview', 'audience', 'analysis'])
+  );
+
+  // Pre-fill from current client
+  useEffect(() => {
+    if (currentClient) {
+      setClientName(currentClient.name);
+      setWebsiteUrl(currentClient.website || '');
+    }
+  }, [currentClient]);
+
+  // Auto-scroll chat
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
+
+  const toggleSection = (id: string) => {
+    setExpandedSections(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  async function analyzeWebsite() {
+    if (!clientName.trim() || !websiteUrl.trim()) {
+      setError('Please enter both client name and website URL');
+      return;
+    }
+
+    setAnalyzing(true);
+    setError(null);
+    setDiscovery(null);
+
+    try {
+      const response = await fetch('/api/analyze-website', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientName: clientName.trim(),
+          websiteUrl: websiteUrl.trim().startsWith('http') 
+            ? websiteUrl.trim() 
+            : `https://${websiteUrl.trim()}`,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to analyze website');
+      }
+
+      const result = await response.json();
+      
+      if (result.analysis) {
+        setDiscovery({
+          ...initialData,
+          ...result.analysis,
+          websiteUrl: websiteUrl.trim(),
+        });
+        setChatMessages([{
+          role: 'assistant',
+          content: `I've analyzed ${clientName}'s website and created a discovery document. Review the sections below and let me know if you'd like me to adjust anything - just type in the chat!`,
+          timestamp: new Date(),
+        }]);
+        setChatOpen(true);
+      }
+    } catch (err) {
+      console.error('Analysis error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to analyze website');
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
+  async function refineDiscovery() {
+    if (!chatInput.trim() || !discovery) return;
+
+    const userMessage: ChatMessage = {
+      role: 'user',
+      content: chatInput.trim(),
+      timestamp: new Date(),
+    };
+
+    setChatMessages(prev => [...prev, userMessage]);
+    setChatInput('');
+    setRefining(true);
+
+    try {
+      const response = await fetch('/api/refine-discovery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentDiscovery: discovery,
+          userMessage: userMessage.content,
+          clientName,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to refine discovery');
+      }
+
+      const result = await response.json();
+
+      if (result.discovery) {
+        setDiscovery(result.discovery);
+        setSaved(false);
+      }
+
+      const assistantMessage: ChatMessage = {
+        role: 'assistant',
+        content: result.message || "I've updated the discovery based on your feedback.",
+        timestamp: new Date(),
+      };
+      setChatMessages(prev => [...prev, assistantMessage]);
+
+    } catch (err) {
+      const errorMessage: ChatMessage = {
+        role: 'assistant',
+        content: "Sorry, I couldn't update the discovery. Please try again.",
+        timestamp: new Date(),
+      };
+      setChatMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setRefining(false);
+    }
+  }
+
+  async function saveDiscovery() {
+    if (!discovery || !clientName.trim()) return;
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/save-discovery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientName: clientName.trim(),
+          industry: discovery.industry || 'General',
+          websiteUrl: discovery.websiteUrl,
+          discoveryData: discovery,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save discovery');
+      }
+
+      await response.json();
+      setSaved(true);
+      refreshClients();
+
+      setChatMessages(prev => [...prev, {
+        role: 'assistant',
+        content: '✅ Discovery saved! You can now export as PDF or generate an AI strategy.',
+        timestamp: new Date(),
+      }]);
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function exportToPDF() {
-    if (!clientName.trim()) return;
+    if (!discovery) return;
     
     setExporting(true);
     try {
       const blob = await pdf(
         <DiscoveryPDF 
-          discovery={data} 
+          discovery={discovery} 
           clientName={clientName} 
-          clientIndustry={industry}
+          clientIndustry={discovery.industry}
+          clientLogo={currentClient?.logo_url || undefined}
         />
       ).toBlob();
       
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${clientName.replace(/\s+/g, '_')}_Discovery_Document.pdf`;
+      link.download = `${clientName.replace(/\s+/g, '_')}_Discovery.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -133,530 +292,454 @@ export default function Discovery() {
     }
   }
 
-  const updateField = (field: keyof DiscoveryData, value: string | string[]) => {
-    setData(prev => ({ ...prev, [field]: value }));
-  };
+  function goToStrategy() {
+    navigate('/dashboard/strategy');
+  }
 
-  const toggleArrayItem = (field: keyof DiscoveryData, item: string) => {
-    const current = data[field] as string[];
-    const updated = current.includes(item)
-      ? current.filter(i => i !== item)
-      : [...current, item];
-    updateField(field, updated);
-  };
-
-  const handleSave = async () => {
-    if (!clientName.trim()) {
-      setError('Please enter a client name');
-      return;
-    }
-
-    setIsSaving(true);
-    setError(null);
-    
-    try {
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'create_and_save',
-          data: {
-            clientName: clientName.trim(),
-            industry,
-            businessDescription: data.businessDescription,
-            targetAudience: data.targetAudience,
-            uniqueValueProposition: data.uniqueValueProposition,
-            currentMarketingChannels: data.currentMarketingChannels,
-            currentMonthlyBudget: data.currentMonthlyBudget,
-            currentPainPoints: data.currentPainPoints,
-            competitors: data.competitors,
-            competitorAnalysis: data.competitorAnalysis,
-            primaryGoals: data.primaryGoals,
-            successMetrics: data.successMetrics,
-            timeline: data.timeline,
-            existingTools: data.existingTools,
-            websiteUrl: data.websiteUrl,
-            socialProfiles: data.socialProfiles,
-            discoveryNotes: data.discoveryNotes,
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || errorData.message || 'Save failed');
-      }
-
-      const result = await response.json();
-      setSavedClientId(result.client?.id);
-      setSaved(true);
-      
-    } catch (err) {
-      console.error('Save error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to save discovery');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleGenerateStrategy = async () => {
-    if (!savedClientId) {
-      // Save first, then generate
-      await handleSave();
-    }
-    setIsGenerating(true);
-    // Navigate to strategy page or trigger generation
-    setTimeout(() => {
-      navigate('/dashboard/strategy');
-    }, 1000);
-  };
-
-  const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 6));
-  const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
-
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-2">Client/Company Name *</label>
-              <input
-                type="text"
-                value={clientName}
-                onChange={(e) => setClientName(e.target.value)}
-                placeholder="e.g., Smile Dental Group"
-                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-cyan-500 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-2">Business Description *</label>
-              <textarea
-                value={data.businessDescription}
-                onChange={(e) => updateField('businessDescription', e.target.value)}
-                placeholder="Describe the business, what they do, their history..."
-                rows={4}
-                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-cyan-500 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-2">Target Audience *</label>
-              <textarea
-                value={data.targetAudience}
-                onChange={(e) => updateField('targetAudience', e.target.value)}
-                placeholder="Who are their ideal customers? Demographics, behaviors, needs..."
-                rows={3}
-                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-cyan-500 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-2">Unique Value Proposition</label>
-              <textarea
-                value={data.uniqueValueProposition}
-                onChange={(e) => updateField('uniqueValueProposition', e.target.value)}
-                placeholder="What makes them different from competitors?"
-                rows={2}
-                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-cyan-500 focus:outline-none"
-              />
-            </div>
-          </div>
-        );
-
-      case 2:
-        return (
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-3">Current Marketing Channels</label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {marketingChannels.map(channel => (
-                  <button
-                    key={channel}
-                    onClick={() => toggleArrayItem('currentMarketingChannels', channel)}
-                    className={`px-3 py-2 rounded-lg text-sm transition-colors ${
-                      data.currentMarketingChannels.includes(channel)
-                        ? 'bg-cyan-600 text-foreground'
-                        : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
-                    }`}
-                  >
-                    {channel}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-2">Current Monthly Marketing Budget</label>
-              <select
-                value={data.currentMonthlyBudget}
-                onChange={(e) => updateField('currentMonthlyBudget', e.target.value)}
-                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-cyan-500 focus:outline-none"
-              >
-                <option value="">Select budget range...</option>
-                <option value="0-1000">$0 - $1,000</option>
-                <option value="1000-5000">$1,000 - $5,000</option>
-                <option value="5000-10000">$5,000 - $10,000</option>
-                <option value="10000-25000">$10,000 - $25,000</option>
-                <option value="25000-50000">$25,000 - $50,000</option>
-                <option value="50000+">$50,000+</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-3">Current Pain Points</label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {commonPainPoints.map(point => (
-                  <button
-                    key={point}
-                    onClick={() => toggleArrayItem('currentPainPoints', point)}
-                    className={`px-3 py-2 rounded-lg text-sm transition-colors text-left ${
-                      data.currentPainPoints.includes(point)
-                        ? 'bg-orange-600 text-foreground'
-                        : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
-                    }`}
-                  >
-                    {point}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
-
-      case 3:
-        return (
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-2">Main Competitors (one per line)</label>
-              <textarea
-                value={data.competitors.join('\n')}
-                onChange={(e) => updateField('competitors', e.target.value.split('\n').filter(c => c.trim()))}
-                placeholder="Competitor 1&#10;Competitor 2&#10;Competitor 3"
-                rows={4}
-                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-cyan-500 focus:outline-none font-mono"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-2">Competitor Analysis</label>
-              <textarea
-                value={data.competitorAnalysis}
-                onChange={(e) => updateField('competitorAnalysis', e.target.value)}
-                placeholder="What are competitors doing well? What are they missing? How can we differentiate?"
-                rows={4}
-                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-cyan-500 focus:outline-none"
-              />
-            </div>
-          </div>
-        );
-
-      case 4:
-        return (
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-3">Primary Goals</label>
-              <div className="grid grid-cols-2 gap-2">
-                {commonGoals.map(goal => (
-                  <button
-                    key={goal}
-                    onClick={() => toggleArrayItem('primaryGoals', goal)}
-                    className={`px-3 py-2 rounded-lg text-sm transition-colors text-left ${
-                      data.primaryGoals.includes(goal)
-                        ? 'bg-green-600 text-foreground'
-                        : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
-                    }`}
-                  >
-                    {goal}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-2">Success Metrics (how will we measure success?)</label>
-              <textarea
-                value={data.successMetrics.join('\n')}
-                onChange={(e) => updateField('successMetrics', e.target.value.split('\n').filter(m => m.trim()))}
-                placeholder="e.g., 50 new patients per month&#10;Cost per lead under $50&#10;30% increase in website traffic"
-                rows={3}
-                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-cyan-500 focus:outline-none font-mono"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-2">Timeline / Urgency</label>
-              <select
-                value={data.timeline}
-                onChange={(e) => updateField('timeline', e.target.value)}
-                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-cyan-500 focus:outline-none"
-              >
-                <option value="">Select timeline...</option>
-                <option value="asap">ASAP - Need results immediately</option>
-                <option value="1-3months">1-3 months</option>
-                <option value="3-6months">3-6 months</option>
-                <option value="6-12months">6-12 months</option>
-                <option value="ongoing">Ongoing / No rush</option>
-              </select>
-            </div>
-          </div>
-        );
-
-      case 5:
-        return (
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-3">Existing Tools & Platforms</label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {commonTools.map(tool => (
-                  <button
-                    key={tool}
-                    onClick={() => toggleArrayItem('existingTools', tool)}
-                    className={`px-3 py-2 rounded-lg text-sm transition-colors ${
-                      data.existingTools.includes(tool)
-                        ? 'bg-purple-600 text-foreground'
-                        : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
-                    }`}
-                  >
-                    {tool}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-2">Website URL</label>
-              <input
-                type="url"
-                value={data.websiteUrl}
-                onChange={(e) => updateField('websiteUrl', e.target.value)}
-                placeholder="https://example.com"
-                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-cyan-500 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-2">Social Media Profiles</label>
-              <textarea
-                value={data.socialProfiles}
-                onChange={(e) => updateField('socialProfiles', e.target.value)}
-                placeholder="Facebook: https://facebook.com/...&#10;Instagram: @handle&#10;LinkedIn: https://linkedin.com/..."
-                rows={3}
-                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-cyan-500 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-2">Additional Notes</label>
-              <textarea
-                value={data.discoveryNotes}
-                onChange={(e) => updateField('discoveryNotes', e.target.value)}
-                placeholder="Any other important information..."
-                rows={3}
-                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-cyan-500 focus:outline-none"
-              />
-            </div>
-          </div>
-        );
-
-      case 6:
-        return (
-          <div className="space-y-6">
-            <div className="bg-secondary/50 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-cyan-400" />
-                {clientName || 'Client Name Not Set'}
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Business Description</h4>
-                  <p className="text-muted-foreground">{data.businessDescription || '-'}</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Target Audience</h4>
-                  <p className="text-muted-foreground">{data.targetAudience || '-'}</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Monthly Budget</h4>
-                  <p className="text-muted-foreground">{data.currentMonthlyBudget || '-'}</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Timeline</h4>
-                  <p className="text-muted-foreground">{data.timeline || '-'}</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Marketing Channels</h4>
-                  <p className="text-muted-foreground">{data.currentMarketingChannels.join(', ') || '-'}</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Pain Points</h4>
-                  <p className="text-muted-foreground">{data.currentPainPoints.join(', ') || '-'}</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Goals</h4>
-                  <p className="text-muted-foreground">{data.primaryGoals.join(', ') || '-'}</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Competitors</h4>
-                  <p className="text-muted-foreground">{data.competitors.join(', ') || '-'}</p>
-                </div>
-              </div>
-            </div>
-
-            {!clientName && (
-              <div className="flex items-center gap-2 text-yellow-400 bg-yellow-400/10 px-4 py-3 rounded-lg">
-                <AlertCircle className="w-5 h-5" />
-                <span>Please go back and enter a client name</span>
-              </div>
-            )}
-
-            {error && (
-              <div className="flex items-center gap-2 text-red-400 bg-red-400/10 px-4 py-3 rounded-lg">
-                <AlertCircle className="w-5 h-5" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            {saved && (
-              <div className="flex items-center gap-2 text-green-400 bg-green-400/10 px-4 py-3 rounded-lg">
-                <Check className="w-5 h-5" />
-                <span>Discovery saved successfully! Client has been added to your pipeline.</span>
-              </div>
-            )}
-
-            <div className="flex gap-4">
-              <button
-                onClick={handleSave}
-                disabled={isSaving || !clientName || saved}
-                className="flex-1 px-6 py-3 bg-cyan-600 text-foreground rounded-lg hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Saving to Database...
-                  </>
-                ) : saved ? (
-                  <>
-                    <Check className="w-5 h-5" />
-                    Saved!
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-5 h-5" />
-                    Save Discovery
-                  </>
-                )}
-              </button>
-              <button
-                onClick={exportToPDF}
-                disabled={exporting || !clientName}
-                className="px-6 py-3 bg-secondary text-foreground rounded-lg hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {exporting ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Exporting...
-                  </>
-                ) : (
-                  <>
-                    <FileDown className="w-5 h-5" />
-                    Export PDF
-                  </>
-                )}
-              </button>
-              <button
-                onClick={handleGenerateStrategy}
-                disabled={!clientName || isGenerating}
-                className="flex-1 px-6 py-3 bg-purple-600 text-foreground rounded-lg hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-5 h-5" />
-                    {saved ? 'Generate AI Strategy' : 'Save & Generate Strategy'}
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
+  const SectionHeader = ({ id, title, icon: Icon, badge }: { id: string; title: string; icon: any; badge?: string }) => (
+    <button
+      onClick={() => toggleSection(id)}
+      className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+    >
+      <div className="flex items-center gap-3">
+        <Icon className="w-5 h-5 text-primary" />
+        <span className="font-semibold">{title}</span>
+        {badge && <Badge variant="secondary">{badge}</Badge>}
+      </div>
+      {expandedSections.has(id) ? (
+        <ChevronDown className="w-5 h-5 text-muted-foreground" />
+      ) : (
+        <ChevronRight className="w-5 h-5 text-muted-foreground" />
+      )}
+    </button>
+  );
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            <ClipboardList className="w-8 h-8 text-cyan-500" />
-            Client Discovery
-          </h1>
-          <p className="text-muted-foreground mt-1">Gather client information to build their marketing strategy</p>
-        </div>
-
-        {/* Progress Steps */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            {steps.map((step, idx) => (
-              <div key={step.id} className="flex items-center">
-                <button
-                  onClick={() => setCurrentStep(step.id)}
-                  className={`flex flex-col items-center ${
-                    currentStep === step.id ? 'text-cyan-400' : 
-                    currentStep > step.id ? 'text-green-400' : 'text-gray-500'
-                  }`}
-                >
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${
-                    currentStep === step.id ? 'bg-cyan-600' : 
-                    currentStep > step.id ? 'bg-green-600' : 'bg-secondary'
-                  }`}>
-                    {currentStep > step.id ? (
-                      <Check className="w-5 h-5 text-foreground" />
-                    ) : (
-                      <step.icon className="w-5 h-5 text-foreground" />
-                    )}
-                  </div>
-                  <span className="text-xs font-medium hidden md:block">{step.title}</span>
-                </button>
-                {idx < steps.length - 1 && (
-                  <div className={`w-12 md:w-24 h-1 mx-2 rounded ${
-                    currentStep > step.id ? 'bg-green-600' : 'bg-secondary'
-                  }`} />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Step Content */}
-        <div className="bg-card backdrop-blur rounded-xl p-6 border border-border mb-6">
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-foreground">{steps[currentStep - 1].title}</h2>
-            <p className="text-muted-foreground text-sm">{steps[currentStep - 1].description}</p>
-          </div>
-          {renderStepContent()}
-        </div>
-
-        {/* Navigation */}
-        <div className="flex justify-between">
-          <button
-            onClick={prevStep}
-            disabled={currentStep === 1}
-            className="px-6 py-3 bg-secondary text-foreground rounded-lg hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            <ChevronLeft className="w-5 h-5" />
-            Previous
-          </button>
-          {currentStep < 6 && (
-            <button
-              onClick={nextStep}
-              className="px-6 py-3 bg-cyan-600 text-foreground rounded-lg hover:bg-cyan-500 flex items-center gap-2"
-            >
-              Next
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          )}
-        </div>
+    <div className="p-4 md:p-8 max-w-6xl mx-auto">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl md:text-3xl font-display font-bold flex items-center gap-3">
+          <ClipboardList className="w-8 h-8 text-primary" />
+          Smart Discovery
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Enter client name + website URL → AI analyzes and creates discovery → Chat to refine → Export PDF
+        </p>
       </div>
+
+      {/* Quick Start - Before Analysis */}
+      {!discovery && !analyzing && (
+        <Card className="mb-8">
+          <CardContent className="p-8">
+            <div className="max-w-xl mx-auto">
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <Sparkles className="w-8 h-8 text-primary" />
+                </div>
+                <h2 className="text-xl font-bold mb-2">AI-Powered Discovery</h2>
+                <p className="text-muted-foreground">
+                  Just enter the client's name and website. Our AI will analyze their site 
+                  and create a comprehensive discovery document for you.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Client Name *</label>
+                  <input
+                    type="text"
+                    value={clientName}
+                    onChange={(e) => setClientName(e.target.value)}
+                    placeholder="e.g., Acme Dental"
+                    className="w-full px-4 py-3 bg-background border border-border rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Website URL *</label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <input
+                      type="text"
+                      value={websiteUrl}
+                      onChange={(e) => setWebsiteUrl(e.target.value)}
+                      placeholder="e.g., acmedental.com"
+                      className="w-full pl-11 pr-4 py-3 bg-background border border-border rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="flex items-center gap-2 text-destructive bg-destructive/10 px-4 py-3 rounded-lg">
+                    <AlertCircle className="w-5 h-5 shrink-0" />
+                    <span className="text-sm">{error}</span>
+                  </div>
+                )}
+
+                <Button 
+                  onClick={analyzeWebsite}
+                  disabled={!clientName.trim() || !websiteUrl.trim()}
+                  className="w-full gap-2 py-6 text-lg"
+                >
+                  <Sparkles className="w-5 h-5" />
+                  Analyze Website & Generate Discovery
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Analyzing State */}
+      {analyzing && (
+        <Card className="mb-8">
+          <CardContent className="p-12 text-center">
+            <Loader2 className="w-16 h-16 text-primary animate-spin mx-auto mb-6" />
+            <h2 className="text-xl font-bold mb-2">Analyzing {clientName}'s Website</h2>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              Claude is reviewing their website content, services, and online presence 
+              to create a comprehensive discovery document...
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Discovery Results */}
+      {discovery && !analyzing && (
+        <>
+          {/* Action Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-6 p-4 bg-card rounded-xl border border-border">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Building2 className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="font-bold">{clientName}</h2>
+                <p className="text-sm text-muted-foreground">{discovery.industry}</p>
+              </div>
+              {saved && (
+                <Badge className="bg-green-500/10 text-green-600 border-green-500/30">
+                  <Check className="w-3 h-3 mr-1" />
+                  Saved
+                </Badge>
+              )}
+            </div>
+            
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDiscovery(null);
+                  setSaved(false);
+                }}
+                className="gap-2"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Start Over
+              </Button>
+              <Button
+                variant="outline"
+                onClick={exportToPDF}
+                disabled={exporting}
+                className="gap-2"
+              >
+                {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+                Export PDF
+              </Button>
+              <Button
+                variant="outline"
+                onClick={saveDiscovery}
+                disabled={saving || saved}
+                className="gap-2"
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                {saved ? 'Saved' : 'Save'}
+              </Button>
+              <Button onClick={goToStrategy} className="gap-2">
+                <Sparkles className="w-4 h-4" />
+                Generate Strategy
+              </Button>
+            </div>
+          </div>
+
+          {/* Discovery Sections */}
+          <div className="grid gap-4 mb-6">
+            {/* Business Overview */}
+            <Card>
+              <SectionHeader id="overview" title="Business Overview" icon={Building2} />
+              {expandedSections.has('overview') && (
+                <CardContent className="pt-0 pb-4 px-4 space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Description</label>
+                    <p className="mt-1">{discovery.businessDescription || 'Not available'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Unique Value Proposition</label>
+                    <p className="mt-1">{discovery.uniqueValueProposition || 'Not available'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Tone</label>
+                    <Badge variant="outline" className="ml-2">{discovery.tone || 'Professional'}</Badge>
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+
+            {/* Target Audience */}
+            <Card>
+              <SectionHeader id="audience" title="Target Audience" icon={Users} />
+              {expandedSections.has('audience') && (
+                <CardContent className="pt-0 pb-4 px-4">
+                  <p>{discovery.targetAudience || 'Not available'}</p>
+                </CardContent>
+              )}
+            </Card>
+
+            {/* Website Analysis */}
+            {discovery.websiteAnalysis && (
+              <Card>
+                <SectionHeader id="analysis" title="Website Analysis" icon={Lightbulb} />
+                {expandedSections.has('analysis') && (
+                  <CardContent className="pt-0 pb-4 px-4">
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
+                        <h4 className="font-medium text-green-600 mb-2">Strengths</h4>
+                        <ul className="space-y-1 text-sm">
+                          {discovery.websiteAnalysis.strengths?.map((s, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                              <Check className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
+                              {s}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="p-4 bg-orange-500/10 rounded-lg border border-orange-500/20">
+                        <h4 className="font-medium text-orange-600 mb-2">Weaknesses</h4>
+                        <ul className="space-y-1 text-sm">
+                          {discovery.websiteAnalysis.weaknesses?.map((w, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                              <AlertCircle className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
+                              {w}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                        <h4 className="font-medium text-blue-600 mb-2">Opportunities</h4>
+                        <ul className="space-y-1 text-sm">
+                          {discovery.websiteAnalysis.opportunities?.map((o, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                              <Sparkles className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+                              {o}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+            )}
+
+            {/* Marketing Channels */}
+            <Card>
+              <SectionHeader 
+                id="channels" 
+                title="Current Marketing" 
+                icon={Target} 
+                badge={discovery.currentMarketingChannels?.length?.toString()}
+              />
+              {expandedSections.has('channels') && (
+                <CardContent className="pt-0 pb-4 px-4">
+                  <div className="flex flex-wrap gap-2">
+                    {discovery.currentMarketingChannels?.map((channel, i) => (
+                      <Badge key={i} variant="secondary">{channel}</Badge>
+                    ))}
+                  </div>
+                  {discovery.currentPainPoints?.length > 0 && (
+                    <div className="mt-4">
+                      <label className="text-sm font-medium text-muted-foreground block mb-2">Pain Points</label>
+                      <div className="flex flex-wrap gap-2">
+                        {discovery.currentPainPoints.map((point, i) => (
+                          <Badge key={i} variant="outline" className="bg-destructive/10 border-destructive/30 text-destructive">
+                            {point}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              )}
+            </Card>
+
+            {/* Competition */}
+            <Card>
+              <SectionHeader 
+                id="competition" 
+                title="Competition" 
+                icon={Users}
+                badge={discovery.competitors?.length?.toString()}
+              />
+              {expandedSections.has('competition') && (
+                <CardContent className="pt-0 pb-4 px-4 space-y-4">
+                  <div className="flex flex-wrap gap-2">
+                    {discovery.competitors?.map((comp, i) => (
+                      <Badge key={i} variant="outline">{comp}</Badge>
+                    ))}
+                  </div>
+                  {discovery.competitorAnalysis && (
+                    <p className="text-sm text-muted-foreground">{discovery.competitorAnalysis}</p>
+                  )}
+                </CardContent>
+              )}
+            </Card>
+
+            {/* Goals */}
+            <Card>
+              <SectionHeader 
+                id="goals" 
+                title="Goals & Metrics" 
+                icon={BarChart3}
+                badge={discovery.primaryGoals?.length?.toString()}
+              />
+              {expandedSections.has('goals') && (
+                <CardContent className="pt-0 pb-4 px-4 space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground block mb-2">Primary Goals</label>
+                    <ul className="space-y-2">
+                      {discovery.primaryGoals?.map((goal, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <Target className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                          {goal}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground block mb-2">Success Metrics</label>
+                    <div className="flex flex-wrap gap-2">
+                      {discovery.successMetrics?.map((metric, i) => (
+                        <Badge key={i} variant="secondary">{metric}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                  {discovery.timeline && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Recommended Timeline</label>
+                      <Badge className="ml-2">{discovery.timeline}</Badge>
+                    </div>
+                  )}
+                </CardContent>
+              )}
+            </Card>
+
+            {/* Tools & Keywords */}
+            <Card>
+              <SectionHeader id="tools" title="Tools & Keywords" icon={Wrench} />
+              {expandedSections.has('tools') && (
+                <CardContent className="pt-0 pb-4 px-4 space-y-4">
+                  {discovery.existingTools?.length > 0 && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground block mb-2">Current Tools</label>
+                      <div className="flex flex-wrap gap-2">
+                        {discovery.existingTools.map((tool, i) => (
+                          <Badge key={i} variant="outline">{tool}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {discovery.keywords?.length > 0 && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground block mb-2">Target Keywords</label>
+                      <div className="flex flex-wrap gap-2">
+                        {discovery.keywords.map((kw, i) => (
+                          <Badge key={i} variant="secondary" className="bg-primary/10">{kw}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              )}
+            </Card>
+          </div>
+
+          {/* Chat Refinement Panel */}
+          <div className={`fixed bottom-6 right-6 z-50 transition-all ${chatOpen ? 'w-96' : 'w-auto'}`}>
+            {chatOpen ? (
+              <Card className="shadow-2xl border-2 border-primary/20">
+                <div className="flex items-center justify-between p-4 border-b border-border">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5 text-primary" />
+                    <span className="font-semibold">Refine Discovery</span>
+                  </div>
+                  <button onClick={() => setChatOpen(false)} className="p-1 hover:bg-muted rounded">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                
+                <div 
+                  ref={chatContainerRef}
+                  className="h-80 overflow-y-auto p-4 space-y-3"
+                >
+                  {chatMessages.map((msg, i) => (
+                    <div 
+                      key={i} 
+                      className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div 
+                        className={`max-w-[85%] px-3 py-2 rounded-lg text-sm ${
+                          msg.role === 'user' 
+                            ? 'bg-primary text-primary-foreground' 
+                            : 'bg-muted'
+                        }`}
+                      >
+                        {msg.content}
+                      </div>
+                    </div>
+                  ))}
+                  {refining && (
+                    <div className="flex justify-start">
+                      <div className="bg-muted px-3 py-2 rounded-lg">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-3 border-t border-border">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && refineDiscovery()}
+                      placeholder="Ask to change anything..."
+                      className="flex-1 px-3 py-2 bg-background border border-border rounded-lg text-sm focus:border-primary focus:outline-none"
+                    />
+                    <Button 
+                      size="sm" 
+                      onClick={refineDiscovery}
+                      disabled={!chatInput.trim() || refining}
+                    >
+                      <Send className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Examples: "Add more pain points" • "Change the tone to friendly" • "Add competitor XYZ"
+                  </p>
+                </div>
+              </Card>
+            ) : (
+              <Button 
+                onClick={() => setChatOpen(true)}
+                className="rounded-full w-14 h-14 shadow-lg"
+              >
+                <MessageSquare className="w-6 h-6" />
+              </Button>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
