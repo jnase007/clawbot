@@ -4,6 +4,8 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { useClient } from '@/components/ClientProvider';
+import { pdf } from '@react-pdf/renderer';
+import { StrategyPDF } from '@/components/pdf/StrategyPDF';
 import { 
   Brain, 
   Sparkles, 
@@ -26,7 +28,8 @@ import {
   MessageSquare,
   Send,
   X,
-  RefreshCw
+  RefreshCw,
+  FileDown
 } from 'lucide-react';
 
 interface Goal {
@@ -210,6 +213,36 @@ export default function Strategy() {
     setCopiedTemplate(template.name);
     setTimeout(() => setCopiedTemplate(null), 2000);
   };
+
+  const [exporting, setExporting] = useState(false);
+
+  async function exportToPDF() {
+    if (!strategy || !currentClient) return;
+    
+    setExporting(true);
+    try {
+      const blob = await pdf(
+        <StrategyPDF 
+          strategy={strategy} 
+          clientName={currentClient.name} 
+          clientLogo={currentClient.logo_url || undefined}
+        />
+      ).toBlob();
+      
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${currentClient.name.replace(/\s+/g, '_')}_Marketing_Strategy.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('PDF export error:', err);
+    } finally {
+      setExporting(false);
+    }
+  }
 
   async function refineStrategy() {
     if (!chatInput.trim() || !strategy || refining) return;
@@ -412,23 +445,43 @@ export default function Strategy() {
         </div>
 
         <div className="flex gap-3">
-        <Button 
-          onClick={generateStrategy} 
-          disabled={generating}
-            className="gap-2"
-        >
-          {generating ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-                Generating Strategy...
-            </>
-          ) : (
-            <>
-              <Sparkles className="w-4 h-4" />
-                {strategy ? 'Regenerate Strategy' : 'Generate AI Strategy'}
-            </>
+          {strategy && (
+            <Button 
+              onClick={exportToPDF} 
+              disabled={exporting}
+              variant="outline"
+              className="gap-2"
+            >
+              {exporting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <FileDown className="w-4 h-4" />
+                  Export PDF
+                </>
+              )}
+            </Button>
           )}
-        </Button>
+          <Button 
+            onClick={generateStrategy} 
+            disabled={generating}
+            className="gap-2"
+          >
+            {generating ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Generating Strategy...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                {strategy ? 'Regenerate Strategy' : 'Generate AI Strategy'}
+              </>
+            )}
+          </Button>
         </div>
       </div>
 

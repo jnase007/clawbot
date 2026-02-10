@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { pdf } from '@react-pdf/renderer';
+import { DiscoveryPDF } from '@/components/pdf/DiscoveryPDF';
 import { 
   ClipboardList, Building2, Target, Users, 
   Wrench, ChevronRight, ChevronLeft, Check, Sparkles,
-  Save, AlertCircle, Loader2
+  Save, AlertCircle, Loader2, FileDown
 } from 'lucide-react';
 
 const API_URL = '/api/save-discovery';
@@ -101,6 +103,35 @@ export default function Discovery() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedClientId, setSavedClientId] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  async function exportToPDF() {
+    if (!clientName.trim()) return;
+    
+    setExporting(true);
+    try {
+      const blob = await pdf(
+        <DiscoveryPDF 
+          discovery={data} 
+          clientName={clientName} 
+          clientIndustry={industry}
+        />
+      ).toBlob();
+      
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${clientName.replace(/\s+/g, '_')}_Discovery_Document.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('PDF export error:', err);
+    } finally {
+      setExporting(false);
+    }
+  }
 
   const updateField = (field: keyof DiscoveryData, value: string | string[]) => {
     setData(prev => ({ ...prev, [field]: value }));
@@ -504,6 +535,23 @@ export default function Discovery() {
                   <>
                     <Save className="w-5 h-5" />
                     Save Discovery
+                  </>
+                )}
+              </button>
+              <button
+                onClick={exportToPDF}
+                disabled={exporting || !clientName}
+                className="px-6 py-3 bg-secondary text-foreground rounded-lg hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {exporting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Exporting...
+                  </>
+                ) : (
+                  <>
+                    <FileDown className="w-5 h-5" />
+                    Export PDF
                   </>
                 )}
               </button>
