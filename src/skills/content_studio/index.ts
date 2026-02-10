@@ -41,10 +41,63 @@ interface BlogPost {
   headings: string[];
   keywords: string[];
   estimatedReadTime: number;
+  wordCount: number;
+  seoScore: number;
+  geoOptimizations: string[];
+  faqSection: Array<{ question: string; answer: string }>;
+  internalLinkingSuggestions: string[];
+  featuredSnippetTarget: string;
 }
 
 /**
- * Generate a full blog post for Brandastic
+ * SEO & GEO Best Practices System Prompt
+ */
+const SEO_GEO_SYSTEM_PROMPT = `You are an expert SEO content writer for Brandastic, a digital marketing agency specializing in AI-powered marketing solutions for healthcare and dental companies.
+
+=== SEO BEST PRACTICES (Search Engine Optimization) ===
+1. TITLE TAG: 50-60 characters, primary keyword near the beginning
+2. META DESCRIPTION: 150-160 characters, compelling with CTA, includes primary keyword
+3. HEADING STRUCTURE: 
+   - One H1 (title)
+   - Multiple H2s for main sections
+   - H3s for subsections
+   - Include keywords naturally in headings
+4. KEYWORD OPTIMIZATION:
+   - Primary keyword in first 100 words
+   - 1-2% keyword density (natural, not stuffed)
+   - Long-tail keyword variations throughout
+   - LSI (Latent Semantic Indexing) keywords
+5. CONTENT STRUCTURE:
+   - Short paragraphs (2-4 sentences)
+   - Bullet points and numbered lists
+   - Bold/italic for emphasis
+   - Table of contents for long posts
+6. INTERNAL LINKING: Suggest 3-5 related topic links
+7. FEATURED SNIPPET OPTIMIZATION: Include a concise definition/answer for "what is" queries
+
+=== GEO BEST PRACTICES (Generative Engine Optimization) ===
+GEO optimizes content so AI systems (ChatGPT, Perplexity, Claude, Google SGE) can cite it:
+
+1. QUOTABLE STATEMENTS: Include clear, factual statements that AI can quote
+2. STATISTICS & DATA: Include specific numbers, percentages, and cite sources
+3. DEFINITIONS: Provide clear definitions for key terms (e.g., "X is defined as...")
+4. FAQ SECTION: Include 5+ FAQs with concise, complete answers
+5. ENTITY MENTIONS: Reference known entities (companies, people, standards)
+6. STRUCTURED DATA: Use clear formatting AI can parse
+7. AUTHORITATIVE TONE: Write as an expert with first-hand experience
+8. CITE SOURCES: Reference studies, reports, and industry standards
+9. RECENCY: Include current year references and trends
+10. COMPLETE ANSWERS: Provide full context, don't assume prior knowledge
+
+=== CONTENT REQUIREMENTS ===
+- MINIMUM 2000 words (aim for 2200-2500 for comprehensive coverage)
+- Include real statistics and data points (even if illustrative, make them realistic)
+- Write in a way that positions Brandastic as a thought leader
+- Include actionable takeaways readers can implement
+- End with a compelling CTA to contact Brandastic`;
+
+/**
+ * Generate a full blog post for Brandastic (2000+ words, SEO & GEO optimized)
  */
 export async function generateBlogPost(options: {
   topic: string;
@@ -53,54 +106,70 @@ export async function generateBlogPost(options: {
   wordCount?: number;
   tone?: 'professional' | 'conversational' | 'educational' | 'persuasive';
   includeCallToAction?: boolean;
+  includeFAQ?: boolean;
 }): Promise<BlogPost> {
   const {
     topic,
     targetAudience = 'healthcare and dental marketing professionals',
     keywords = [],
-    wordCount = 1200,
+    wordCount = 2200, // Default to 2200 words (minimum 2000)
     tone = 'professional',
     includeCallToAction = true,
+    includeFAQ = true,
   } = options;
+
+  // Enforce minimum 2000 words
+  const targetWordCount = Math.max(wordCount, 2000);
 
   const safeTopic = sanitizeInput(topic);
   const safeAudience = sanitizeInput(targetAudience);
 
   const client = getAnthropic();
 
+  // Use Claude 3.5 Sonnet for longer, higher-quality content
   const response = await client.messages.create({
-    model: 'claude-3-haiku-20240307',
-    max_tokens: 4096,
-    system: `You are an expert content writer for Brandastic, a digital marketing agency specializing in AI-powered marketing solutions for healthcare and dental companies.
-
-Write SEO-optimized, valuable blog content that:
-- Provides actionable insights
-- Establishes thought leadership
-- Naturally incorporates keywords
-- Uses proper heading structure (H2, H3)
-- Includes relevant examples and data
-- Has a compelling introduction and conclusion
-${includeCallToAction ? '- Ends with a CTA to contact Brandastic for AI marketing solutions' : ''}
+    model: 'claude-3-5-sonnet-20241022',
+    max_tokens: 8192, // Increased for longer content
+    system: `${SEO_GEO_SYSTEM_PROMPT}
 
 Target audience: ${safeAudience}
 Tone: ${tone}
-Target word count: ${wordCount}`,
+Minimum word count: ${targetWordCount} words
+${includeCallToAction ? 'Include a CTA to contact Brandastic for AI marketing solutions at the end.' : ''}`,
     messages: [
       {
         role: 'user',
-        content: `Write a comprehensive blog post about: ${safeTopic}
+        content: `Write a comprehensive, SEO and GEO optimized blog post about: ${safeTopic}
 
-${keywords.length > 0 ? `Target keywords to naturally include: ${keywords.join(', ')}` : ''}
+${keywords.length > 0 ? `Primary keywords to naturally include: ${keywords.join(', ')}` : ''}
+
+REQUIREMENTS:
+1. MINIMUM ${targetWordCount} words (this is critical - count carefully)
+2. Follow all SEO best practices outlined
+3. Follow all GEO best practices for AI citability
+4. Include ${includeFAQ ? '5-7 FAQs with complete answers' : 'no FAQ section'}
+5. Include realistic statistics and data points
+6. Reference current trends (2024-2026)
+7. Make it genuinely valuable and actionable
 
 Return JSON:
 {
-  "title": "SEO-optimized title (50-60 chars)",
-  "metaDescription": "Meta description (150-160 chars)",
+  "title": "SEO-optimized title with primary keyword (50-60 chars)",
+  "metaDescription": "Compelling meta description with keyword and CTA (150-160 chars)",
   "excerpt": "Blog excerpt for previews (100-150 chars)",
-  "content": "Full blog post in markdown format with ## and ### headings",
+  "content": "Full blog post in markdown format. MUST be ${targetWordCount}+ words. Use ## for H2, ### for H3. Include statistics, examples, and actionable advice.",
   "headings": ["H2 heading 1", "H2 heading 2", ...],
-  "keywords": ["keyword1", "keyword2", ...],
-  "estimatedReadTime": 5
+  "keywords": ["primary keyword", "secondary keyword", "long-tail keyword", ...],
+  "estimatedReadTime": 10,
+  "wordCount": <actual word count>,
+  "seoScore": <estimated SEO score 1-100>,
+  "geoOptimizations": ["Quotable statistic about X", "Clear definition of Y", "FAQ answers for AI citation", ...],
+  "faqSection": [
+    {"question": "What is X?", "answer": "Complete answer that AI can cite..."},
+    ...
+  ],
+  "internalLinkingSuggestions": ["Related topic 1", "Related topic 2", ...],
+  "featuredSnippetTarget": "Concise 40-60 word answer to the main query for featured snippet"
 }`,
       },
     ],
@@ -111,13 +180,23 @@ Return JSON:
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   const result = JSON.parse(jsonMatch ? jsonMatch[0] : '{}');
 
+  // Calculate actual word count
+  const actualWordCount = result.content ? result.content.split(/\s+/).length : 0;
+  result.wordCount = actualWordCount;
+
   await logAction(
     'email' as Platform,
     'generate_blog_post',
     true,
     undefined,
     undefined,
-    { topic, wordCount: result.content?.length }
+    { 
+      topic, 
+      targetWordCount,
+      actualWordCount,
+      seoScore: result.seoScore,
+      geoOptimizations: result.geoOptimizations?.length || 0
+    }
   );
 
   return result;
