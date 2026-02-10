@@ -1,55 +1,143 @@
 import { useState } from 'react';
-import { Search, Users, Building2, Mail, Download, Filter, RefreshCw, Target } from 'lucide-react';
+import { 
+  Target, Search, Users, Building2, Mail, Linkedin,
+  Loader2, AlertCircle, Download, RefreshCw, Check, Filter,
+  MapPin, ChevronDown
+} from 'lucide-react';
 
 interface Lead {
   id: string;
-  first_name: string;
-  last_name: string;
+  name: string;
+  firstName?: string;
+  lastName?: string;
   title: string;
   company: string;
-  email: string | null;
-  has_email: boolean;
-  linkedin_url?: string;
+  email?: string;
+  phone?: string;
+  linkedin?: string;
   location?: string;
+  industry?: string;
+  companySize?: number;
+  companyWebsite?: string;
 }
 
-// Sample data for demo (in production, this would come from the API)
-const sampleLeads: Lead[] = [
-  { id: '1', first_name: 'Erik', last_name: 'Johnson', title: 'Chief Marketing Officer', company: 'Dental Associates', email: null, has_email: false, location: 'Los Angeles, CA' },
-  { id: '2', first_name: 'Sarah', last_name: 'Miller', title: 'VP of Marketing', company: 'Smile Dental Group', email: 'sarah@smiledental.com', has_email: true, location: 'San Diego, CA' },
-  { id: '3', first_name: 'Greg', last_name: 'Thompson', title: 'Chief Marketing Officer', company: 'Carestream Dental', email: null, has_email: false, location: 'Atlanta, GA' },
-  { id: '4', first_name: 'Maria', last_name: 'Garcia', title: 'Marketing Director', company: 'Pacific Dental Services', email: 'mgarcia@pacificdental.com', has_email: true, location: 'Irvine, CA' },
-  { id: '5', first_name: 'James', last_name: 'Wilson', title: 'CMO', company: 'Aspen Dental', email: null, has_email: false, location: 'Chicago, IL' },
-  { id: '6', first_name: 'Jennifer', last_name: 'Davis', title: 'Marketing Manager', company: 'Heartland Dental', email: 'jdavis@heartland.com', has_email: true, location: 'Effingham, IL' },
-  { id: '7', first_name: 'Michael', last_name: 'Brown', title: 'VP Marketing', company: 'Dental Care Alliance', email: null, has_email: false, location: 'Sarasota, FL' },
-  { id: '8', first_name: 'Lisa', last_name: 'Anderson', title: 'Chief Marketing Officer', company: 'Affordable Dentures', email: 'landerson@affordabledentures.com', has_email: true, location: 'Kinston, NC' },
+interface SearchFilters {
+  query: string;
+  titles: string[];
+  industries: string[];
+  locations: string[];
+  companySize: string;
+}
+
+const API_URL = '/api/apollo-search';
+
+const defaultTitles = [
+  'Marketing Director',
+  'CMO',
+  'Chief Marketing Officer', 
+  'Marketing Manager',
+  'VP of Marketing',
+  'Director of Marketing',
+];
+
+const defaultIndustries = [
+  'Hospital & Health Care',
+  'Medical Practice',
+  'Medical Devices',
+  'Health, Wellness and Fitness',
+  'Mental Health Care',
+];
+
+const companySizes = [
+  { value: '', label: 'Any size' },
+  { value: '1,10', label: '1-10 employees' },
+  { value: '11,50', label: '11-50 employees' },
+  { value: '51,200', label: '51-200 employees' },
+  { value: '201,500', label: '201-500 employees' },
+  { value: '501,1000', label: '501-1000 employees' },
+  { value: '1001,5000', label: '1001-5000 employees' },
 ];
 
 export default function ApolloLeads() {
-  const [leads] = useState<Lead[]>(sampleLeads);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [industry, setIndustry] = useState('dental');
-  const [titles, setTitles] = useState('CMO,Marketing Director,VP Marketing');
-  const [location, setLocation] = useState('United States');
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [totalResults, setTotalResults] = useState(0);
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
+  const [showFilters, setShowFilters] = useState(true);
+  
+  const [filters, setFilters] = useState<SearchFilters>({
+    query: '',
+    titles: ['Marketing Director', 'CMO', 'Marketing Manager'],
+    industries: ['Hospital & Health Care', 'Medical Practice'],
+    locations: ['United States'],
+    companySize: '',
+  });
 
   const handleSearch = async () => {
     setIsSearching(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsSearching(false);
-    // In production, this would call the Apollo API
+    setError(null);
+    
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: filters.query,
+          titles: filters.titles,
+          industries: filters.industries,
+          locations: filters.locations,
+          companySize: filters.companySize,
+          limit: 25,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.message || 'Search failed');
+      }
+
+      const data = await response.json();
+      setLeads(data.leads || []);
+      setTotalResults(data.total || 0);
+      setSelectedLeads(new Set());
+
+    } catch (err) {
+      console.error('Search error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to search leads');
+    } finally {
+      setIsSearching(false);
+    }
   };
 
-  const toggleSelectLead = (id: string) => {
-    const newSelected = new Set(selectedLeads);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
-    } else {
-      newSelected.add(id);
-    }
-    setSelectedLeads(newSelected);
+  const toggleTitle = (title: string) => {
+    setFilters(prev => ({
+      ...prev,
+      titles: prev.titles.includes(title)
+        ? prev.titles.filter(t => t !== title)
+        : [...prev.titles, title],
+    }));
+  };
+
+  const toggleIndustry = (industry: string) => {
+    setFilters(prev => ({
+      ...prev,
+      industries: prev.industries.includes(industry)
+        ? prev.industries.filter(i => i !== industry)
+        : [...prev.industries, industry],
+    }));
+  };
+
+  const toggleLead = (id: string) => {
+    setSelectedLeads(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
   };
 
   const selectAll = () => {
@@ -60,224 +148,297 @@ export default function ApolloLeads() {
     }
   };
 
-  const filteredLeads = leads.filter(lead => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      lead.first_name.toLowerCase().includes(query) ||
-      lead.last_name.toLowerCase().includes(query) ||
-      lead.company.toLowerCase().includes(query) ||
-      lead.title.toLowerCase().includes(query)
-    );
-  });
+  const exportLeads = () => {
+    const selectedData = leads.filter(l => selectedLeads.has(l.id));
+    if (selectedData.length === 0) return;
+    
+    const csv = [
+      ['Name', 'Title', 'Company', 'Email', 'Phone', 'LinkedIn', 'Location', 'Industry'].join(','),
+      ...selectedData.map(l => [
+        l.name,
+        l.title,
+        l.company,
+        l.email || '',
+        l.phone || '',
+        l.linkedin || '',
+        l.location || '',
+        l.industry || '',
+      ].map(v => `"${v}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `apollo-leads-${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-              <Target className="w-8 h-8 text-orange-500" />
-              Apollo.io Lead Generation
+            <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
+              <Target className="w-7 h-7 text-orange-500" />
+              Apollo Lead Search
             </h1>
-            <p className="text-gray-400 mt-1">Find healthcare & dental marketing leaders</p>
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={() => {}}
-              className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Export CSV
-            </button>
-            <button
-              onClick={() => {}}
-              disabled={selectedLeads.size === 0}
-              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              <Users className="w-4 h-4" />
-              Import {selectedLeads.size > 0 ? `(${selectedLeads.size})` : ''} to Contacts
-            </button>
-          </div>
-        </div>
-
-        {/* Search Filters */}
-        <div className="bg-slate-800/50 backdrop-blur rounded-xl p-6 mb-6 border border-slate-700">
-          <div className="flex items-center gap-2 mb-4">
-            <Filter className="w-5 h-5 text-orange-500" />
-            <h2 className="text-lg font-semibold text-white">Search Filters</h2>
+            <p className="text-gray-400 mt-1">Find healthcare marketing decision-makers</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Industry</label>
-              <select
-                value={industry}
-                onChange={(e) => setIndustry(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-orange-500 focus:outline-none"
-              >
-                <option value="dental">Dental</option>
-                <option value="healthcare">Healthcare</option>
-                <option value="medical">Medical Practice</option>
-                <option value="hospital">Hospital & Health Care</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Job Titles</label>
-              <input
-                type="text"
-                value={titles}
-                onChange={(e) => setTitles(e.target.value)}
-                placeholder="CMO, Marketing Director..."
-                className="w-full px-3 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-orange-500 focus:outline-none"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Location</label>
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="United States"
-                className="w-full px-3 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-orange-500 focus:outline-none"
-              />
-            </div>
-            
-            <div className="flex items-end">
+          {selectedLeads.size > 0 && (
+            <button
+              onClick={exportLeads}
+              className="mt-4 md:mt-0 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Export {selectedLeads.size} Leads
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Filters Panel */}
+          <div className="lg:col-span-1">
+            <div className="bg-slate-800/70 rounded-xl border border-slate-700 overflow-hidden">
               <button
-                onClick={handleSearch}
-                disabled={isSearching}
-                className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-500 disabled:opacity-50 flex items-center justify-center gap-2"
+                onClick={() => setShowFilters(!showFilters)}
+                className="w-full p-4 flex items-center justify-between text-white font-semibold lg:cursor-default"
               >
-                {isSearching ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    Searching...
-                  </>
-                ) : (
-                  <>
-                    <Search className="w-4 h-4" />
-                    Search Apollo
-                  </>
-                )}
+                <span className="flex items-center gap-2">
+                  <Filter className="w-4 h-4" />
+                  Search Filters
+                </span>
+                <ChevronDown className={`w-4 h-4 lg:hidden transition-transform ${showFilters ? 'rotate-180' : ''}`} />
               </button>
+              
+              <div className={`${showFilters ? 'block' : 'hidden lg:block'} p-4 pt-0 space-y-5`}>
+                {/* Keyword Search */}
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Keywords</label>
+                  <input
+                    type="text"
+                    value={filters.query}
+                    onChange={(e) => setFilters(prev => ({ ...prev, query: e.target.value }))}
+                    placeholder="e.g., dental, orthodontics"
+                    className="w-full px-3 py-2 bg-slate-900/50 text-white rounded-lg border border-slate-600 focus:border-orange-500 focus:outline-none text-sm"
+                  />
+                </div>
+
+                {/* Job Titles */}
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Job Titles</label>
+                  <div className="space-y-1 max-h-40 overflow-y-auto">
+                    {defaultTitles.map(title => (
+                      <label key={title} className="flex items-center gap-2 cursor-pointer hover:bg-slate-700/50 p-1 rounded">
+                        <input
+                          type="checkbox"
+                          checked={filters.titles.includes(title)}
+                          onChange={() => toggleTitle(title)}
+                          className="rounded border-slate-500"
+                        />
+                        <span className="text-sm text-gray-300">{title}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Industries */}
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Industries</label>
+                  <div className="space-y-1 max-h-40 overflow-y-auto">
+                    {defaultIndustries.map(industry => (
+                      <label key={industry} className="flex items-center gap-2 cursor-pointer hover:bg-slate-700/50 p-1 rounded">
+                        <input
+                          type="checkbox"
+                          checked={filters.industries.includes(industry)}
+                          onChange={() => toggleIndustry(industry)}
+                          className="rounded border-slate-500"
+                        />
+                        <span className="text-sm text-gray-300">{industry}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Company Size */}
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Company Size</label>
+                  <select
+                    value={filters.companySize}
+                    onChange={(e) => setFilters(prev => ({ ...prev, companySize: e.target.value }))}
+                    className="w-full px-3 py-2 bg-slate-900/50 text-white rounded-lg border border-slate-600 focus:border-orange-500 focus:outline-none text-sm"
+                  >
+                    {companySizes.map(size => (
+                      <option key={size.value} value={size.value}>{size.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Search Button */}
+                <button
+                  onClick={handleSearch}
+                  disabled={isSearching}
+                  className="w-full px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-500 disabled:opacity-50 flex items-center justify-center gap-2 font-semibold"
+                >
+                  {isSearching ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Searching...
+                    </>
+                  ) : (
+                    <>
+                      <Search className="w-5 h-5" />
+                      Search Leads
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Quick Search */}
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Filter results by name, company, or title..."
-              className="w-full pl-10 pr-4 py-3 bg-slate-800/50 text-white rounded-xl border border-slate-700 focus:border-orange-500 focus:outline-none"
-            />
-          </div>
-        </div>
-
-        {/* Results Stats */}
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-gray-400">
-            Showing <span className="text-white font-semibold">{filteredLeads.length}</span> leads
-            {selectedLeads.size > 0 && (
-              <span className="ml-2 text-orange-400">({selectedLeads.size} selected)</span>
+          {/* Results Panel */}
+          <div className="lg:col-span-3">
+            {/* Error Message */}
+            {error && (
+              <div className="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-red-400 font-medium">Search Failed</p>
+                  <p className="text-red-300 text-sm">{error}</p>
+                </div>
+              </div>
             )}
-          </p>
-          <button
-            onClick={selectAll}
-            className="text-sm text-orange-400 hover:text-orange-300"
-          >
-            {selectedLeads.size === leads.length ? 'Deselect All' : 'Select All'}
-          </button>
-        </div>
 
-        {/* Leads Table */}
-        <div className="bg-slate-800/50 backdrop-blur rounded-xl border border-slate-700 overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-slate-700/50">
-              <tr>
-                <th className="px-4 py-3 text-left">
-                  <input
-                    type="checkbox"
-                    checked={selectedLeads.size === leads.length && leads.length > 0}
-                    onChange={selectAll}
-                    className="rounded border-slate-500"
-                  />
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Name</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Title</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Company</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Location</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Email</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-700">
-              {filteredLeads.map((lead) => (
-                <tr 
-                  key={lead.id} 
-                  className={`hover:bg-slate-700/30 transition-colors ${selectedLeads.has(lead.id) ? 'bg-orange-900/20' : ''}`}
-                >
-                  <td className="px-4 py-3">
+            {/* Results Header */}
+            {leads.length > 0 && (
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={selectedLeads.has(lead.id)}
-                      onChange={() => toggleSelectLead(lead.id)}
+                      checked={selectedLeads.size === leads.length && leads.length > 0}
+                      onChange={selectAll}
                       className="rounded border-slate-500"
                     />
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center text-white font-semibold text-sm">
-                        {lead.first_name[0]}{lead.last_name[0]}
-                      </div>
-                      <span className="text-white font-medium">{lead.first_name} {lead.last_name}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-gray-300">{lead.title}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2 text-gray-300">
-                      <Building2 className="w-4 h-4 text-gray-500" />
-                      {lead.company}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-gray-400 text-sm">{lead.location || '-'}</td>
-                  <td className="px-4 py-3">
-                    {lead.has_email ? (
-                      <span className="inline-flex items-center gap-1 text-green-400">
-                        <Mail className="w-4 h-4" />
-                        Available
-                      </span>
-                    ) : (
-                      <span className="text-gray-500">Not available</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <button className="text-orange-400 hover:text-orange-300 text-sm">
-                      View Profile
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    <span className="text-sm text-gray-300">Select all</span>
+                  </label>
+                  <span className="text-sm text-gray-400">
+                    {totalResults.toLocaleString()} results found
+                  </span>
+                </div>
+                <button
+                  onClick={handleSearch}
+                  disabled={isSearching}
+                  className="text-sm text-gray-400 hover:text-white flex items-center gap-1"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isSearching ? 'animate-spin' : ''}`} />
+                  Refresh
+                </button>
+              </div>
+            )}
 
-        {/* CLI Command Hint */}
-        <div className="mt-6 bg-slate-800/30 rounded-xl p-4 border border-slate-700">
-          <p className="text-gray-400 text-sm">
-            💡 <span className="text-white">Pro tip:</span> Use the CLI for bulk searches:
-          </p>
-          <code className="block mt-2 text-orange-400 font-mono text-sm bg-slate-900/50 p-3 rounded-lg">
-            clawbot apollo healthcare --limit 50 --import
-          </code>
+            {/* Leads List */}
+            {leads.length > 0 ? (
+              <div className="space-y-3">
+                {leads.map(lead => (
+                  <div
+                    key={lead.id}
+                    className={`bg-slate-800/70 rounded-xl p-4 border transition-colors cursor-pointer ${
+                      selectedLeads.has(lead.id) 
+                        ? 'border-orange-500 bg-orange-500/10' 
+                        : 'border-slate-700 hover:border-slate-600'
+                    }`}
+                    onClick={() => toggleLead(lead.id)}
+                  >
+                    <div className="flex items-start gap-4">
+                      {/* Checkbox */}
+                      <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 mt-1 ${
+                        selectedLeads.has(lead.id) ? 'bg-orange-500 border-orange-500' : 'border-slate-500'
+                      }`}>
+                        {selectedLeads.has(lead.id) && <Check className="w-3 h-3 text-white" />}
+                      </div>
+
+                      {/* Lead Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                          <div>
+                            <h3 className="text-white font-semibold">{lead.name}</h3>
+                            <p className="text-gray-400 text-sm">{lead.title}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {lead.linkedin && (
+                              <a
+                                href={lead.linkedin}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="p-2 bg-blue-600/20 text-blue-400 rounded-lg hover:bg-blue-600/30"
+                              >
+                                <Linkedin className="w-4 h-4" />
+                              </a>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+                          <div className="flex items-center gap-2 text-gray-400">
+                            <Building2 className="w-4 h-4 shrink-0" />
+                            <span className="truncate">{lead.company}</span>
+                          </div>
+                          {lead.email && (
+                            <div className="flex items-center gap-2 text-gray-400">
+                              <Mail className="w-4 h-4 shrink-0" />
+                              <span className="truncate">{lead.email}</span>
+                            </div>
+                          )}
+                          {lead.location && (
+                            <div className="flex items-center gap-2 text-gray-400">
+                              <MapPin className="w-4 h-4 shrink-0" />
+                              <span className="truncate">{lead.location}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {(lead.industry || lead.companySize) && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {lead.industry && (
+                              <span className="px-2 py-1 bg-slate-700 rounded text-xs text-gray-300">
+                                {lead.industry}
+                              </span>
+                            )}
+                            {lead.companySize && (
+                              <span className="px-2 py-1 bg-slate-700 rounded text-xs text-gray-300">
+                                {lead.companySize.toLocaleString()} employees
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : !isSearching && (
+              <div className="bg-slate-800/50 rounded-xl p-12 border border-slate-700 text-center">
+                <Users className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-white mb-2">No Leads Yet</h3>
+                <p className="text-gray-400 mb-6">
+                  Configure your filters and click "Search Leads" to find healthcare marketing decision-makers
+                </p>
+                <button
+                  onClick={handleSearch}
+                  disabled={isSearching}
+                  className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-500 inline-flex items-center gap-2"
+                >
+                  <Search className="w-5 h-5" />
+                  Search Now
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

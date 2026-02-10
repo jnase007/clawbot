@@ -1,9 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   ClipboardList, Building2, Target, Users, 
   Wrench, ChevronRight, ChevronLeft, Check, Sparkles,
-  Save, AlertCircle
+  Save, AlertCircle, Loader2
 } from 'lucide-react';
+
+const API_URL = '/api/save-discovery';
 
 interface DiscoveryData {
   // Business Overview
@@ -88,11 +91,16 @@ const steps = [
 ];
 
 export default function Discovery() {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [data, setData] = useState<DiscoveryData>(initialData);
   const [clientName, setClientName] = useState('');
+  const [industry] = useState('Healthcare');
   const [isSaving, setIsSaving] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [savedClientId, setSavedClientId] = useState<string | null>(null);
 
   const updateField = (field: keyof DiscoveryData, value: string | string[]) => {
     setData(prev => ({ ...prev, [field]: value }));
@@ -107,12 +115,69 @@ export default function Discovery() {
   };
 
   const handleSave = async () => {
+    if (!clientName.trim()) {
+      setError('Please enter a client name');
+      return;
+    }
+
     setIsSaving(true);
-    // Simulate saving to database
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setError(null);
+    
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create_and_save',
+          data: {
+            clientName: clientName.trim(),
+            industry,
+            businessDescription: data.businessDescription,
+            targetAudience: data.targetAudience,
+            uniqueValueProposition: data.uniqueValueProposition,
+            currentMarketingChannels: data.currentMarketingChannels,
+            currentMonthlyBudget: data.currentMonthlyBudget,
+            currentPainPoints: data.currentPainPoints,
+            competitors: data.competitors,
+            competitorAnalysis: data.competitorAnalysis,
+            primaryGoals: data.primaryGoals,
+            successMetrics: data.successMetrics,
+            timeline: data.timeline,
+            existingTools: data.existingTools,
+            websiteUrl: data.websiteUrl,
+            socialProfiles: data.socialProfiles,
+            discoveryNotes: data.discoveryNotes,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.message || 'Save failed');
+      }
+
+      const result = await response.json();
+      setSavedClientId(result.client?.id);
+      setSaved(true);
+      
+    } catch (err) {
+      console.error('Save error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save discovery');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleGenerateStrategy = async () => {
+    if (!savedClientId) {
+      // Save first, then generate
+      await handleSave();
+    }
+    setIsGenerating(true);
+    // Navigate to strategy page or trigger generation
+    setTimeout(() => {
+      navigate('/dashboard/strategy');
+    }, 1000);
   };
 
   const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 6));
@@ -405,14 +470,31 @@ export default function Discovery() {
               </div>
             )}
 
+            {error && (
+              <div className="flex items-center gap-2 text-red-400 bg-red-400/10 px-4 py-3 rounded-lg">
+                <AlertCircle className="w-5 h-5" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {saved && (
+              <div className="flex items-center gap-2 text-green-400 bg-green-400/10 px-4 py-3 rounded-lg">
+                <Check className="w-5 h-5" />
+                <span>Discovery saved successfully! Client has been added to your pipeline.</span>
+              </div>
+            )}
+
             <div className="flex gap-4">
               <button
                 onClick={handleSave}
-                disabled={isSaving || !clientName}
+                disabled={isSaving || !clientName || saved}
                 className="flex-1 px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isSaving ? (
-                  <>Saving...</>
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Saving to Database...
+                  </>
                 ) : saved ? (
                   <>
                     <Check className="w-5 h-5" />
@@ -426,12 +508,21 @@ export default function Discovery() {
                 )}
               </button>
               <button
-                onClick={() => {}}
-                disabled={!clientName}
+                onClick={handleGenerateStrategy}
+                disabled={!clientName || isGenerating}
                 className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                <Sparkles className="w-5 h-5" />
-                Generate AI Strategy
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-5 h-5" />
+                    {saved ? 'Generate AI Strategy' : 'Save & Generate Strategy'}
+                  </>
+                )}
               </button>
             </div>
           </div>
