@@ -89,7 +89,7 @@ async function apolloRequest<T>(
     throw new Error(`Apollo API error: ${response.status} - ${error}`);
   }
 
-  return response.json();
+  return response.json() as Promise<T>;
 }
 
 /**

@@ -729,6 +729,278 @@ apollo
     }
   });
 
+// ============ CONTENT STUDIO COMMANDS ============
+
+const content = program.command('content').description('✍️ Content Studio - Blog & Ads');
+
+content
+  .command('blog')
+  .description('Generate a blog post for Brandastic')
+  .requiredOption('-t, --topic <topic>', 'Blog topic')
+  .option('-w, --words <number>', 'Target word count', '1200')
+  .option('-a, --audience <audience>', 'Target audience', 'healthcare marketing professionals')
+  .option('--tone <tone>', 'Tone: professional, conversational, educational', 'professional')
+  .action(async (options) => {
+    printSection('BLOG POST GENERATOR');
+    
+    const spinner = new Spinner('Generating blog post with AI...');
+    spinner.start();
+    
+    try {
+      const { generateBlogPost } = await import('./skills/content_studio/index.js');
+      
+      const post = await generateBlogPost({
+        topic: options.topic,
+        targetAudience: options.audience,
+        wordCount: parseInt(options.words),
+        tone: options.tone,
+      });
+      
+      spinner.stop(true);
+      
+      console.log();
+      printInfo('Title', post.title);
+      printInfo('Meta Description', post.metaDescription);
+      printInfo('Read Time', post.estimatedReadTime + ' min');
+      printInfo('Keywords', post.keywords?.join(', ') || '-');
+      
+      console.log();
+      console.log(chalk.cyan('  Headings:'));
+      post.headings?.forEach((h: string) => console.log(chalk.gray('    • ') + h));
+      
+      console.log();
+      console.log(chalk.cyan('  Excerpt:'));
+      console.log(chalk.gray('    ') + post.excerpt);
+      
+      console.log();
+      console.log(chalk.green('  ✓ Full content generated (' + post.content?.length + ' chars)'));
+      console.log(chalk.gray('    Use --output flag to save to file (coming soon)'));
+      
+    } catch (error) {
+      spinner.stop(false);
+      printError(`Error: ${error}`);
+    }
+  });
+
+content
+  .command('ideas')
+  .description('Generate blog post ideas for content calendar')
+  .option('-i, --industry <industry>', 'Target industry', 'dental marketing')
+  .option('-c, --count <number>', 'Number of ideas', '10')
+  .action(async (options) => {
+    printSection('BLOG IDEAS GENERATOR');
+    
+    const spinner = new Spinner('Generating content ideas...');
+    spinner.start();
+    
+    try {
+      const { generateBlogIdeas } = await import('./skills/content_studio/index.js');
+      
+      const ideas = await generateBlogIdeas({
+        industry: options.industry,
+        count: parseInt(options.count),
+      });
+      
+      spinner.stop(true);
+      
+      if (ideas.length === 0) {
+        printInfo('Ideas', 'None generated');
+      } else {
+        ideas.forEach((idea: any, i: number) => {
+          console.log();
+          console.log(chalk.cyan(`  ${i + 1}. ${idea.title}`));
+          console.log(chalk.gray(`     ${idea.description}`));
+          console.log(chalk.gray(`     Keywords: ${idea.keywords?.join(', ')}`));
+          console.log(chalk.gray(`     Difficulty: ${idea.difficulty} | Search Volume: ${idea.searchVolume}`));
+        });
+      }
+      
+    } catch (error) {
+      spinner.stop(false);
+      printError(`Error: ${error}`);
+    }
+  });
+
+content
+  .command('meta-ads')
+  .description('Generate Facebook/Instagram ads')
+  .requiredOption('-p, --product <product>', 'Product or service to advertise')
+  .option('-a, --audience <audience>', 'Target audience', 'dental practice owners')
+  .option('-o, --objective <objective>', 'Campaign objective: awareness, traffic, leads, conversions', 'leads')
+  .option('-v, --variants <number>', 'Number of ad variants', '3')
+  .action(async (options) => {
+    printSection('META ADS GENERATOR');
+    
+    const spinner = new Spinner('Creating Facebook/Instagram ad variations...');
+    spinner.start();
+    
+    try {
+      const { generateMetaAds } = await import('./skills/content_studio/index.js');
+      
+      const campaign = await generateMetaAds({
+        product: options.product,
+        targetAudience: options.audience,
+        objective: options.objective,
+        variants: parseInt(options.variants),
+      });
+      
+      spinner.stop(true);
+      
+      console.log();
+      printInfo('Campaign', campaign.campaignName);
+      printInfo('Objective', campaign.objective);
+      
+      campaign.ads?.forEach((ad: any, i: number) => {
+        console.log();
+        console.log(chalk.cyan(`  Ad ${i + 1} (${ad.platform})`));
+        console.log(chalk.gray('  ─────────────────────────────'));
+        console.log(chalk.white(`  Headline: ${ad.headline}`));
+        console.log(chalk.gray(`  Text: ${ad.primaryText?.substring(0, 100)}...`));
+        console.log(chalk.green(`  CTA: ${ad.callToAction}`));
+      });
+      
+    } catch (error) {
+      spinner.stop(false);
+      printError(`Error: ${error}`);
+    }
+  });
+
+content
+  .command('google-ads')
+  .description('Generate Google Search & Display ads')
+  .requiredOption('-p, --product <product>', 'Product or service')
+  .requiredOption('-k, --keywords <keywords>', 'Comma-separated target keywords')
+  .option('-t, --type <type>', 'Ad type: search, display, both', 'both')
+  .action(async (options) => {
+    printSection('GOOGLE ADS GENERATOR');
+    
+    const spinner = new Spinner('Creating Google ad variations...');
+    spinner.start();
+    
+    try {
+      const { generateGoogleAds } = await import('./skills/content_studio/index.js');
+      
+      const keywords = options.keywords.split(',').map((k: string) => k.trim());
+      
+      const result = await generateGoogleAds({
+        product: options.product,
+        targetKeywords: keywords,
+        adType: options.type,
+      });
+      
+      spinner.stop(true);
+      
+      if (result.searchAds?.length > 0) {
+        console.log();
+        console.log(chalk.cyan('  📱 Search Ads'));
+        result.searchAds.forEach((ad: any, i: number) => {
+          console.log(chalk.gray(`  ─── Ad ${i + 1} ───`));
+          console.log(chalk.white(`  Headlines: ${ad.headlines?.slice(0, 3).join(' | ')}`));
+          console.log(chalk.gray(`  Description: ${ad.descriptions?.[0]}`));
+        });
+      }
+      
+      if (result.displayAds?.length > 0) {
+        console.log();
+        console.log(chalk.cyan('  🖼️ Display Ads'));
+        result.displayAds.forEach((ad: any, i: number) => {
+          console.log(chalk.gray(`  ─── Ad ${i + 1} ───`));
+          console.log(chalk.white(`  Short: ${ad.shortHeadline}`));
+          console.log(chalk.white(`  Long: ${ad.longHeadline}`));
+        });
+      }
+      
+    } catch (error) {
+      spinner.stop(false);
+      printError(`Error: ${error}`);
+    }
+  });
+
+content
+  .command('linkedin-ads')
+  .description('Generate LinkedIn B2B ads')
+  .requiredOption('-p, --product <product>', 'Product or service')
+  .option('-a, --audience <audience>', 'Target audience', 'CMOs and Marketing Directors in Healthcare')
+  .option('-o, --objective <objective>', 'Objective: awareness, consideration, conversions', 'consideration')
+  .action(async (options) => {
+    printSection('LINKEDIN ADS GENERATOR');
+    
+    const spinner = new Spinner('Creating LinkedIn B2B ad variations...');
+    spinner.start();
+    
+    try {
+      const { generateLinkedInAds } = await import('./skills/content_studio/index.js');
+      
+      const campaign = await generateLinkedInAds({
+        product: options.product,
+        targetAudience: options.audience,
+        objective: options.objective,
+      });
+      
+      spinner.stop(true);
+      
+      console.log();
+      printInfo('Campaign', campaign.campaignName);
+      
+      campaign.ads?.forEach((ad: any, i: number) => {
+        console.log();
+        console.log(chalk.cyan(`  Ad ${i + 1}`));
+        console.log(chalk.white(`  Headline: ${ad.headline}`));
+        console.log(chalk.gray(`  Text: ${ad.primaryText?.substring(0, 100)}...`));
+        console.log(chalk.green(`  CTA: ${ad.callToAction}`));
+      });
+      
+    } catch (error) {
+      spinner.stop(false);
+      printError(`Error: ${error}`);
+    }
+  });
+
+content
+  .command('campaign')
+  .description('Generate full multi-platform campaign')
+  .requiredOption('-p, --product <product>', 'Product or service')
+  .option('-a, --audience <audience>', 'Target audience', 'dental marketing professionals')
+  .option('--platforms <platforms>', 'Platforms: meta,google,linkedin', 'meta,google,linkedin')
+  .action(async (options) => {
+    printSection('FULL CAMPAIGN GENERATOR');
+    
+    const spinner = new Spinner('Generating multi-platform campaign...');
+    spinner.start();
+    
+    try {
+      const { generateFullCampaign } = await import('./skills/content_studio/index.js');
+      
+      const platforms = options.platforms.split(',').map((p: string) => p.trim());
+      
+      const campaign = await generateFullCampaign({
+        product: options.product,
+        targetAudience: options.audience,
+        platforms,
+      });
+      
+      spinner.stop(true);
+      
+      console.log();
+      printSuccess('Campaign generated for: ' + platforms.join(', '));
+      
+      if (campaign.meta) {
+        console.log();
+        console.log(chalk.cyan('  📘 Meta Ads: ') + chalk.white(campaign.meta.ads?.length + ' variations'));
+      }
+      if (campaign.google) {
+        console.log(chalk.cyan('  🔍 Google Ads: ') + chalk.white((campaign.google.searchAds?.length || 0) + ' search, ' + (campaign.google.displayAds?.length || 0) + ' display'));
+      }
+      if (campaign.linkedin) {
+        console.log(chalk.cyan('  💼 LinkedIn Ads: ') + chalk.white(campaign.linkedin.ads?.length + ' variations'));
+      }
+      
+    } catch (error) {
+      spinner.stop(false);
+      printError(`Error: ${error}`);
+    }
+  });
+
 // ============ LOGS COMMAND ============
 
 program
