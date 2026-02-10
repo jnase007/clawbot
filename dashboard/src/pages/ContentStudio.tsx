@@ -241,16 +241,16 @@ export default function ContentStudio() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-6">
+    <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground flex items-center gap-3">
               <PenTool className="w-7 h-7 text-purple-500" />
               Content Studio
             </h1>
-            <p className="text-gray-400 mt-1">
+            <p className="text-muted-foreground mt-1">
               {currentClient 
                 ? `Creating content for ${currentClient.name} • ${preset?.industry || currentClient.industry || 'General'}`
                 : 'Select a client to customize content generation'}
@@ -260,7 +260,7 @@ export default function ContentStudio() {
           {/* History Toggle */}
           <button
             onClick={() => setShowHistory(!showHistory)}
-            className="mt-4 md:mt-0 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 flex items-center gap-2"
+            className="mt-4 md:mt-0 px-4 py-2 bg-secondary text-foreground rounded-lg hover:bg-secondary/80 flex items-center gap-2"
           >
             <Clock className="w-4 h-4" />
             History ({history.length})
@@ -270,14 +270,14 @@ export default function ContentStudio() {
 
         {/* History Dropdown */}
         {showHistory && (
-          <div className="mb-6 bg-slate-800/80 rounded-xl border border-slate-700 p-4">
-            <h3 className="text-white font-semibold mb-3">Recent Generations</h3>
+          <div className="mb-6 bg-card rounded-xl border border-border p-4">
+            <h3 className="text-foreground font-semibold mb-3">Recent Generations</h3>
             {loadingHistory ? (
               <div className="flex items-center justify-center py-6">
                 <Loader2 className="w-6 h-6 animate-spin text-purple-400" />
               </div>
             ) : history.length === 0 ? (
-              <div className="text-center py-6 text-gray-400">
+              <div className="text-center py-6 text-muted-foreground">
                 <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p>No content generated yet</p>
                 <p className="text-sm">Generated content will appear here</p>
@@ -288,11 +288,11 @@ export default function ContentStudio() {
                   <button
                     key={item.id}
                     onClick={() => loadFromHistory(item)}
-                    className="w-full text-left p-3 bg-slate-700/50 rounded-lg hover:bg-slate-600/50 transition-colors"
+                    className="w-full text-left p-3 bg-secondary/50 rounded-lg hover:bg-secondary/80/50 transition-colors"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-white font-medium truncate">{item.topic}</span>
-                      <span className="text-xs text-gray-400 uppercase">{item.type}</span>
+                      <span className="text-foreground font-medium truncate">{item.topic}</span>
+                      <span className="text-xs text-muted-foreground uppercase">{item.type}</span>
                     </div>
                     <span className="text-xs text-gray-500">
                       {new Date(item.createdAt).toLocaleString()}
@@ -316,8 +316,8 @@ export default function ContentStudio() {
               }}
               className={`p-4 rounded-xl flex flex-col items-center gap-2 transition-all border ${
                 activeTab === tab.id
-                  ? 'bg-slate-700 border-purple-500 text-white'
-                  : 'bg-slate-800/50 border-slate-700 text-gray-400 hover:bg-slate-700/50 hover:text-white'
+                  ? 'bg-secondary border-purple-500 text-foreground'
+                  : 'bg-secondary/50 border-border text-muted-foreground hover:bg-secondary/50 hover:text-foreground'
               }`}
             >
               <tab.icon className={`w-6 h-6 ${activeTab === tab.id ? tab.color : ''}`} />
@@ -328,7 +328,7 @@ export default function ContentStudio() {
         </div>
 
         {/* Input Section */}
-        <div className="bg-slate-800/70 backdrop-blur rounded-xl p-5 md:p-6 mb-6 border border-slate-700">
+        <div className="bg-card backdrop-blur rounded-xl p-5 md:p-6 mb-6 border border-border">
           {/* Client Context Alert */}
           {currentClient && (
             <div className="mb-4 bg-purple-500/10 border border-purple-500/30 rounded-lg p-3">
@@ -337,12 +337,12 @@ export default function ContentStudio() {
                 Creating content for {currentClient.name}
               </div>
               <div className="flex flex-wrap gap-2">
-                <span className="text-xs text-gray-400">Quick topics:</span>
+                <span className="text-xs text-muted-foreground">Quick topics:</span>
                 {getSuggestedTopics().slice(0, 4).map((suggestedTopic, i) => (
                   <button
                     key={i}
                     onClick={() => setTopic(suggestedTopic)}
-                    className="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-xs text-gray-300 rounded transition-colors"
+                    className="px-2 py-1 bg-secondary hover:bg-secondary/80 text-xs text-muted-foreground rounded transition-colors"
                   >
                     {suggestedTopic}
                   </button>
@@ -353,7 +353,7 @@ export default function ContentStudio() {
 
           {/* Main Input */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
               {activeTab === 'blog' ? '📝 Blog Topic *' : '🎯 Product/Service *'}
             </label>
             <input
@@ -363,28 +363,28 @@ export default function ContentStudio() {
               placeholder={activeTab === 'blog' 
                 ? `e.g., ${getSuggestedTopics()[0] || 'Marketing Strategies'} for ${currentClient?.name || 'Your Business'}` 
                 : `e.g., ${currentClient?.name || 'Your'} ${preset?.industry || 'Marketing'} Services`}
-              className="w-full px-4 py-3 bg-slate-900/50 text-white text-lg rounded-lg border border-slate-600 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+              className="w-full px-4 py-3 bg-background text-foreground text-lg rounded-lg border border-border focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
             />
           </div>
 
           {/* Secondary Inputs */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Target Audience</label>
+              <label className="block text-sm text-muted-foreground mb-1">Target Audience</label>
               <input
                 type="text"
                 value={audience}
                 onChange={(e) => setAudience(e.target.value)}
                 placeholder="e.g., dental practice owners"
-                className="w-full px-4 py-2.5 bg-slate-900/50 text-white rounded-lg border border-slate-600 focus:border-purple-500 focus:outline-none"
+                className="w-full px-4 py-2.5 bg-background text-foreground rounded-lg border border-border focus:border-purple-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Tone</label>
+              <label className="block text-sm text-muted-foreground mb-1">Tone</label>
               <select
                 value={tone}
                 onChange={(e) => setTone(e.target.value)}
-                className="w-full px-4 py-2.5 bg-slate-900/50 text-white rounded-lg border border-slate-600 focus:border-purple-500 focus:outline-none"
+                className="w-full px-4 py-2.5 bg-background text-foreground rounded-lg border border-border focus:border-purple-500 focus:outline-none"
               >
                 <option value="professional">Professional</option>
                 <option value="conversational">Conversational</option>
@@ -393,13 +393,13 @@ export default function ContentStudio() {
               </select>
             </div>
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Keywords (comma-separated)</label>
+              <label className="block text-sm text-muted-foreground mb-1">Keywords (comma-separated)</label>
               <input
                 type="text"
                 value={keywords}
                 onChange={(e) => setKeywords(e.target.value)}
                 placeholder="e.g., AI marketing, dental SEO"
-                className="w-full px-4 py-2.5 bg-slate-900/50 text-white rounded-lg border border-slate-600 focus:border-purple-500 focus:outline-none"
+                className="w-full px-4 py-2.5 bg-background text-foreground rounded-lg border border-border focus:border-purple-500 focus:outline-none"
               />
             </div>
           </div>
@@ -419,7 +419,7 @@ export default function ContentStudio() {
           <button
             onClick={handleGenerate}
             disabled={isGenerating || !topic.trim()}
-            className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-lg font-semibold rounded-xl hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 transition-all"
+            className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-foreground text-lg font-semibold rounded-xl hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 transition-all"
           >
             {isGenerating ? (
               <>
@@ -443,15 +443,15 @@ export default function ContentStudio() {
 
         {/* Generated Content */}
         {generatedContent && (
-          <div className="bg-slate-800/70 backdrop-blur rounded-xl border border-slate-700 overflow-hidden">
+          <div className="bg-card backdrop-blur rounded-xl border border-border overflow-hidden">
             {/* Content Header */}
-            <div className="p-4 md:p-5 border-b border-slate-700 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="p-4 md:p-5 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
                   <Check className="w-5 h-5 text-green-400" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
                     Content Generated Successfully
                     {saved && currentClientId && (
                       <span className="flex items-center gap-1 text-sm font-normal text-green-400">
@@ -460,7 +460,7 @@ export default function ContentStudio() {
                       </span>
                     )}
                   </h2>
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-muted-foreground">
                     {generatedContent.generatedAt && new Date(generatedContent.generatedAt).toLocaleString()}
                   </p>
                 </div>
@@ -469,14 +469,14 @@ export default function ContentStudio() {
               <div className="flex gap-2">
                 <button
                   onClick={() => handleCopy()}
-                  className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 flex items-center gap-2"
+                  className="px-4 py-2 bg-secondary text-foreground rounded-lg hover:bg-secondary/80 flex items-center gap-2"
                 >
                   {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
                   {copied ? 'Copied!' : 'Copy'}
                 </button>
                 <button
                   onClick={handleDownload}
-                  className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 flex items-center gap-2"
+                  className="px-4 py-2 bg-secondary text-foreground rounded-lg hover:bg-secondary/80 flex items-center gap-2"
                 >
                   <Download className="w-4 h-4" />
                   Download
@@ -484,7 +484,7 @@ export default function ContentStudio() {
                 <button
                   onClick={handleGenerate}
                   disabled={isGenerating}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 flex items-center gap-2"
+                  className="px-4 py-2 bg-purple-600 text-foreground rounded-lg hover:bg-purple-500 flex items-center gap-2"
                 >
                   <RefreshCw className={`w-4 h-4 ${isGenerating ? 'animate-spin' : ''}`} />
                   Regenerate
@@ -494,14 +494,14 @@ export default function ContentStudio() {
 
             {/* Metrics (Blog only) */}
             {generatedContent.type === 'blog' && (
-              <div className="p-4 md:p-5 border-b border-slate-700 bg-slate-900/30">
+              <div className="p-4 md:p-5 border-b border-border bg-muted/30">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-slate-800/50 rounded-lg p-4">
-                    <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
+                  <div className="bg-secondary/50 rounded-lg p-4">
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
                       <FileText className="w-4 h-4" />
                       Word Count
                     </div>
-                    <div className="text-2xl font-bold text-white">
+                    <div className="text-2xl font-bold text-foreground">
                       {generatedContent.wordCount?.toLocaleString() || '—'}
                     </div>
                     {generatedContent.wordCount && generatedContent.wordCount >= 2000 ? (
@@ -510,35 +510,35 @@ export default function ContentStudio() {
                       <div className="text-xs text-yellow-400">⚠ Below target</div>
                     )}
                   </div>
-                  <div className="bg-slate-800/50 rounded-lg p-4">
-                    <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
+                  <div className="bg-secondary/50 rounded-lg p-4">
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
                       <TrendingUp className="w-4 h-4" />
                       SEO Score
                     </div>
                     <div className={`text-2xl font-bold ${(generatedContent.seoScore || 0) >= 80 ? 'text-green-400' : 'text-yellow-400'}`}>
                       {generatedContent.seoScore || '—'}/100
                     </div>
-                    <div className="text-xs text-gray-400">Search optimized</div>
+                    <div className="text-xs text-muted-foreground">Search optimized</div>
                   </div>
-                  <div className="bg-slate-800/50 rounded-lg p-4">
-                    <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
+                  <div className="bg-secondary/50 rounded-lg p-4">
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
                       <BarChart3 className="w-4 h-4" />
                       GEO Optimizations
                     </div>
                     <div className="text-2xl font-bold text-purple-400">
                       {generatedContent.geoOptimizations?.length || 0}
                     </div>
-                    <div className="text-xs text-gray-400">AI-citable elements</div>
+                    <div className="text-xs text-muted-foreground">AI-citable elements</div>
                   </div>
-                  <div className="bg-slate-800/50 rounded-lg p-4">
-                    <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
+                  <div className="bg-secondary/50 rounded-lg p-4">
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
                       <HelpCircle className="w-4 h-4" />
                       FAQs Included
                     </div>
                     <div className="text-2xl font-bold text-cyan-400">
                       {generatedContent.faqSection?.length || 0}
                     </div>
-                    <div className="text-xs text-gray-400">For featured snippets</div>
+                    <div className="text-xs text-muted-foreground">For featured snippets</div>
                   </div>
                 </div>
               </div>
@@ -546,23 +546,23 @@ export default function ContentStudio() {
 
             {/* Title & Meta (Blog only) */}
             {generatedContent.type === 'blog' && generatedContent.title && (
-              <div className="p-4 md:p-5 border-b border-slate-700 space-y-4">
+              <div className="p-4 md:p-5 border-b border-border space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-1">SEO Title</label>
+                  <label className="block text-sm font-medium text-muted-foreground mb-1">SEO Title</label>
                   <div className="flex items-center gap-2">
-                    <p className="text-xl font-semibold text-white flex-1">{generatedContent.title}</p>
-                    <button onClick={() => handleCopy(generatedContent.title)} className="p-2 hover:bg-slate-700 rounded">
-                      <Copy className="w-4 h-4 text-gray-400" />
+                    <p className="text-xl font-semibold text-foreground flex-1">{generatedContent.title}</p>
+                    <button onClick={() => handleCopy(generatedContent.title)} className="p-2 hover:bg-secondary rounded">
+                      <Copy className="w-4 h-4 text-muted-foreground" />
                     </button>
                   </div>
                 </div>
                 {generatedContent.metaDescription && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-400 mb-1">Meta Description</label>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1">Meta Description</label>
                     <div className="flex items-center gap-2">
-                      <p className="text-gray-300 flex-1">{generatedContent.metaDescription}</p>
-                      <button onClick={() => handleCopy(generatedContent.metaDescription)} className="p-2 hover:bg-slate-700 rounded">
-                        <Copy className="w-4 h-4 text-gray-400" />
+                      <p className="text-muted-foreground flex-1">{generatedContent.metaDescription}</p>
+                      <button onClick={() => handleCopy(generatedContent.metaDescription)} className="p-2 hover:bg-secondary rounded">
+                        <Copy className="w-4 h-4 text-muted-foreground" />
                       </button>
                     </div>
                   </div>
@@ -572,19 +572,19 @@ export default function ContentStudio() {
 
             {/* Headline for Ads */}
             {generatedContent.headline && generatedContent.type !== 'blog' && (
-              <div className="p-4 md:p-5 border-b border-slate-700">
-                <label className="block text-sm font-medium text-gray-400 mb-1">Headline</label>
-                <p className="text-xl font-semibold text-white">{generatedContent.headline}</p>
+              <div className="p-4 md:p-5 border-b border-border">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">Headline</label>
+                <p className="text-xl font-semibold text-foreground">{generatedContent.headline}</p>
               </div>
             )}
 
             {/* Main Content */}
             <div className="p-4 md:p-5">
-              <label className="block text-sm font-medium text-gray-400 mb-2">
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
                 {activeTab === 'blog' ? 'Full Blog Post' : 'Ad Copy'}
               </label>
-              <div className="bg-slate-900/50 rounded-lg p-4 md:p-5 overflow-auto max-h-[600px] prose prose-invert prose-sm max-w-none">
-                <pre className="whitespace-pre-wrap text-gray-300 font-mono text-sm leading-relaxed">
+              <div className="bg-background rounded-lg p-4 md:p-5 overflow-auto max-h-[600px] prose dark:prose-invert prose-sm max-w-none">
+                <pre className="whitespace-pre-wrap text-muted-foreground font-mono text-sm leading-relaxed">
                   {generatedContent.content}
                 </pre>
               </div>
@@ -594,34 +594,34 @@ export default function ContentStudio() {
 
         {/* Empty State / Tips */}
         {!generatedContent && !isGenerating && (
-          <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+          <div className="bg-secondary/50 rounded-xl p-6 border border-border">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
                 <Lightbulb className="w-5 h-5 text-purple-400" />
               </div>
               <div>
-                <h3 className="text-white font-semibold">Ready to Generate</h3>
-                <p className="text-sm text-gray-400">Enter your topic above and click Generate</p>
+                <h3 className="text-foreground font-semibold">Ready to Generate</h3>
+                <p className="text-sm text-muted-foreground">Enter your topic above and click Generate</p>
               </div>
             </div>
             
             {activeTab === 'blog' && (
               <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="bg-slate-700/30 rounded-lg p-3 text-center">
-                  <div className="text-2xl font-bold text-white">2000+</div>
-                  <div className="text-xs text-gray-400">Words minimum</div>
+                <div className="bg-secondary/30 rounded-lg p-3 text-center">
+                  <div className="text-2xl font-bold text-foreground">2000+</div>
+                  <div className="text-xs text-muted-foreground">Words minimum</div>
                 </div>
-                <div className="bg-slate-700/30 rounded-lg p-3 text-center">
+                <div className="bg-secondary/30 rounded-lg p-3 text-center">
                   <div className="text-2xl font-bold text-green-400">SEO</div>
-                  <div className="text-xs text-gray-400">Optimized</div>
+                  <div className="text-xs text-muted-foreground">Optimized</div>
                 </div>
-                <div className="bg-slate-700/30 rounded-lg p-3 text-center">
+                <div className="bg-secondary/30 rounded-lg p-3 text-center">
                   <div className="text-2xl font-bold text-purple-400">GEO</div>
-                  <div className="text-xs text-gray-400">AI-citable</div>
+                  <div className="text-xs text-muted-foreground">AI-citable</div>
                 </div>
-                <div className="bg-slate-700/30 rounded-lg p-3 text-center">
+                <div className="bg-secondary/30 rounded-lg p-3 text-center">
                   <div className="text-2xl font-bold text-cyan-400">5-7</div>
-                  <div className="text-xs text-gray-400">FAQs included</div>
+                  <div className="text-xs text-muted-foreground">FAQs included</div>
                 </div>
               </div>
             )}

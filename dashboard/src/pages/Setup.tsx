@@ -233,7 +233,7 @@ export default function Setup() {
     switch (priority) {
       case 'required': return <span className="px-2 py-0.5 bg-red-500/20 text-red-400 text-xs rounded-full">Required</span>;
       case 'recommended': return <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 text-xs rounded-full">Recommended</span>;
-      case 'optional': return <span className="px-2 py-0.5 bg-gray-500/20 text-gray-400 text-xs rounded-full">Optional</span>;
+      case 'optional': return <span className="px-2 py-0.5 bg-gray-500/20 text-muted-foreground text-xs rounded-full">Optional</span>;
       default: return null;
     }
   };
@@ -257,7 +257,7 @@ export default function Setup() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-6">
@@ -265,7 +265,7 @@ export default function Setup() {
             <Settings className="w-8 h-8 text-emerald-500" />
             Setup Checklist
           </h1>
-          <p className="text-gray-400 mt-1">Configure these services for ClawBot to work properly</p>
+          <p className="text-muted-foreground mt-1">Configure these services for ClawBot to work properly</p>
         </div>
 
         {/* CRITICAL: Netlify Setup Alert */}
@@ -274,23 +274,23 @@ export default function Setup() {
             <AlertCircle className="w-5 h-5" />
             CRITICAL: Add Environment Variables to Netlify
           </h3>
-          <p className="text-gray-300 text-sm mb-3">
+          <p className="text-muted-foreground text-sm mb-3">
             For the dashboard to work, add these environment variables in <strong>Netlify → Site Settings → Environment Variables</strong>:
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-            <div className="bg-slate-900/50 p-2 rounded font-mono flex items-center justify-between">
+            <div className="bg-background p-2 rounded font-mono flex items-center justify-between">
               <span className="text-cyan-400">ANTHROPIC_API_KEY</span>
               <span className="text-gray-500">= your-key</span>
             </div>
-            <div className="bg-slate-900/50 p-2 rounded font-mono flex items-center justify-between">
+            <div className="bg-background p-2 rounded font-mono flex items-center justify-between">
               <span className="text-cyan-400">APOLLO_API_KEY</span>
               <span className="text-gray-500">= your-key</span>
             </div>
-            <div className="bg-slate-900/50 p-2 rounded font-mono flex items-center justify-between">
+            <div className="bg-background p-2 rounded font-mono flex items-center justify-between">
               <span className="text-cyan-400">SUPABASE_URL</span>
               <span className="text-gray-500">= your-url</span>
             </div>
-            <div className="bg-slate-900/50 p-2 rounded font-mono flex items-center justify-between">
+            <div className="bg-background p-2 rounded font-mono flex items-center justify-between">
               <span className="text-cyan-400">SUPABASE_ANON_KEY</span>
               <span className="text-gray-500">= your-key</span>
             </div>
@@ -308,23 +308,23 @@ export default function Setup() {
 
         {/* Progress Overview */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+          <div className="bg-card rounded-xl p-4 border border-border">
             <div className="text-3xl font-bold text-white">{stats.complete}/{stats.total}</div>
-            <div className="text-sm text-gray-400">Total Complete</div>
+            <div className="text-sm text-muted-foreground">Total Complete</div>
           </div>
-          <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+          <div className="bg-card rounded-xl p-4 border border-border">
             <div className="text-3xl font-bold text-emerald-400">{stats.requiredComplete}/{stats.required}</div>
-            <div className="text-sm text-gray-400">Required Complete</div>
+            <div className="text-sm text-muted-foreground">Required Complete</div>
           </div>
-          <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+          <div className="bg-card rounded-xl p-4 border border-border">
             <div className="text-3xl font-bold text-yellow-400">{stats.total - stats.complete}</div>
-            <div className="text-sm text-gray-400">Pending Setup</div>
+            <div className="text-sm text-muted-foreground">Pending Setup</div>
           </div>
-          <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+          <div className="bg-card rounded-xl p-4 border border-border">
             <div className={`text-3xl font-bold ${stats.requiredComplete === stats.required ? 'text-green-400' : 'text-orange-400'}`}>
               {stats.requiredComplete === stats.required ? '✓' : '!'}
             </div>
-            <div className="text-sm text-gray-400">
+            <div className="text-sm text-muted-foreground">
               {stats.requiredComplete === stats.required ? 'Ready to Go' : 'Action Needed'}
             </div>
           </div>
@@ -333,7 +333,7 @@ export default function Setup() {
         {/* Setup Items by Category */}
         {categories.map(category => (
           <div key={category} className="mb-6">
-            <div className="flex items-center gap-2 mb-3 text-gray-300">
+            <div className="flex items-center gap-2 mb-3 text-muted-foreground">
               {getCategoryIcon(category)}
               <h2 className="text-lg font-semibold">{category}</h2>
             </div>
@@ -342,14 +342,14 @@ export default function Setup() {
               {setupItems.filter(item => item.category === category).map(item => (
                 <div 
                   key={item.id}
-                  className={`bg-slate-800/50 rounded-xl border transition-colors ${
+                  className={`bg-card rounded-xl border transition-colors ${
                     item.status === 'complete' ? 'border-green-500/30' : 
-                    item.status === 'error' ? 'border-red-500/30' : 'border-slate-700'
+                    item.status === 'error' ? 'border-red-500/30' : 'border-border'
                   }`}
                 >
                   {/* Header */}
                   <div 
-                    className="p-4 flex items-center gap-4 cursor-pointer hover:bg-slate-700/30 transition-colors rounded-t-xl"
+                    className="p-4 flex items-center gap-4 cursor-pointer hover:bg-secondary/30 transition-colors rounded-t-xl"
                     onClick={() => toggleExpand(item.id)}
                   >
                     {getStatusIcon(item.status)}
@@ -358,24 +358,24 @@ export default function Setup() {
                         <span className="font-medium text-white">{item.name}</span>
                         {getPriorityBadge(item.priority)}
                       </div>
-                      <p className="text-sm text-gray-400 mt-0.5">{item.description}</p>
+                      <p className="text-sm text-muted-foreground mt-0.5">{item.description}</p>
                     </div>
                     {expandedItems.has(item.id) ? (
-                      <ChevronDown className="w-5 h-5 text-gray-400" />
+                      <ChevronDown className="w-5 h-5 text-muted-foreground" />
                     ) : (
-                      <ChevronRight className="w-5 h-5 text-gray-400" />
+                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
                     )}
                   </div>
 
                   {/* Expanded Content */}
                   {expandedItems.has(item.id) && (
-                    <div className="px-4 pb-4 border-t border-slate-700 pt-4">
+                    <div className="px-4 pb-4 border-t border-border pt-4">
                       {/* Env Variable */}
                       {item.envVar && (
                         <div className="mb-4">
-                          <label className="block text-xs text-gray-400 mb-1">Environment Variable(s)</label>
+                          <label className="block text-xs text-muted-foreground mb-1">Environment Variable(s)</label>
                           <div className="flex items-center gap-2">
-                            <code className="flex-1 bg-slate-900/50 px-3 py-2 rounded-lg text-emerald-400 font-mono text-sm">
+                            <code className="flex-1 bg-background px-3 py-2 rounded-lg text-emerald-400 font-mono text-sm">
                               {item.envVar}
                             </code>
                             <button
@@ -383,12 +383,12 @@ export default function Setup() {
                                 e.stopPropagation();
                                 copyEnvVar(item.envVar!);
                               }}
-                              className="p-2 bg-slate-700 rounded-lg hover:bg-slate-600 transition-colors"
+                              className="p-2 bg-secondary rounded-lg hover:bg-secondary/80 transition-colors"
                             >
                               {copiedEnv === item.envVar ? (
                                 <Check className="w-4 h-4 text-green-400" />
                               ) : (
-                                <Copy className="w-4 h-4 text-gray-400" />
+                                <Copy className="w-4 h-4 text-muted-foreground" />
                               )}
                             </button>
                           </div>
@@ -397,11 +397,11 @@ export default function Setup() {
 
                       {/* Instructions */}
                       <div className="mb-4">
-                        <label className="block text-xs text-gray-400 mb-2">Setup Instructions</label>
+                        <label className="block text-xs text-muted-foreground mb-2">Setup Instructions</label>
                         <ol className="space-y-2">
                           {item.instructions.map((instruction, idx) => (
-                            <li key={idx} className="flex items-start gap-2 text-sm text-gray-300">
-                              <span className="w-5 h-5 rounded-full bg-slate-700 flex items-center justify-center text-xs flex-shrink-0">
+                            <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
+                              <span className="w-5 h-5 rounded-full bg-secondary flex items-center justify-center text-xs flex-shrink-0">
                                 {idx + 1}
                               </span>
                               {instruction}
@@ -432,12 +432,12 @@ export default function Setup() {
         ))}
 
         {/* ENV Template */}
-        <div className="mt-8 bg-slate-800/50 rounded-xl p-6 border border-slate-700">
+        <div className="mt-8 bg-card rounded-xl p-6 border border-border">
           <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
             <Key className="w-5 h-5 text-emerald-400" />
             .env File Template
           </h3>
-          <pre className="bg-slate-900/50 rounded-lg p-4 text-sm text-gray-300 font-mono overflow-x-auto">
+          <pre className="bg-background rounded-lg p-4 text-sm text-muted-foreground font-mono overflow-x-auto">
 {`# Core (Required)
 SUPABASE_URL=your_supabase_url
 SUPABASE_ANON_KEY=your_anon_key

@@ -18,7 +18,7 @@ import { PlatformIcon } from '@/components/PlatformIcon';
 import type { Template, Platform, TemplateType } from '@/lib/types';
 
 export default function Templates() {
-  const { currentClientId } = useClient();
+  const { currentClientId, currentClient } = useClient();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [platform, setPlatform] = useState<Platform | 'all'>('all');
@@ -310,7 +310,7 @@ export default function Templates() {
                     <Input
                       value={newTemplate.subject}
                       onChange={(e) => setNewTemplate({ ...newTemplate, subject: e.target.value })}
-                      placeholder="e.g., Earn building AI agents on ProjectHunter.ai 🚀"
+                      placeholder={`e.g., Check out ${currentClient?.name || 'our services'} 🚀`}
                     />
                   </div>
                 )}
@@ -325,7 +325,7 @@ export default function Templates() {
                   <textarea
                     value={newTemplate.content}
                     onChange={(e) => setNewTemplate({ ...newTemplate, content: e.target.value })}
-                    placeholder={`Hey {{name}},\n\nI noticed you're into {{interest}} - thought you might be interested in ProjectHunter.ai!\n\nWe're a marketplace where developers can earn building custom AI agents...`}
+                    placeholder={`Hey {{name}},\n\nI noticed you're into {{interest}} - thought you might be interested in ${currentClient?.name || 'our company'}!\n\n${currentClient?.goals || 'We help businesses grow with our services'}...`}
                     className="w-full h-48 px-3 py-2 rounded-lg border border-input bg-background text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     required
                   />

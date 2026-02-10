@@ -254,16 +254,16 @@ export default function ApolloLeads() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-6">
+    <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground flex items-center gap-3">
               <Target className="w-7 h-7 text-orange-500" />
               Apollo Lead Search
             </h1>
-            <p className="text-gray-400 mt-1">
+            <p className="text-muted-foreground mt-1">
               {currentClient 
                 ? `Finding leads for ${currentClient.name}` 
                 : 'Select a client to customize your search'}
@@ -273,7 +273,7 @@ export default function ApolloLeads() {
           {selectedLeads.size > 0 && (
             <button
               onClick={exportLeads}
-              className="mt-4 md:mt-0 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 flex items-center gap-2"
+              className="mt-4 md:mt-0 px-4 py-2 bg-green-600 text-foreground rounded-lg hover:bg-green-500 flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
               Export {selectedLeads.size} Leads
@@ -284,10 +284,10 @@ export default function ApolloLeads() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Filters Panel */}
           <div className="lg:col-span-1">
-            <div className="bg-slate-800/70 rounded-xl border border-slate-700 overflow-hidden">
+            <div className="bg-card rounded-xl border border-border overflow-hidden">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="w-full p-4 flex items-center justify-between text-white font-semibold lg:cursor-default"
+                className="w-full p-4 flex items-center justify-between text-foreground font-semibold lg:cursor-default"
               >
                 <span className="flex items-center gap-2">
                   <Filter className="w-4 h-4" />
@@ -299,13 +299,13 @@ export default function ApolloLeads() {
               <div className={`${showFilters ? 'block' : 'hidden lg:block'} p-4 pt-0 space-y-5`}>
                 {/* Keyword Search */}
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">Keywords</label>
+                  <label className="block text-sm text-muted-foreground mb-2">Keywords</label>
                   <input
                     type="text"
                     value={filters.query}
                     onChange={(e) => setFilters(prev => ({ ...prev, query: e.target.value }))}
                     placeholder="e.g., dental, orthodontics"
-                    className="w-full px-3 py-2 bg-slate-900/50 text-white rounded-lg border border-slate-600 focus:border-orange-500 focus:outline-none text-sm"
+                    className="w-full px-3 py-2 bg-background text-foreground rounded-lg border border-border focus:border-orange-500 focus:outline-none text-sm"
                   />
                 </div>
 
@@ -316,7 +316,7 @@ export default function ApolloLeads() {
                       <Info className="w-4 h-4" />
                       Targeting for {currentClient.name}
                     </div>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-muted-foreground">
                       Filters are preset for {preset?.industry || currentClient.industry || 'this client'}
                     </p>
                   </div>
@@ -324,17 +324,17 @@ export default function ApolloLeads() {
 
                 {/* Job Titles */}
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">Job Titles</label>
+                  <label className="block text-sm text-muted-foreground mb-2">Job Titles</label>
                   <div className="space-y-1 max-h-40 overflow-y-auto">
                     {getAvailableTitles().map(title => (
-                      <label key={title} className="flex items-center gap-2 cursor-pointer hover:bg-slate-700/50 p-1 rounded">
+                      <label key={title} className="flex items-center gap-2 cursor-pointer hover:bg-secondary/50 p-1 rounded">
                         <input
                           type="checkbox"
                           checked={filters.titles.includes(title)}
                           onChange={() => toggleTitle(title)}
                           className="rounded border-slate-500"
                         />
-                        <span className="text-sm text-gray-300">{title}</span>
+                        <span className="text-sm text-muted-foreground">{title}</span>
                       </label>
                     ))}
                   </div>
@@ -342,17 +342,17 @@ export default function ApolloLeads() {
 
                 {/* Industries */}
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">Industries</label>
+                  <label className="block text-sm text-muted-foreground mb-2">Industries</label>
                   <div className="space-y-1 max-h-40 overflow-y-auto">
                     {getAvailableIndustries().map(industry => (
-                      <label key={industry} className="flex items-center gap-2 cursor-pointer hover:bg-slate-700/50 p-1 rounded">
+                      <label key={industry} className="flex items-center gap-2 cursor-pointer hover:bg-secondary/50 p-1 rounded">
                         <input
                           type="checkbox"
                           checked={filters.industries.includes(industry)}
                           onChange={() => toggleIndustry(industry)}
                           className="rounded border-slate-500"
                         />
-                        <span className="text-sm text-gray-300">{industry}</span>
+                        <span className="text-sm text-muted-foreground">{industry}</span>
                       </label>
                     ))}
                   </div>
@@ -360,11 +360,11 @@ export default function ApolloLeads() {
 
                 {/* Company Size */}
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">Company Size</label>
+                  <label className="block text-sm text-muted-foreground mb-2">Company Size</label>
                   <select
                     value={filters.companySize}
                     onChange={(e) => setFilters(prev => ({ ...prev, companySize: e.target.value }))}
-                    className="w-full px-3 py-2 bg-slate-900/50 text-white rounded-lg border border-slate-600 focus:border-orange-500 focus:outline-none text-sm"
+                    className="w-full px-3 py-2 bg-background text-foreground rounded-lg border border-border focus:border-orange-500 focus:outline-none text-sm"
                   >
                     {companySizes.map(size => (
                       <option key={size.value} value={size.value}>{size.label}</option>
@@ -376,7 +376,7 @@ export default function ApolloLeads() {
                 <button
                   onClick={handleSearch}
                   disabled={isSearching}
-                  className="w-full px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-500 disabled:opacity-50 flex items-center justify-center gap-2 font-semibold"
+                  className="w-full px-4 py-3 bg-orange-600 text-foreground rounded-lg hover:bg-orange-500 disabled:opacity-50 flex items-center justify-center gap-2 font-semibold"
                 >
                   {isSearching ? (
                     <>
@@ -418,16 +418,16 @@ export default function ApolloLeads() {
                       onChange={selectAll}
                       className="rounded border-slate-500"
                     />
-                    <span className="text-sm text-gray-300">Select all</span>
+                    <span className="text-sm text-muted-foreground">Select all</span>
                   </label>
-                  <span className="text-sm text-gray-400">
+                  <span className="text-sm text-muted-foreground">
                     {totalResults.toLocaleString()} results found
                   </span>
                 </div>
                 <button
                   onClick={handleSearch}
                   disabled={isSearching}
-                  className="text-sm text-gray-400 hover:text-white flex items-center gap-1"
+                  className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
                 >
                   <RefreshCw className={`w-4 h-4 ${isSearching ? 'animate-spin' : ''}`} />
                   Refresh
@@ -441,10 +441,10 @@ export default function ApolloLeads() {
                 {leads.map(lead => (
                   <div
                     key={lead.id}
-                    className={`bg-slate-800/70 rounded-xl p-4 border transition-colors cursor-pointer ${
+                    className={`bg-card rounded-xl p-4 border transition-colors cursor-pointer ${
                       selectedLeads.has(lead.id) 
                         ? 'border-orange-500 bg-orange-500/10' 
-                        : 'border-slate-700 hover:border-slate-600'
+                        : 'border-border hover:border-border'
                     }`}
                     onClick={() => toggleLead(lead.id)}
                   >
@@ -453,15 +453,15 @@ export default function ApolloLeads() {
                       <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 mt-1 ${
                         selectedLeads.has(lead.id) ? 'bg-orange-500 border-orange-500' : 'border-slate-500'
                       }`}>
-                        {selectedLeads.has(lead.id) && <Check className="w-3 h-3 text-white" />}
+                        {selectedLeads.has(lead.id) && <Check className="w-3 h-3 text-foreground" />}
                       </div>
 
                       {/* Lead Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                           <div>
-                            <h3 className="text-white font-semibold">{lead.name}</h3>
-                            <p className="text-gray-400 text-sm">{lead.title}</p>
+                            <h3 className="text-foreground font-semibold">{lead.name}</h3>
+                            <p className="text-muted-foreground text-sm">{lead.title}</p>
                           </div>
                           <div className="flex items-center gap-2">
                             {lead.linkedin && (
@@ -479,18 +479,18 @@ export default function ApolloLeads() {
                         </div>
 
                         <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
-                          <div className="flex items-center gap-2 text-gray-400">
+                          <div className="flex items-center gap-2 text-muted-foreground">
                             <Building2 className="w-4 h-4 shrink-0" />
                             <span className="truncate">{lead.company}</span>
                           </div>
                           {lead.email && (
-                            <div className="flex items-center gap-2 text-gray-400">
+                            <div className="flex items-center gap-2 text-muted-foreground">
                               <Mail className="w-4 h-4 shrink-0" />
                               <span className="truncate">{lead.email}</span>
                             </div>
                           )}
                           {lead.location && (
-                            <div className="flex items-center gap-2 text-gray-400">
+                            <div className="flex items-center gap-2 text-muted-foreground">
                               <MapPin className="w-4 h-4 shrink-0" />
                               <span className="truncate">{lead.location}</span>
                             </div>
@@ -500,12 +500,12 @@ export default function ApolloLeads() {
                         {(lead.industry || lead.companySize) && (
                           <div className="mt-2 flex flex-wrap gap-2">
                             {lead.industry && (
-                              <span className="px-2 py-1 bg-slate-700 rounded text-xs text-gray-300">
+                              <span className="px-2 py-1 bg-secondary rounded text-xs text-muted-foreground">
                                 {lead.industry}
                               </span>
                             )}
                             {lead.companySize && (
-                              <span className="px-2 py-1 bg-slate-700 rounded text-xs text-gray-300">
+                              <span className="px-2 py-1 bg-secondary rounded text-xs text-muted-foreground">
                                 {lead.companySize.toLocaleString()} employees
                               </span>
                             )}
@@ -517,16 +517,16 @@ export default function ApolloLeads() {
                 ))}
               </div>
             ) : !isSearching && (
-              <div className="bg-slate-800/50 rounded-xl p-12 border border-slate-700 text-center">
+              <div className="bg-card rounded-xl p-12 border border-border text-center">
                 <Users className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-white mb-2">No Leads Yet</h3>
-                <p className="text-gray-400 mb-6">
+                <h3 className="text-xl font-semibold text-foreground mb-2">No Leads Yet</h3>
+                <p className="text-muted-foreground mb-6">
                   Configure your filters and click "Search Leads" to find healthcare marketing decision-makers
                 </p>
                 <button
                   onClick={handleSearch}
                   disabled={isSearching}
-                  className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-500 inline-flex items-center gap-2"
+                  className="px-6 py-3 bg-orange-600 text-foreground rounded-lg hover:bg-orange-500 inline-flex items-center gap-2"
                 >
                   <Search className="w-5 h-5" />
                   Search Now

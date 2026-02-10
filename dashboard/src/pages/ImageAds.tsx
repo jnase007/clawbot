@@ -246,15 +246,15 @@ export default function ImageAds() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
             <Image className="w-8 h-8 text-pink-500" />
             Image Ad Generator
           </h1>
-          <p className="text-gray-400 mt-1">
+          <p className="text-muted-foreground mt-1">
             {currentClient 
               ? `Creating ad images for ${currentClient.name}` 
               : 'Generate AI-powered ad images with Google Imagen 4.0'}
@@ -271,15 +271,15 @@ export default function ImageAds() {
                   <Info className="w-4 h-4" />
                   Creating for {currentClient.name}
                 </div>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   {preset?.industry || currentClient.industry || 'General'} • Style auto-selected
                 </p>
               </div>
             )}
 
             {/* Brand Name - Auto-filled */}
-            <div className="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-slate-700">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+            <div className="bg-card backdrop-blur rounded-xl p-4 border border-border">
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
                 Brand/Company Name
               </label>
               <input
@@ -287,7 +287,7 @@ export default function ImageAds() {
                 value={brandName}
                 onChange={(e) => setBrandName(e.target.value)}
                 placeholder={currentClient?.name || 'e.g., Your Brand'}
-                className="w-full px-4 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-pink-500 focus:outline-none"
+                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-pink-500 focus:outline-none"
               />
               {currentClient && brandName === currentClient.name && (
                 <p className="text-xs text-green-400 mt-1">✓ Auto-filled from selected client</p>
@@ -296,8 +296,8 @@ export default function ImageAds() {
 
             {/* Suggested Concepts */}
             {suggestedConcepts.length > 0 && (
-              <div className="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-slate-700">
-                <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+              <div className="bg-card backdrop-blur rounded-xl p-4 border border-border">
+                <label className="block text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
                   <Lightbulb className="w-4 h-4 text-yellow-400" />
                   Quick Concepts for {currentClient?.name}
                 </label>
@@ -306,7 +306,7 @@ export default function ImageAds() {
                     <button
                       key={i}
                       onClick={() => useSuggestedConcept(concept)}
-                      className="w-full text-left px-3 py-2 bg-slate-700/50 hover:bg-slate-600/50 rounded-lg text-sm text-gray-300 transition-colors"
+                      className="w-full text-left px-3 py-2 bg-secondary/50 hover:bg-secondary/80/50 rounded-lg text-sm text-muted-foreground transition-colors"
                     >
                       {concept.length > 60 ? concept.substring(0, 60) + '...' : concept}
                     </button>
@@ -316,8 +316,8 @@ export default function ImageAds() {
             )}
 
             {/* Prompt */}
-            <div className="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-slate-700">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+            <div className="bg-card backdrop-blur rounded-xl p-4 border border-border">
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
                 Ad Concept / Description *
               </label>
               <textarea
@@ -325,13 +325,13 @@ export default function ImageAds() {
                 onChange={(e) => setPrompt(e.target.value)}
                 placeholder={suggestedConcepts[0] || "Describe your ad concept..."}
                 rows={4}
-                className="w-full px-4 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-pink-500 focus:outline-none"
+                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-pink-500 focus:outline-none"
               />
             </div>
 
             {/* Platform */}
-            <div className="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-slate-700">
-              <label className="block text-sm font-medium text-gray-300 mb-3">
+            <div className="bg-card backdrop-blur rounded-xl p-4 border border-border">
+              <label className="block text-sm font-medium text-muted-foreground mb-3">
                 Platform
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -342,7 +342,7 @@ export default function ImageAds() {
                     className={`px-3 py-2 rounded-lg text-sm transition-colors ${
                       selectedPlatform === id
                         ? `${config.bgColor} ${config.color} ring-2 ring-offset-2 ring-offset-slate-800`
-                        : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+                        : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
                     }`}
                   >
                     {config.label}
@@ -352,8 +352,8 @@ export default function ImageAds() {
             </div>
 
             {/* Size */}
-            <div className="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-slate-700">
-              <label className="block text-sm font-medium text-gray-300 mb-3">
+            <div className="bg-card backdrop-blur rounded-xl p-4 border border-border">
+              <label className="block text-sm font-medium text-muted-foreground mb-3">
                 <Maximize2 className="w-4 h-4 inline mr-1" />
                 Size
               </label>
@@ -364,8 +364,8 @@ export default function ImageAds() {
                     onClick={() => setSelectedSize(id as AdSize)}
                     className={`px-3 py-2 rounded-lg text-sm transition-colors ${
                       selectedSize === id
-                        ? 'bg-pink-600 text-white'
-                        : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+                        ? 'bg-pink-600 text-foreground'
+                        : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
                     }`}
                   >
                     <div className="font-medium">{config.label}</div>
@@ -376,15 +376,15 @@ export default function ImageAds() {
             </div>
 
             {/* Style */}
-            <div className="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-slate-700">
-              <label className="block text-sm font-medium text-gray-300 mb-3">
+            <div className="bg-card backdrop-blur rounded-xl p-4 border border-border">
+              <label className="block text-sm font-medium text-muted-foreground mb-3">
                 <Palette className="w-4 h-4 inline mr-1" />
                 Visual Style
               </label>
               <select
                 value={style}
                 onChange={(e) => setStyle(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-pink-500 focus:outline-none"
+                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-pink-500 focus:outline-none"
               >
                 {styles.map(s => (
                   <option key={s.id} value={s.id}>{s.label}</option>
@@ -399,7 +399,7 @@ export default function ImageAds() {
             <button
               onClick={handleGenerate}
               disabled={isGenerating || !prompt.trim()}
-              className="w-full px-6 py-4 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-xl hover:from-pink-500 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-semibold"
+              className="w-full px-6 py-4 bg-gradient-to-r from-pink-600 to-purple-600 text-foreground rounded-xl hover:from-pink-500 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-semibold"
             >
               {isGenerating ? (
                 <>
@@ -420,8 +420,8 @@ export default function ImageAds() {
                 <p className="text-red-400 text-sm font-medium mb-2">⚠️ {error}</p>
                 {generatedPrompt && (
                   <div className="mt-2">
-                    <p className="text-xs text-gray-400 mb-1">Use this prompt in Midjourney, DALL-E, or Canva:</p>
-                    <div className="bg-slate-900 rounded-lg p-3 text-xs text-gray-300 font-mono">
+                    <p className="text-xs text-muted-foreground mb-1">Use this prompt in Midjourney, DALL-E, or Canva:</p>
+                    <div className="bg-background rounded-lg p-3 text-xs text-muted-foreground font-mono">
                       {generatedPrompt}
                     </div>
                     <button
@@ -443,9 +443,9 @@ export default function ImageAds() {
 
           {/* Right Column - Generated Images */}
           <div className="lg:col-span-2">
-            <div className="bg-slate-800/50 backdrop-blur rounded-xl p-6 border border-slate-700 min-h-[600px]">
+            <div className="bg-card backdrop-blur rounded-xl p-6 border border-border min-h-[600px]">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-pink-400" />
                   Generated Images
                   {saved && currentClientId && (
@@ -455,13 +455,13 @@ export default function ImageAds() {
                     </span>
                   )}
                   {loadingHistory && (
-                    <Loader2 className="w-4 h-4 animate-spin text-gray-400 ml-2" />
+                    <Loader2 className="w-4 h-4 animate-spin text-muted-foreground ml-2" />
                   )}
                 </h2>
                 {generatedImages.length > 0 && (
                   <button 
                     onClick={() => setGeneratedImages([])}
-                    className="text-gray-400 hover:text-white text-sm flex items-center gap-1"
+                    className="text-muted-foreground hover:text-foreground text-sm flex items-center gap-1"
                   >
                     <RefreshCw className="w-4 h-4" />
                     Clear All
@@ -482,7 +482,7 @@ export default function ImageAds() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {generatedImages.map((img, idx) => (
-                    <div key={idx} className="bg-slate-700/50 rounded-xl overflow-hidden border border-slate-600 group">
+                    <div key={idx} className="bg-secondary/50 rounded-xl overflow-hidden border border-border group">
                       <div className={`relative ${sizeConfigs[img.size].aspect} max-h-64 overflow-hidden`}>
                         <img 
                           src={img.url} 
@@ -501,11 +501,11 @@ export default function ImageAds() {
                           <span className={`px-2 py-0.5 rounded text-xs ${platformStyles[img.platform].bgColor} ${platformStyles[img.platform].color}`}>
                             {platformStyles[img.platform].label}
                           </span>
-                          <span className="px-2 py-0.5 rounded text-xs bg-slate-600 text-gray-300">
+                          <span className="px-2 py-0.5 rounded text-xs bg-secondary/80 text-muted-foreground">
                             {sizeConfigs[img.size].label}
                           </span>
                         </div>
-                        <p className="text-gray-400 text-xs truncate">{img.prompt}</p>
+                        <p className="text-muted-foreground text-xs truncate">{img.prompt}</p>
                         <button
                           onClick={() => handleCopyPrompt(img)}
                           className="mt-2 text-cyan-400 hover:text-cyan-300 text-xs flex items-center gap-1"

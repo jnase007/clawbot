@@ -189,43 +189,43 @@ export default function Discovery() {
         return (
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Client/Company Name *</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">Client/Company Name *</label>
               <input
                 type="text"
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
                 placeholder="e.g., Smile Dental Group"
-                className="w-full px-4 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 focus:outline-none"
+                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-cyan-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Business Description *</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">Business Description *</label>
               <textarea
                 value={data.businessDescription}
                 onChange={(e) => updateField('businessDescription', e.target.value)}
                 placeholder="Describe the business, what they do, their history..."
                 rows={4}
-                className="w-full px-4 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 focus:outline-none"
+                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-cyan-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Target Audience *</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">Target Audience *</label>
               <textarea
                 value={data.targetAudience}
                 onChange={(e) => updateField('targetAudience', e.target.value)}
                 placeholder="Who are their ideal customers? Demographics, behaviors, needs..."
                 rows={3}
-                className="w-full px-4 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 focus:outline-none"
+                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-cyan-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Unique Value Proposition</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">Unique Value Proposition</label>
               <textarea
                 value={data.uniqueValueProposition}
                 onChange={(e) => updateField('uniqueValueProposition', e.target.value)}
                 placeholder="What makes them different from competitors?"
                 rows={2}
-                className="w-full px-4 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 focus:outline-none"
+                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-cyan-500 focus:outline-none"
               />
             </div>
           </div>
@@ -235,7 +235,7 @@ export default function Discovery() {
         return (
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-3">Current Marketing Channels</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-3">Current Marketing Channels</label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 {marketingChannels.map(channel => (
                   <button
@@ -243,8 +243,8 @@ export default function Discovery() {
                     onClick={() => toggleArrayItem('currentMarketingChannels', channel)}
                     className={`px-3 py-2 rounded-lg text-sm transition-colors ${
                       data.currentMarketingChannels.includes(channel)
-                        ? 'bg-cyan-600 text-white'
-                        : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+                        ? 'bg-cyan-600 text-foreground'
+                        : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
                     }`}
                   >
                     {channel}
@@ -253,11 +253,11 @@ export default function Discovery() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Current Monthly Marketing Budget</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">Current Monthly Marketing Budget</label>
               <select
                 value={data.currentMonthlyBudget}
                 onChange={(e) => updateField('currentMonthlyBudget', e.target.value)}
-                className="w-full px-4 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 focus:outline-none"
+                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-cyan-500 focus:outline-none"
               >
                 <option value="">Select budget range...</option>
                 <option value="0-1000">$0 - $1,000</option>
@@ -269,7 +269,7 @@ export default function Discovery() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-3">Current Pain Points</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-3">Current Pain Points</label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 {commonPainPoints.map(point => (
                   <button
@@ -277,8 +277,8 @@ export default function Discovery() {
                     onClick={() => toggleArrayItem('currentPainPoints', point)}
                     className={`px-3 py-2 rounded-lg text-sm transition-colors text-left ${
                       data.currentPainPoints.includes(point)
-                        ? 'bg-orange-600 text-white'
-                        : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+                        ? 'bg-orange-600 text-foreground'
+                        : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
                     }`}
                   >
                     {point}
@@ -293,23 +293,23 @@ export default function Discovery() {
         return (
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Main Competitors (one per line)</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">Main Competitors (one per line)</label>
               <textarea
                 value={data.competitors.join('\n')}
                 onChange={(e) => updateField('competitors', e.target.value.split('\n').filter(c => c.trim()))}
                 placeholder="Competitor 1&#10;Competitor 2&#10;Competitor 3"
                 rows={4}
-                className="w-full px-4 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 focus:outline-none font-mono"
+                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-cyan-500 focus:outline-none font-mono"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Competitor Analysis</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">Competitor Analysis</label>
               <textarea
                 value={data.competitorAnalysis}
                 onChange={(e) => updateField('competitorAnalysis', e.target.value)}
                 placeholder="What are competitors doing well? What are they missing? How can we differentiate?"
                 rows={4}
-                className="w-full px-4 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 focus:outline-none"
+                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-cyan-500 focus:outline-none"
               />
             </div>
           </div>
@@ -319,7 +319,7 @@ export default function Discovery() {
         return (
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-3">Primary Goals</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-3">Primary Goals</label>
               <div className="grid grid-cols-2 gap-2">
                 {commonGoals.map(goal => (
                   <button
@@ -327,8 +327,8 @@ export default function Discovery() {
                     onClick={() => toggleArrayItem('primaryGoals', goal)}
                     className={`px-3 py-2 rounded-lg text-sm transition-colors text-left ${
                       data.primaryGoals.includes(goal)
-                        ? 'bg-green-600 text-white'
-                        : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+                        ? 'bg-green-600 text-foreground'
+                        : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
                     }`}
                   >
                     {goal}
@@ -337,21 +337,21 @@ export default function Discovery() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Success Metrics (how will we measure success?)</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">Success Metrics (how will we measure success?)</label>
               <textarea
                 value={data.successMetrics.join('\n')}
                 onChange={(e) => updateField('successMetrics', e.target.value.split('\n').filter(m => m.trim()))}
                 placeholder="e.g., 50 new patients per month&#10;Cost per lead under $50&#10;30% increase in website traffic"
                 rows={3}
-                className="w-full px-4 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 focus:outline-none font-mono"
+                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-cyan-500 focus:outline-none font-mono"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Timeline / Urgency</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">Timeline / Urgency</label>
               <select
                 value={data.timeline}
                 onChange={(e) => updateField('timeline', e.target.value)}
-                className="w-full px-4 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 focus:outline-none"
+                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-cyan-500 focus:outline-none"
               >
                 <option value="">Select timeline...</option>
                 <option value="asap">ASAP - Need results immediately</option>
@@ -368,7 +368,7 @@ export default function Discovery() {
         return (
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-3">Existing Tools & Platforms</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-3">Existing Tools & Platforms</label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 {commonTools.map(tool => (
                   <button
@@ -376,8 +376,8 @@ export default function Discovery() {
                     onClick={() => toggleArrayItem('existingTools', tool)}
                     className={`px-3 py-2 rounded-lg text-sm transition-colors ${
                       data.existingTools.includes(tool)
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+                        ? 'bg-purple-600 text-foreground'
+                        : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
                     }`}
                   >
                     {tool}
@@ -386,33 +386,33 @@ export default function Discovery() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Website URL</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">Website URL</label>
               <input
                 type="url"
                 value={data.websiteUrl}
                 onChange={(e) => updateField('websiteUrl', e.target.value)}
                 placeholder="https://example.com"
-                className="w-full px-4 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 focus:outline-none"
+                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-cyan-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Social Media Profiles</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">Social Media Profiles</label>
               <textarea
                 value={data.socialProfiles}
                 onChange={(e) => updateField('socialProfiles', e.target.value)}
                 placeholder="Facebook: https://facebook.com/...&#10;Instagram: @handle&#10;LinkedIn: https://linkedin.com/..."
                 rows={3}
-                className="w-full px-4 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 focus:outline-none"
+                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-cyan-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Additional Notes</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">Additional Notes</label>
               <textarea
                 value={data.discoveryNotes}
                 onChange={(e) => updateField('discoveryNotes', e.target.value)}
                 placeholder="Any other important information..."
                 rows={3}
-                className="w-full px-4 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-cyan-500 focus:outline-none"
+                className="w-full px-4 py-3 bg-secondary text-foreground rounded-lg border border-border focus:border-cyan-500 focus:outline-none"
               />
             </div>
           </div>
@@ -421,44 +421,44 @@ export default function Discovery() {
       case 6:
         return (
           <div className="space-y-6">
-            <div className="bg-slate-700/50 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <div className="bg-secondary/50 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-cyan-400" />
                 {clientName || 'Client Name Not Set'}
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="text-sm font-medium text-gray-400 mb-1">Business Description</h4>
-                  <p className="text-gray-300">{data.businessDescription || '-'}</p>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Business Description</h4>
+                  <p className="text-muted-foreground">{data.businessDescription || '-'}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-400 mb-1">Target Audience</h4>
-                  <p className="text-gray-300">{data.targetAudience || '-'}</p>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Target Audience</h4>
+                  <p className="text-muted-foreground">{data.targetAudience || '-'}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-400 mb-1">Monthly Budget</h4>
-                  <p className="text-gray-300">{data.currentMonthlyBudget || '-'}</p>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Monthly Budget</h4>
+                  <p className="text-muted-foreground">{data.currentMonthlyBudget || '-'}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-400 mb-1">Timeline</h4>
-                  <p className="text-gray-300">{data.timeline || '-'}</p>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Timeline</h4>
+                  <p className="text-muted-foreground">{data.timeline || '-'}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-400 mb-1">Marketing Channels</h4>
-                  <p className="text-gray-300">{data.currentMarketingChannels.join(', ') || '-'}</p>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Marketing Channels</h4>
+                  <p className="text-muted-foreground">{data.currentMarketingChannels.join(', ') || '-'}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-400 mb-1">Pain Points</h4>
-                  <p className="text-gray-300">{data.currentPainPoints.join(', ') || '-'}</p>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Pain Points</h4>
+                  <p className="text-muted-foreground">{data.currentPainPoints.join(', ') || '-'}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-400 mb-1">Goals</h4>
-                  <p className="text-gray-300">{data.primaryGoals.join(', ') || '-'}</p>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Goals</h4>
+                  <p className="text-muted-foreground">{data.primaryGoals.join(', ') || '-'}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-400 mb-1">Competitors</h4>
-                  <p className="text-gray-300">{data.competitors.join(', ') || '-'}</p>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Competitors</h4>
+                  <p className="text-muted-foreground">{data.competitors.join(', ') || '-'}</p>
                 </div>
               </div>
             </div>
@@ -488,7 +488,7 @@ export default function Discovery() {
               <button
                 onClick={handleSave}
                 disabled={isSaving || !clientName || saved}
-                className="flex-1 px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 px-6 py-3 bg-cyan-600 text-foreground rounded-lg hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isSaving ? (
                   <>
@@ -510,7 +510,7 @@ export default function Discovery() {
               <button
                 onClick={handleGenerateStrategy}
                 disabled={!clientName || isGenerating}
-                className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 px-6 py-3 bg-purple-600 text-foreground rounded-lg hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isGenerating ? (
                   <>
@@ -534,15 +534,15 @@ export default function Discovery() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
             <ClipboardList className="w-8 h-8 text-cyan-500" />
             Client Discovery
           </h1>
-          <p className="text-gray-400 mt-1">Gather client information to build their marketing strategy</p>
+          <p className="text-muted-foreground mt-1">Gather client information to build their marketing strategy</p>
         </div>
 
         {/* Progress Steps */}
@@ -559,19 +559,19 @@ export default function Discovery() {
                 >
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 ${
                     currentStep === step.id ? 'bg-cyan-600' : 
-                    currentStep > step.id ? 'bg-green-600' : 'bg-slate-700'
+                    currentStep > step.id ? 'bg-green-600' : 'bg-secondary'
                   }`}>
                     {currentStep > step.id ? (
-                      <Check className="w-5 h-5 text-white" />
+                      <Check className="w-5 h-5 text-foreground" />
                     ) : (
-                      <step.icon className="w-5 h-5 text-white" />
+                      <step.icon className="w-5 h-5 text-foreground" />
                     )}
                   </div>
                   <span className="text-xs font-medium hidden md:block">{step.title}</span>
                 </button>
                 {idx < steps.length - 1 && (
                   <div className={`w-12 md:w-24 h-1 mx-2 rounded ${
-                    currentStep > step.id ? 'bg-green-600' : 'bg-slate-700'
+                    currentStep > step.id ? 'bg-green-600' : 'bg-secondary'
                   }`} />
                 )}
               </div>
@@ -580,10 +580,10 @@ export default function Discovery() {
         </div>
 
         {/* Step Content */}
-        <div className="bg-slate-800/50 backdrop-blur rounded-xl p-6 border border-slate-700 mb-6">
+        <div className="bg-card backdrop-blur rounded-xl p-6 border border-border mb-6">
           <div className="mb-6">
-            <h2 className="text-xl font-semibold text-white">{steps[currentStep - 1].title}</h2>
-            <p className="text-gray-400 text-sm">{steps[currentStep - 1].description}</p>
+            <h2 className="text-xl font-semibold text-foreground">{steps[currentStep - 1].title}</h2>
+            <p className="text-muted-foreground text-sm">{steps[currentStep - 1].description}</p>
           </div>
           {renderStepContent()}
         </div>
@@ -593,7 +593,7 @@ export default function Discovery() {
           <button
             onClick={prevStep}
             disabled={currentStep === 1}
-            className="px-6 py-3 bg-slate-700 text-white rounded-lg hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-6 py-3 bg-secondary text-foreground rounded-lg hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             <ChevronLeft className="w-5 h-5" />
             Previous
@@ -601,7 +601,7 @@ export default function Discovery() {
           {currentStep < 6 && (
             <button
               onClick={nextStep}
-              className="px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-500 flex items-center gap-2"
+              className="px-6 py-3 bg-cyan-600 text-foreground rounded-lg hover:bg-cyan-500 flex items-center gap-2"
             >
               Next
               <ChevronRight className="w-5 h-5" />
