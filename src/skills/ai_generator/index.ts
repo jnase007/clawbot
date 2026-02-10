@@ -3,6 +3,34 @@ import { config } from '../../config/index.js';
 import { logAction } from '../../db/repository.js';
 import type { Platform } from '../../db/types.js';
 
+/**
+ * Sanitize user input to prevent prompt injection attacks
+ */
+function sanitizeForPrompt(input: string): string {
+  if (typeof input !== 'string') return '';
+  
+  let sanitized = input.trim().substring(0, 2000); // Limit length
+  
+  // Remove common prompt injection patterns
+  const injectionPatterns = [
+    /ignore\s+(previous|all|above)\s+instructions?/gi,
+    /disregard\s+(previous|all|above)\s+instructions?/gi,
+    /forget\s+(previous|all|above)\s+instructions?/gi,
+    /new\s+instructions?:/gi,
+    /system\s*:/gi,
+    /assistant\s*:/gi,
+    /\[system\]/gi,
+    /\[assistant\]/gi,
+    /<\|.*?\|>/g,
+  ];
+  
+  for (const pattern of injectionPatterns) {
+    sanitized = sanitized.replace(pattern, '[filtered]');
+  }
+  
+  return sanitized;
+}
+
 let anthropic: Anthropic | null = null;
 
 function getAnthropic(): Anthropic {
@@ -45,6 +73,10 @@ export async function generateContent(options: {
     maxLength = platform === 'twitter' ? 270 : 1000,
   } = options;
 
+  // Sanitize user inputs to prevent prompt injection
+  const safeTopic = sanitizeForPrompt(topic);
+  const safeTargetAudience = sanitizeForPrompt(targetAudience);
+
   const client = getAnthropic();
 
   const systemPrompt = `You are an expert marketing copywriter for ProjectHunter.ai, a marketplace where:
@@ -58,7 +90,7 @@ Rules:
 - Platform: ${platform}
 - Content type: ${type}
 - Tone: ${tone}
-- Target audience: ${targetAudience}
+- Target audience: ${safeTargetAudience}
 - Max length: ${maxLength} characters
 - Include emojis: ${includeEmoji}
 - Always include a soft CTA to projecthunter.ai
@@ -67,7 +99,7 @@ Rules:
 - For LinkedIn, be professional but personable
 - For email, be direct and valuable`;
 
-  const userPrompt = `Create a ${type} about: ${topic}
+  const userPrompt = `Create a ${type} about: ${safeTopic}
 
 Return your response as valid JSON with this exact structure:
 {

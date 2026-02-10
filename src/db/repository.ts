@@ -105,10 +105,23 @@ export async function searchContacts(
   query: string,
   platform?: Platform
 ): Promise<OutreachContact[]> {
+  // Sanitize query to prevent SQL injection via ILIKE
+  const sanitizedQuery = query
+    .replace(/\\/g, '\\\\')  // Escape backslashes first
+    .replace(/%/g, '\\%')    // Escape percent
+    .replace(/_/g, '\\_')    // Escape underscore
+    .replace(/'/g, "''")     // Escape single quotes
+    .trim()
+    .substring(0, 200);      // Limit length
+
+  if (!sanitizedQuery) {
+    return [];
+  }
+
   let dbQuery = supabase()
     .from('outreach_contacts')
     .select('*')
-    .or(`name.ilike.%${query}%,handle.ilike.%${query}%,email.ilike.%${query}%`);
+    .or(`name.ilike.%${sanitizedQuery}%,handle.ilike.%${sanitizedQuery}%,email.ilike.%${sanitizedQuery}%`);
 
   if (platform) {
     dbQuery = dbQuery.eq('platform', platform);
