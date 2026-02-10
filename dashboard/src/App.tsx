@@ -14,6 +14,7 @@ import ApolloLeads from './pages/ApolloLeads';
 import ContentStudio from './pages/ContentStudio';
 import ClientWorkflow from './pages/ClientWorkflow';
 import Setup from './pages/Setup';
+import Discovery from './pages/Discovery';
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
       <Route path="/dashboard" element={<Layout />}>
         <Route index element={<ClientDashboard />} />
         <Route path="clients" element={<ClientWorkflow />} />
+        <Route path="discovery" element={<Discovery />} />
         <Route path="apollo" element={<ApolloLeads />} />
         <Route path="content" element={<ContentStudio />} />
         <Route path="contacts" element={<Contacts />} />

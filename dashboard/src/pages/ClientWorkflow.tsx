@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Users, Building2, ChevronRight, Plus, Search,
-  ClipboardList, Target, Rocket, TrendingUp
+  ClipboardList, Target, Rocket, TrendingUp, ArrowRight
 } from 'lucide-react';
 
 type Stage = 'discovery' | 'strategy' | 'execution' | 'optimization';
@@ -59,10 +60,13 @@ export default function ClientWorkflow() {
             </h1>
             <p className="text-gray-400 mt-1">Manage clients through Discovery → Strategy → Execution</p>
           </div>
-          <button className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-500 flex items-center gap-2">
+          <Link 
+            to="/dashboard/discovery"
+            className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-500 flex items-center gap-2"
+          >
             <Plus className="w-4 h-4" />
-            New Client
-          </button>
+            New Client Discovery
+          </Link>
         </div>
 
         {/* Pipeline Overview */}
@@ -176,9 +180,30 @@ export default function ClientWorkflow() {
                     <td className="px-4 py-3 text-gray-400 text-sm">{client.lastActivity}</td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
-                        <button className="text-cyan-400 hover:text-cyan-300 text-sm">
-                          View
-                        </button>
+                        {client.stage === 'discovery' && (
+                          <Link 
+                            to="/dashboard/discovery"
+                            className="text-cyan-400 hover:text-cyan-300 text-sm flex items-center gap-1"
+                          >
+                            Start Discovery <ArrowRight className="w-3 h-3" />
+                          </Link>
+                        )}
+                        {client.stage === 'strategy' && (
+                          <Link 
+                            to="/dashboard/strategy"
+                            className="text-purple-400 hover:text-purple-300 text-sm flex items-center gap-1"
+                          >
+                            Generate Strategy <ArrowRight className="w-3 h-3" />
+                          </Link>
+                        )}
+                        {(client.stage === 'execution' || client.stage === 'optimization') && (
+                          <Link 
+                            to="/dashboard/campaigns"
+                            className="text-orange-400 hover:text-orange-300 text-sm flex items-center gap-1"
+                          >
+                            View Campaigns <ArrowRight className="w-3 h-3" />
+                          </Link>
+                        )}
                         <button className="text-gray-400 hover:text-white text-sm">
                           Edit
                         </button>

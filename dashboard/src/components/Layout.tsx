@@ -22,7 +22,8 @@ import {
   Target,
   PenTool,
   UserCircle,
-  Wrench
+  Wrench,
+  ClipboardList
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { ThemeToggle } from './ThemeToggle';
@@ -182,9 +183,10 @@ function NotificationsDropdown() {
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/dashboard/clients', icon: UserCircle, label: 'Clients', isNew: true },
+  { to: '/dashboard/discovery', icon: ClipboardList, label: 'Discovery', isNew: true, highlight: true },
   { to: '/dashboard/apollo', icon: Target, label: 'Apollo Leads', isNew: true },
   { to: '/dashboard/content', icon: PenTool, label: 'Content Studio', isNew: true },
-  { to: '/dashboard/strategy', icon: Brain, label: 'AI Strategy', highlight: true },
+  { to: '/dashboard/strategy', icon: Brain, label: 'AI Strategy' },
   { to: '/dashboard/contacts', icon: Users, label: 'Contacts' },
   { to: '/dashboard/templates', icon: FileText, label: 'Templates' },
   { to: '/dashboard/sequences', icon: Workflow, label: 'Sequences' },
