@@ -131,7 +131,7 @@ export default function Discovery() {
       });
 
       if (response.ok) {
-        const result = await response.json();
+        await response.json();
         setSaved(true);
         success('Discovery auto-saved');
         refreshClients();
@@ -304,7 +304,7 @@ export default function Discovery() {
         throw new Error(errorData.message || errorData.error || 'Failed to save discovery');
       }
 
-      const result = await response.json();
+      await response.json();
       setSaved(true);
       refreshClients();
       removeToast(loadingId);

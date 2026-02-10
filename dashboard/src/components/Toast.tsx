@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Check, X, AlertCircle, Info, Loader2 } from 'lucide-react';
+import { Check, X, Info, Loader2 } from 'lucide-react';
 
 export type ToastType = 'success' | 'error' | 'info' | 'loading';
 

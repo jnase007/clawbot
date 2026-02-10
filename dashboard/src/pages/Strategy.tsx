@@ -122,7 +122,7 @@ interface ChatMessage {
 
 export default function Strategy() {
   const { currentClient, currentClientId } = useClient();
-  const { toasts, removeToast, success, error: toastError, loading: toastLoading } = useToast();
+  const { toasts, removeToast, success } = useToast();
   const [strategy, setStrategy] = useState<GeneratedStrategy | null>(null);
   const [strategyId, setStrategyId] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);

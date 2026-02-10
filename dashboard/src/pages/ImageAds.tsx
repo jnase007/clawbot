@@ -101,7 +101,7 @@ function getSuggestedStyle(industry?: string | null): string {
 
 export default function ImageAds() {
   const { currentClient, currentClientId } = useClient();
-  const { toasts, removeToast, success, error: toastError } = useToast();
+  const { toasts, removeToast, success } = useToast();
   const [prompt, setPrompt] = useState('');
   const [brandName, setBrandName] = useState('');
   const [selectedSize, setSelectedSize] = useState<AdSize>('square');

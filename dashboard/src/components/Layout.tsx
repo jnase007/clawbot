@@ -156,7 +156,14 @@ function NotificationsDropdown() {
 
 // Grouped navigation for better organization
 // Flow: Plan → Create → Execute → Measure
-const navGroups = [
+interface NavItem {
+  to: string;
+  icon: any;
+  label: string;
+  isNew?: boolean;
+}
+
+const navGroups: Array<{ label: string; items: NavItem[] }> = [
   {
     label: 'Plan',
     items: [
