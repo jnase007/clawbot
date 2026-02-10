@@ -68,15 +68,25 @@ export default function Clients() {
   };
 
   const handleOpenEdit = (client: any) => {
+    // Clean website URL for display (remove protocol if present)
+    let website = client.website || '';
+    if (website) {
+      website = website.replace(/^https?:\/\//i, '');
+    }
+
     setFormData({
       name: client.name || '',
       email: client.email || '',
       phone: client.phone || '',
-      website: client.website || '',
+      website: website,
       goals: client.goals || '',
       challenges: client.challenges || '',
-      competitors: client.competitor_names?.join(', ') || '',
-      budget: client.monthly_budget?.toString() || '',
+      competitors: Array.isArray(client.competitor_names) 
+        ? client.competitor_names.join(', ') 
+        : '',
+      budget: client.monthly_budget 
+        ? client.monthly_budget.toString() 
+        : '',
       industry: client.industry || '',
     });
     setEditingClient(client.id);
