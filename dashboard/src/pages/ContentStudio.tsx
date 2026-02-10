@@ -52,7 +52,7 @@ function getPresetKey(clientName?: string | null): string | null {
 
 export default function ContentStudio() {
   const { currentClient, currentClientId } = useClient();
-  const { toasts, removeToast, success } = useToast();
+  const { toasts, removeToast, success, error: toastError } = useToast();
   const [activeTab, setActiveTab] = useState<ContentType>('blog');
   const [topic, setTopic] = useState('');
   const [audience, setAudience] = useState('');
@@ -154,8 +154,14 @@ export default function ContentStudio() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || errorData.message || 'Generation failed');
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
+        }
+        const errorMessage = errorData.message || errorData.error || 'Generation failed';
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
@@ -210,7 +216,9 @@ export default function ContentStudio() {
 
     } catch (err) {
       console.error('Generation error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to generate content. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to generate content. Please try again.';
+      setError(errorMessage);
+      toastError(errorMessage);
     } finally {
       setIsGenerating(false);
     }

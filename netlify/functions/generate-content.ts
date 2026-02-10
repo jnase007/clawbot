@@ -1,10 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { Handler, HandlerEvent } from '@netlify/functions';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || '',
-});
-
 // SEO & GEO Best Practices System Prompt
 const BLOG_SYSTEM_PROMPT = `You are an expert SEO content writer for Brandastic, a digital marketing agency specializing in AI-powered marketing solutions for healthcare and dental companies.
 
@@ -113,18 +109,40 @@ export const handler: Handler = async (event: HandlerEvent) => {
     };
   } catch (error) {
     console.error('Generation error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    // Provide more specific error messages
+    let userMessage = 'Generation failed';
+    if (errorMessage.includes('API key') || errorMessage.includes('ANTHROPIC')) {
+      userMessage = 'API key not configured. Please add ANTHROPIC_API_KEY to Netlify environment variables.';
+    } else if (errorMessage.includes('rate limit') || errorMessage.includes('429')) {
+      userMessage = 'Rate limit exceeded. Please try again in a moment.';
+    } else if (errorMessage.includes('timeout')) {
+      userMessage = 'Request timed out. Please try again.';
+    } else {
+      userMessage = errorMessage;
+    }
+    
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({ 
         error: 'Generation failed', 
-        message: error instanceof Error ? error.message : 'Unknown error' 
+        message: userMessage,
+        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
       }),
     };
   }
 };
 
 async function generateBlogPost(topic: string, audience: string, tone: string, keywords: string[], clientName: string) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY not configured');
+  }
+
+  const anthropic = new Anthropic({ apiKey });
+
   const response = await anthropic.messages.create({
     model: 'claude-3-haiku-20240307',
     max_tokens: 8192,
@@ -164,8 +182,36 @@ Return JSON:
 
   const textContent = response.content.find(block => block.type === 'text');
   const text = textContent?.type === 'text' ? textContent.text : '{}';
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  const result = JSON.parse(jsonMatch ? jsonMatch[0] : '{}');
+  
+  // Try to extract JSON from the response
+  let jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    // If no JSON found, try to parse the entire text
+    jsonMatch = [text];
+  }
+  
+  let result;
+  try {
+    result = JSON.parse(jsonMatch[0]);
+  } catch (parseError) {
+    // If JSON parsing fails, create a fallback structure
+    console.error('JSON parse error:', parseError);
+    result = {
+      title: topic,
+      metaDescription: `Learn about ${topic} - Expert insights and strategies.`,
+      excerpt: `Discover everything you need to know about ${topic}.`,
+      content: text, // Use the raw text as content
+      headings: [],
+      keywords: keywords.length > 0 ? keywords : [topic],
+      estimatedReadTime: Math.ceil(text.split(/\s+/).length / 200),
+      wordCount: text.split(/\s+/).length,
+      seoScore: 75,
+      geoOptimizations: [],
+      faqSection: [],
+      internalLinkingSuggestions: [],
+      featuredSnippetTarget: text.substring(0, 200),
+    };
+  }
   
   // Calculate actual word count
   if (result.content) {
@@ -177,6 +223,12 @@ Return JSON:
 }
 
 async function generateMetaAds(product: string, audience: string) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY not configured');
+  }
+  const anthropic = new Anthropic({ apiKey });
+
   const response = await anthropic.messages.create({
     model: 'claude-3-haiku-20240307',
     max_tokens: 2048,
@@ -219,6 +271,12 @@ Return JSON:
 }
 
 async function generateGoogleAds(product: string, keywords: string[]) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY not configured');
+  }
+  const anthropic = new Anthropic({ apiKey });
+
   const response = await anthropic.messages.create({
     model: 'claude-3-haiku-20240307',
     max_tokens: 2048,
@@ -259,6 +317,12 @@ Return JSON:
 }
 
 async function generateLinkedInAds(product: string, audience: string) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY not configured');
+  }
+  const anthropic = new Anthropic({ apiKey });
+
   const response = await anthropic.messages.create({
     model: 'claude-3-haiku-20240307',
     max_tokens: 2048,
