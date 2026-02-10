@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Target, Search, Users, Building2, Mail, Linkedin,
   Loader2, AlertCircle, Download, RefreshCw, Check, Filter,
-  MapPin, ChevronDown
+  MapPin, ChevronDown, Info
 } from 'lucide-react';
+import { useClient } from '@/components/ClientProvider';
+import { CLIENT_PRESETS } from '@/lib/types';
 
 interface Lead {
   id: string;
@@ -31,22 +33,47 @@ interface SearchFilters {
 
 const API_URL = '/api/apollo-search';
 
-const defaultTitles = [
-  'Marketing Director',
-  'CMO',
-  'Chief Marketing Officer', 
-  'Marketing Manager',
-  'VP of Marketing',
-  'Director of Marketing',
-];
-
-const defaultIndustries = [
-  'Hospital & Health Care',
-  'Medical Practice',
-  'Medical Devices',
-  'Health, Wellness and Fitness',
-  'Mental Health Care',
-];
+// Industry options grouped by client type
+const industryOptions: Record<string, string[]> = {
+  healthcare: [
+    'Hospital & Health Care',
+    'Medical Practice',
+    'Medical Devices',
+    'Health, Wellness and Fitness',
+    'Mental Health Care',
+    'Pharmaceuticals',
+  ],
+  realestate: [
+    'Real Estate',
+    'Investment Banking',
+    'Venture Capital & Private Equity',
+    'Financial Services',
+    'Banking',
+    'Wealth Management',
+  ],
+  construction: [
+    'Construction',
+    'Building Materials',
+    'Architecture & Planning',
+    'Civil Engineering',
+    'Real Estate Development',
+  ],
+  technology: [
+    'Information Technology & Services',
+    'Computer Software',
+    'Financial Services',
+    'Banking',
+    'Insurance',
+  ],
+  marketing: [
+    'Hospital & Health Care',
+    'Medical Practice',
+    'Real Estate',
+    'Technology',
+    'E-commerce',
+    'Professional Services',
+  ],
+};
 
 const companySizes = [
   { value: '', label: 'Any size' },
@@ -58,7 +85,19 @@ const companySizes = [
   { value: '1001,5000', label: '1001-5000 employees' },
 ];
 
+// Get preset key from client name
+function getPresetKey(clientName?: string | null): string | null {
+  if (!clientName) return null;
+  const name = clientName.toLowerCase();
+  if (name.includes('equitymd') || name.includes('equity')) return 'equitymd';
+  if (name.includes('projecthunter') || name.includes('hunter')) return 'projecthunter';
+  if (name.includes('comply')) return 'comply';
+  if (name.includes('brandastic')) return 'brandastic';
+  return null;
+}
+
 export default function ApolloLeads() {
+  const { currentClient } = useClient();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,13 +105,52 @@ export default function ApolloLeads() {
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
   const [showFilters, setShowFilters] = useState(true);
   
+  // Get client-specific defaults
+  const presetKey = getPresetKey(currentClient?.name);
+  const preset = presetKey ? CLIENT_PRESETS[presetKey] : null;
+  
   const [filters, setFilters] = useState<SearchFilters>({
     query: '',
-    titles: ['Marketing Director', 'CMO', 'Marketing Manager'],
-    industries: ['Hospital & Health Care', 'Medical Practice'],
-    locations: ['United States'],
+    titles: preset?.target_job_titles || currentClient?.target_job_titles || ['Marketing Director', 'CMO', 'Marketing Manager'],
+    industries: preset?.target_industries || currentClient?.target_industries || ['Hospital & Health Care', 'Medical Practice'],
+    locations: preset?.target_locations || currentClient?.target_locations || ['United States'],
     companySize: '',
   });
+
+  // Get available industries based on client
+  const getAvailableIndustries = () => {
+    if (preset?.target_industries) return preset.target_industries;
+    if (currentClient?.target_industries) return currentClient.target_industries;
+    // Determine by client type
+    const name = currentClient?.name?.toLowerCase() || '';
+    if (name.includes('equity')) return industryOptions.realestate;
+    if (name.includes('hunter')) return industryOptions.construction;
+    if (name.includes('comply')) return industryOptions.technology;
+    return industryOptions.marketing;
+  };
+
+  // Get available job titles
+  const getAvailableTitles = () => {
+    if (preset?.target_job_titles) return preset.target_job_titles;
+    if (currentClient?.target_job_titles) return currentClient.target_job_titles;
+    return ['Marketing Director', 'CMO', 'Chief Marketing Officer', 'VP of Marketing', 'Director of Marketing'];
+  };
+
+  // Update filters when client changes
+  useEffect(() => {
+    const newPresetKey = getPresetKey(currentClient?.name);
+    const newPreset = newPresetKey ? CLIENT_PRESETS[newPresetKey] : null;
+    
+    setFilters({
+      query: '',
+      titles: newPreset?.target_job_titles || currentClient?.target_job_titles || ['Marketing Director', 'CMO'],
+      industries: newPreset?.target_industries || currentClient?.target_industries || ['Hospital & Health Care'],
+      locations: newPreset?.target_locations || currentClient?.target_locations || ['United States'],
+      companySize: '',
+    });
+    setLeads([]);
+    setTotalResults(0);
+  }, [currentClient?.id]);
 
   const handleSearch = async () => {
     setIsSearching(true);
@@ -185,7 +263,11 @@ export default function ApolloLeads() {
               <Target className="w-7 h-7 text-orange-500" />
               Apollo Lead Search
             </h1>
-            <p className="text-gray-400 mt-1">Find healthcare marketing decision-makers</p>
+            <p className="text-gray-400 mt-1">
+              {currentClient 
+                ? `Finding leads for ${currentClient.name}` 
+                : 'Select a client to customize your search'}
+            </p>
           </div>
           
           {selectedLeads.size > 0 && (
@@ -227,11 +309,24 @@ export default function ApolloLeads() {
                   />
                 </div>
 
+                {/* Client Context Alert */}
+                {currentClient && (
+                  <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
+                    <div className="flex items-center gap-2 text-orange-400 text-sm font-medium mb-1">
+                      <Info className="w-4 h-4" />
+                      Targeting for {currentClient.name}
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      Filters are preset for {preset?.industry || currentClient.industry || 'this client'}
+                    </p>
+                  </div>
+                )}
+
                 {/* Job Titles */}
                 <div>
                   <label className="block text-sm text-gray-400 mb-2">Job Titles</label>
                   <div className="space-y-1 max-h-40 overflow-y-auto">
-                    {defaultTitles.map(title => (
+                    {getAvailableTitles().map(title => (
                       <label key={title} className="flex items-center gap-2 cursor-pointer hover:bg-slate-700/50 p-1 rounded">
                         <input
                           type="checkbox"
@@ -249,7 +344,7 @@ export default function ApolloLeads() {
                 <div>
                   <label className="block text-sm text-gray-400 mb-2">Industries</label>
                   <div className="space-y-1 max-h-40 overflow-y-auto">
-                    {defaultIndustries.map(industry => (
+                    {getAvailableIndustries().map(industry => (
                       <label key={industry} className="flex items-center gap-2 cursor-pointer hover:bg-slate-700/50 p-1 rounded">
                         <input
                           type="checkbox"

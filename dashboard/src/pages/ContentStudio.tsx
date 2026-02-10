@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   FileText, Sparkles, Copy, Check, Download,
   Linkedin, Facebook, Search, PenTool, Loader2,
   Lightbulb, TrendingUp, HelpCircle, BarChart3,
-  AlertCircle, RefreshCw, Clock, ChevronDown
+  AlertCircle, RefreshCw, Clock, ChevronDown, Info
 } from 'lucide-react';
 import { useClient } from '@/components/ClientProvider';
+import { CLIENT_PRESETS } from '@/lib/types';
 
 type ContentType = 'blog' | 'meta' | 'google' | 'linkedin';
 
@@ -35,11 +36,22 @@ interface ContentHistory {
 
 const API_URL = '/api/generate-content';
 
+// Get preset key from client name
+function getPresetKey(clientName?: string | null): string | null {
+  if (!clientName) return null;
+  const name = clientName.toLowerCase();
+  if (name.includes('equitymd') || name.includes('equity')) return 'equitymd';
+  if (name.includes('projecthunter') || name.includes('hunter')) return 'projecthunter';
+  if (name.includes('comply')) return 'comply';
+  if (name.includes('brandastic')) return 'brandastic';
+  return null;
+}
+
 export default function ContentStudio() {
   const { currentClient } = useClient();
   const [activeTab, setActiveTab] = useState<ContentType>('blog');
   const [topic, setTopic] = useState('');
-  const [audience, setAudience] = useState('dental practice owners');
+  const [audience, setAudience] = useState('');
   const [tone, setTone] = useState('professional');
   const [keywords, setKeywords] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -48,6 +60,24 @@ export default function ContentStudio() {
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<ContentHistory[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+
+  // Get client-specific defaults
+  const presetKey = getPresetKey(currentClient?.name);
+  const preset = presetKey ? CLIENT_PRESETS[presetKey] : null;
+
+  // Suggested topics based on client
+  const getSuggestedTopics = () => {
+    if (preset?.content_topics) return preset.content_topics;
+    return ['AI Marketing Strategies', 'Lead Generation Tips', 'Digital Marketing Trends'];
+  };
+
+  // Update defaults when client changes
+  useEffect(() => {
+    if (currentClient) {
+      setAudience(currentClient.target_audience || preset?.target_audience as string || 'business professionals');
+      setKeywords(preset?.keywords?.join(', ') || currentClient.keywords?.join(', ') || '');
+    }
+  }, [currentClient?.id]);
 
   const tabs = [
     { id: 'blog', label: 'Blog Post (2000+ words)', icon: FileText, color: 'text-blue-400', description: 'SEO & GEO optimized' },
@@ -145,7 +175,9 @@ export default function ContentStudio() {
               Content Studio
             </h1>
             <p className="text-gray-400 mt-1">
-              {currentClient ? `Creating content for ${currentClient.name}` : 'Generate production-ready marketing content'}
+              {currentClient 
+                ? `Creating content for ${currentClient.name} • ${preset?.industry || currentClient.industry || 'General'}`
+                : 'Select a client to customize content generation'}
             </p>
           </div>
           
@@ -209,6 +241,28 @@ export default function ContentStudio() {
 
         {/* Input Section */}
         <div className="bg-slate-800/70 backdrop-blur rounded-xl p-5 md:p-6 mb-6 border border-slate-700">
+          {/* Client Context Alert */}
+          {currentClient && (
+            <div className="mb-4 bg-purple-500/10 border border-purple-500/30 rounded-lg p-3">
+              <div className="flex items-center gap-2 text-purple-400 text-sm font-medium mb-2">
+                <Info className="w-4 h-4" />
+                Creating content for {currentClient.name}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <span className="text-xs text-gray-400">Quick topics:</span>
+                {getSuggestedTopics().slice(0, 4).map((suggestedTopic, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setTopic(suggestedTopic)}
+                    className="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-xs text-gray-300 rounded transition-colors"
+                  >
+                    {suggestedTopic}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Main Input */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -219,8 +273,8 @@ export default function ContentStudio() {
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               placeholder={activeTab === 'blog' 
-                ? 'e.g., AI Marketing Strategies for Dental Practices in 2026' 
-                : 'e.g., Brandastic AI Marketing Platform'}
+                ? `e.g., ${getSuggestedTopics()[0] || 'Marketing Strategies'} for ${currentClient?.name || 'Your Business'}` 
+                : `e.g., ${currentClient?.name || 'Your'} ${preset?.industry || 'Marketing'} Services`}
               className="w-full px-4 py-3 bg-slate-900/50 text-white text-lg rounded-lg border border-slate-600 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
             />
           </div>

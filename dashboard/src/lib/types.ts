@@ -22,7 +22,54 @@ export interface Client {
   monthly_budget: number | null;
   created_at: string;
   updated_at: string;
+  // Marketing-specific settings for Apollo/Content
+  target_job_titles?: string[];
+  target_industries?: string[];
+  target_locations?: string[];
+  keywords?: string[];
+  content_topics?: string[];
+  competitor_names?: string[];
 }
+
+// Client presets for quick setup
+export const CLIENT_PRESETS: Record<string, Partial<Client>> = {
+  brandastic: {
+    name: 'Brandastic',
+    industry: 'Marketing & Advertising',
+    target_job_titles: ['Marketing Director', 'CMO', 'CEO', 'Business Owner'],
+    target_industries: ['Hospital & Health Care', 'Medical Practice', 'Dental', 'Real Estate', 'Technology'],
+    target_locations: ['United States'],
+    keywords: ['digital marketing', 'AI marketing', 'SEO', 'PPC', 'social media marketing'],
+    content_topics: ['AI Marketing', 'Digital Strategy', 'Lead Generation', 'Brand Building'],
+  },
+  equitymd: {
+    name: 'EquityMD',
+    industry: 'Real Estate Investment',
+    target_job_titles: ['Accredited Investor', 'Real Estate Syndicator', 'Fund Manager', 'Family Office', 'Wealth Manager'],
+    target_industries: ['Real Estate', 'Investment Banking', 'Venture Capital', 'Private Equity', 'Financial Services'],
+    target_locations: ['United States'],
+    keywords: ['real estate syndication', 'accredited investors', 'passive income', 'multifamily investing'],
+    content_topics: ['Real Estate Syndication', 'Passive Investing', 'Tax Benefits', '1031 Exchange'],
+  },
+  projecthunter: {
+    name: 'ProjectHunter',
+    industry: 'Construction & Development',
+    target_job_titles: ['Project Manager', 'General Contractor', 'Developer', 'Construction Manager', 'Estimator'],
+    target_industries: ['Construction', 'Real Estate Development', 'Architecture', 'Engineering'],
+    target_locations: ['United States'],
+    keywords: ['construction leads', 'project bidding', 'commercial construction'],
+    content_topics: ['Construction Management', 'Project Bidding', 'Contractor Marketing'],
+  },
+  comply: {
+    name: 'Comply',
+    industry: 'Compliance & Legal Tech',
+    target_job_titles: ['Compliance Officer', 'General Counsel', 'Risk Manager', 'CISO', 'VP of Legal'],
+    target_industries: ['Financial Services', 'Banking', 'Insurance', 'Healthcare', 'Technology'],
+    target_locations: ['United States'],
+    keywords: ['compliance management', 'regulatory compliance', 'risk management', 'audit'],
+    content_topics: ['Compliance Automation', 'Regulatory Updates', 'Risk Mitigation'],
+  },
+};
 
 export interface OutreachContact {
   id: string;
