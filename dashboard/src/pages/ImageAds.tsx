@@ -5,6 +5,7 @@ import {
   CheckCircle, Globe, Zap
 } from 'lucide-react';
 import { useClient } from '@/components/ClientProvider';
+import { useToast, ToastContainer } from '@/components/Toast';
 import { CLIENT_PRESETS } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
 
@@ -100,6 +101,7 @@ function getSuggestedStyle(industry?: string | null): string {
 
 export default function ImageAds() {
   const { currentClient, currentClientId } = useClient();
+  const { toasts, removeToast, success, error: toastError } = useToast();
   const [prompt, setPrompt] = useState('');
   const [brandName, setBrandName] = useState('');
   const [selectedSize, setSelectedSize] = useState<AdSize>('square');
@@ -299,6 +301,7 @@ export default function ImageAds() {
               });
             }
             setSaved(true);
+            success('Image saved');
           } catch (saveErr) {
             console.log('Auto-save failed:', saveErr);
           }
@@ -337,6 +340,9 @@ export default function ImageAds() {
 
   return (
     <div className="min-h-screen bg-background p-6">
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
+      
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-6">

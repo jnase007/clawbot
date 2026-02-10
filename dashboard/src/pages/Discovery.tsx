@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { pdf } from '@react-pdf/renderer';
 import { DiscoveryPDF } from '@/components/pdf/DiscoveryPDF';
 import { useClient } from '@/components/ClientProvider';
+import { useToast, ToastContainer } from '@/components/Toast';
 import { 
   ClipboardList, Building2, Globe, Sparkles, Send,
   Save, AlertCircle, Loader2, FileDown, MessageSquare,
@@ -70,6 +71,7 @@ export default function Discovery() {
   const navigate = useNavigate();
   const { currentClient, refreshClients } = useClient();
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const { toasts, removeToast, success, error: toastError, loading } = useToast();
   
   // Basic inputs
   const [clientName, setClientName] = useState('');
@@ -93,6 +95,9 @@ export default function Discovery() {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(['overview', 'audience', 'analysis'])
   );
+  
+  // Auto-save timeout ref
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Pre-fill from current client
   useEffect(() => {
@@ -108,6 +113,53 @@ export default function Discovery() {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [chatMessages]);
+
+  // Auto-save function
+  const performAutoSave = useCallback(async () => {
+    if (!discovery || !clientName.trim() || saving) return;
+
+    try {
+      const response = await fetch('/api/save-discovery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientName: clientName.trim(),
+          industry: discovery.industry || 'General',
+          websiteUrl: discovery.websiteUrl,
+          discoveryData: discovery,
+        }),
+      });
+
+      if (response.ok) {
+        setSaved(true);
+        success('Discovery auto-saved');
+        refreshClients();
+      }
+    } catch (err) {
+      console.log('Auto-save failed:', err);
+    }
+  }, [discovery, clientName, saving, success, refreshClients]);
+
+  // Trigger auto-save when discovery changes
+  useEffect(() => {
+    if (!discovery || saved) return;
+
+    // Clear previous timeout
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    // Set new timeout for auto-save (3 seconds after last change)
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      performAutoSave();
+    }, 3000);
+
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [discovery, saved, performAutoSave]);
 
   const toggleSection = (id: string) => {
     setExpandedSections(prev => {
@@ -229,6 +281,7 @@ export default function Discovery() {
 
     setSaving(true);
     setError(null);
+    const loadingId = loading('Saving discovery...');
 
     try {
       const response = await fetch('/api/save-discovery', {
@@ -249,6 +302,8 @@ export default function Discovery() {
       await response.json();
       setSaved(true);
       refreshClients();
+      removeToast(loadingId);
+      success('Discovery saved successfully!');
 
       setChatMessages(prev => [...prev, {
         role: 'assistant',
@@ -257,6 +312,8 @@ export default function Discovery() {
       }]);
 
     } catch (err) {
+      removeToast(loadingId);
+      toastError(err instanceof Error ? err.message : 'Failed to save');
       setError(err instanceof Error ? err.message : 'Failed to save');
     } finally {
       setSaving(false);
@@ -316,6 +373,9 @@ export default function Discovery() {
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto">
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
+      
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl md:text-3xl font-display font-bold flex items-center gap-3">

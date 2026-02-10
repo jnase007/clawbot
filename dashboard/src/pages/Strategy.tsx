@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { useClient } from '@/components/ClientProvider';
+import { useToast, ToastContainer } from '@/components/Toast';
 import { pdf } from '@react-pdf/renderer';
 import { StrategyPDF } from '@/components/pdf/StrategyPDF';
 import { 
@@ -121,6 +122,7 @@ interface ChatMessage {
 
 export default function Strategy() {
   const { currentClient, currentClientId } = useClient();
+  const { toasts, removeToast, success, error: toastError, loading: toastLoading } = useToast();
   const [strategy, setStrategy] = useState<GeneratedStrategy | null>(null);
   const [strategyId, setStrategyId] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -129,7 +131,7 @@ export default function Strategy() {
   const [error, setError] = useState<string | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['summary', 'goals', 'channels']));
   const [copiedTemplate, setCopiedTemplate] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Chat state
   const [chatOpen, setChatOpen] = useState(false);
@@ -137,12 +139,13 @@ export default function Strategy() {
   const [chatInput, setChatInput] = useState('');
   const [refining, setRefining] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load existing strategy on mount
   useEffect(() => {
     async function loadStrategy() {
       if (!currentClientId) {
-        setLoading(false);
+        setIsLoading(false);
         return;
       }
 
@@ -181,12 +184,72 @@ export default function Strategy() {
       } catch (err) {
         console.log('No existing strategy found');
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     }
 
     loadStrategy();
   }, [currentClientId]);
+
+  // Auto-save function
+  const performAutoSave = useCallback(async () => {
+    if (!strategy || !currentClientId || saving) return;
+
+    try {
+      const strategyData = {
+        client_id: currentClientId,
+        name: `${currentClient?.name || 'Client'} Marketing Strategy`,
+        status: 'draft',
+        duration_days: 90,
+        executive_summary: strategy.executiveSummary,
+        target_persona: strategy.targetPersona,
+        channel_strategy: strategy.channelStrategy,
+        content_calendar: strategy.contentCalendar,
+        sample_templates: strategy.templates,
+        kpi_targets: strategy.kpis,
+        timeline: strategy.timeline,
+        risks: strategy.risks,
+        next_steps: strategy.nextSteps,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (strategyId) {
+        await (supabase.from('client_strategies' as any) as any)
+          .update(strategyData)
+          .eq('id', strategyId);
+      } else {
+        const { data } = await (supabase.from('client_strategies' as any) as any)
+          .insert(strategyData)
+          .select()
+          .single();
+        if (data) setStrategyId(data.id);
+      }
+
+      setSaved(true);
+      success('Strategy auto-saved');
+    } catch (err) {
+      console.log('Auto-save failed:', err);
+    }
+  }, [strategy, currentClientId, strategyId, currentClient?.name, saving, success]);
+
+  // Trigger auto-save when strategy changes
+  useEffect(() => {
+    if (!strategy || saved) return;
+
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      performAutoSave();
+    }, 3000);
+
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [strategy, saved, performAutoSave]);
 
   // Scroll chat to bottom
   useEffect(() => {
@@ -300,7 +363,7 @@ export default function Strategy() {
     }
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="p-8 flex flex-col items-center justify-center min-h-[60vh]">
         <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
@@ -432,6 +495,9 @@ export default function Strategy() {
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto">
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
+      
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>

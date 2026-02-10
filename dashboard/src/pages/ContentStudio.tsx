@@ -7,6 +7,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { useClient } from '@/components/ClientProvider';
+import { useToast, ToastContainer } from '@/components/Toast';
 import { CLIENT_PRESETS } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
 
@@ -51,6 +52,7 @@ function getPresetKey(clientName?: string | null): string | null {
 
 export default function ContentStudio() {
   const { currentClient, currentClientId } = useClient();
+  const { toasts, removeToast, success } = useToast();
   const [activeTab, setActiveTab] = useState<ContentType>('blog');
   const [topic, setTopic] = useState('');
   const [audience, setAudience] = useState('');
@@ -189,6 +191,7 @@ export default function ContentStudio() {
             };
             setHistory(prev => [historyItem, ...prev.slice(0, 19)]);
             setSaved(true);
+            success('Content saved');
           }
         } catch (saveErr) {
           console.log('Auto-save failed, content still available:', saveErr);
@@ -242,6 +245,9 @@ export default function ContentStudio() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
+      
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
