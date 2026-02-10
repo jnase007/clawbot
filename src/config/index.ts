@@ -9,8 +9,9 @@ const envSchema = z.object({
   SUPABASE_ANON_KEY: z.string().min(1),
   SUPABASE_SERVICE_KEY: z.string().optional(),
   
-  // OpenAI
+  // AI Providers
   OPENAI_API_KEY: z.string().optional(),
+  ANTHROPIC_API_KEY: z.string().optional(),
   
   // Email
   EMAIL_HOST: z.string().default('smtp.gmail.com'),

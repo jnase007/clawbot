@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 import { config } from '../config/index.js';
 import { 
   emailSkillMetadata,
@@ -30,167 +30,137 @@ import {
 } from '../db/repository.js';
 import type { Platform } from '../db/types.js';
 
-// OpenAI client for AI-powered decisions
-let openai: OpenAI | null = null;
+// Anthropic client for AI-powered decisions
+let anthropic: Anthropic | null = null;
 
-function getOpenAI(): OpenAI {
-  if (!openai) {
-    if (!config.OPENAI_API_KEY) {
-      throw new Error('OpenAI API key not configured');
+function getAnthropic(): Anthropic {
+  if (!anthropic) {
+    if (!config.ANTHROPIC_API_KEY) {
+      throw new Error('Anthropic API key not configured');
     }
-    openai = new OpenAI({ apiKey: config.OPENAI_API_KEY });
+    anthropic = new Anthropic({ apiKey: config.ANTHROPIC_API_KEY });
   }
-  return openai;
+  return anthropic;
 }
 
 // Tool definitions for the AI agent
-const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
+const tools: Anthropic.Tool[] = [
   {
-    type: 'function',
-    function: {
-      name: 'run_email_outreach',
-      description: 'Send marketing emails to pending email contacts using a template',
-      parameters: {
-        type: 'object',
-        properties: {
-          template_id: { type: 'string', description: 'UUID of the email template' },
-          limit: { type: 'number', description: 'Max contacts to email (default: 50)' },
+    name: 'run_email_outreach',
+    description: 'Send marketing emails to pending email contacts using a template',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        template_id: { type: 'string', description: 'UUID of the email template' },
+        limit: { type: 'number', description: 'Max contacts to email (default: 50)' },
+      },
+      required: ['template_id'],
+    },
+  },
+  {
+    name: 'run_linkedin_outreach',
+    description: 'Send LinkedIn messages to pending contacts using a template',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        template_id: { type: 'string', description: 'UUID of the LinkedIn template' },
+        limit: { type: 'number', description: 'Max contacts to message (default: 20)' },
+      },
+      required: ['template_id'],
+    },
+  },
+  {
+    name: 'post_linkedin_update',
+    description: 'Post a status update on LinkedIn',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        content: { type: 'string', description: 'The post content' },
+      },
+      required: ['content'],
+    },
+  },
+  {
+    name: 'run_reddit_post_campaign',
+    description: 'Post to multiple subreddits using a template',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        template_id: { type: 'string', description: 'UUID of the Reddit template' },
+        subreddits: { 
+          type: 'array', 
+          items: { type: 'string' },
+          description: 'Subreddit names (without r/)' 
         },
-        required: ['template_id'],
+      },
+      required: ['template_id', 'subreddits'],
+    },
+  },
+  {
+    name: 'run_reddit_message_outreach',
+    description: 'Send Reddit DMs to pending contacts using a template',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        template_id: { type: 'string', description: 'UUID of the Reddit template' },
+        limit: { type: 'number', description: 'Max messages to send (default: 20)' },
+      },
+      required: ['template_id'],
+    },
+  },
+  {
+    name: 'add_contact',
+    description: 'Add a new contact for outreach',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        platform: { type: 'string', enum: ['email', 'linkedin', 'reddit'] },
+        handle: { type: 'string', description: 'Email, profile URL, or username' },
+        name: { type: 'string', description: 'Contact name (optional)' },
+        tags: { type: 'array', items: { type: 'string' }, description: 'Tags for segmentation' },
+      },
+      required: ['platform', 'handle'],
+    },
+  },
+  {
+    name: 'get_templates',
+    description: 'Get available templates for a platform',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        platform: { type: 'string', enum: ['email', 'linkedin', 'reddit'] },
+      },
+      required: ['platform'],
+    },
+  },
+  {
+    name: 'get_stats',
+    description: 'Get outreach statistics',
+    input_schema: {
+      type: 'object' as const,
+      properties: {},
+    },
+  },
+  {
+    name: 'get_recent_logs',
+    description: 'Get recent outreach activity logs',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        limit: { type: 'number', description: 'Number of logs to retrieve (default: 20)' },
+        platform: { type: 'string', enum: ['email', 'linkedin', 'reddit'] },
       },
     },
   },
   {
-    type: 'function',
-    function: {
-      name: 'run_linkedin_outreach',
-      description: 'Send LinkedIn messages to pending contacts using a template',
-      parameters: {
-        type: 'object',
-        properties: {
-          template_id: { type: 'string', description: 'UUID of the LinkedIn template' },
-          limit: { type: 'number', description: 'Max contacts to message (default: 20)' },
-        },
-        required: ['template_id'],
+    name: 'verify_config',
+    description: 'Verify configuration for a platform (email, reddit)',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        platform: { type: 'string', enum: ['email', 'reddit'] },
       },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'post_linkedin_update',
-      description: 'Post a status update on LinkedIn',
-      parameters: {
-        type: 'object',
-        properties: {
-          content: { type: 'string', description: 'The post content' },
-        },
-        required: ['content'],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'run_reddit_post_campaign',
-      description: 'Post to multiple subreddits using a template',
-      parameters: {
-        type: 'object',
-        properties: {
-          template_id: { type: 'string', description: 'UUID of the Reddit template' },
-          subreddits: { 
-            type: 'array', 
-            items: { type: 'string' },
-            description: 'Subreddit names (without r/)' 
-          },
-        },
-        required: ['template_id', 'subreddits'],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'run_reddit_message_outreach',
-      description: 'Send Reddit DMs to pending contacts using a template',
-      parameters: {
-        type: 'object',
-        properties: {
-          template_id: { type: 'string', description: 'UUID of the Reddit template' },
-          limit: { type: 'number', description: 'Max messages to send (default: 20)' },
-        },
-        required: ['template_id'],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'add_contact',
-      description: 'Add a new contact for outreach',
-      parameters: {
-        type: 'object',
-        properties: {
-          platform: { type: 'string', enum: ['email', 'linkedin', 'reddit'] },
-          handle: { type: 'string', description: 'Email, profile URL, or username' },
-          name: { type: 'string', description: 'Contact name (optional)' },
-          tags: { type: 'array', items: { type: 'string' }, description: 'Tags for segmentation' },
-        },
-        required: ['platform', 'handle'],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'get_templates',
-      description: 'Get available templates for a platform',
-      parameters: {
-        type: 'object',
-        properties: {
-          platform: { type: 'string', enum: ['email', 'linkedin', 'reddit'] },
-        },
-        required: ['platform'],
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'get_stats',
-      description: 'Get outreach statistics',
-      parameters: {
-        type: 'object',
-        properties: {},
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'get_recent_logs',
-      description: 'Get recent outreach activity logs',
-      parameters: {
-        type: 'object',
-        properties: {
-          limit: { type: 'number', description: 'Number of logs to retrieve (default: 20)' },
-          platform: { type: 'string', enum: ['email', 'linkedin', 'reddit'] },
-        },
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'verify_config',
-      description: 'Verify configuration for a platform (email, reddit)',
-      parameters: {
-        type: 'object',
-        properties: {
-          platform: { type: 'string', enum: ['email', 'reddit'] },
-        },
-        required: ['platform'],
-      },
+      required: ['platform'],
     },
   },
 ];
@@ -309,10 +279,10 @@ async function executeTool(
  * Run the AI agent with a message
  */
 export async function runAgent(message: string): Promise<string> {
-  console.log('\n🤖 ClawBot Agent Starting...');
+  console.log('\n🤖 ClawBot Agent Starting (Claude)...');
   console.log(`📝 Task: ${message}\n`);
 
-  const client = getOpenAI();
+  const client = getAnthropic();
   
   const systemPrompt = `You are ClawBot, an AI marketing assistant for ProjectHunter.ai.
 
@@ -335,8 +305,7 @@ When asked to run outreach:
 
 Be concise and action-oriented. Execute tasks efficiently.`;
 
-  const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-    { role: 'system', content: systemPrompt },
+  const messages: Anthropic.MessageParam[] = [
     { role: 'user', content: message },
   ];
 
@@ -347,33 +316,41 @@ Be concise and action-oriented. Execute tasks efficiently.`;
   while (iterations < maxIterations) {
     iterations++;
 
-    const response = await client.chat.completions.create({
-      model: 'gpt-4-turbo-preview',
-      messages,
+    const response = await client.messages.create({
+      model: 'claude-3-haiku-20240307',
+      max_tokens: 4096,
+      system: systemPrompt,
       tools,
-      tool_choice: 'auto',
+      messages,
     });
 
-    const choice = response.choices[0];
-    const assistantMessage = choice.message;
-    messages.push(assistantMessage);
+    // Check if we need to execute tools
+    if (response.stop_reason === 'tool_use') {
+      // Add assistant message with tool use
+      messages.push({ role: 'assistant', content: response.content });
 
-    // If no tool calls, we're done
-    if (!assistantMessage.tool_calls || assistantMessage.tool_calls.length === 0) {
+      // Execute each tool call
+      const toolResults: Anthropic.ToolResultBlockParam[] = [];
+      
+      for (const block of response.content) {
+        if (block.type === 'tool_use') {
+          const result = await executeTool(block.name, block.input as Record<string, unknown>);
+          toolResults.push({
+            type: 'tool_result',
+            tool_use_id: block.id,
+            content: result,
+          });
+        }
+      }
+
+      // Add tool results
+      messages.push({ role: 'user', content: toolResults });
+    } else {
+      // No more tool calls, extract final response
       console.log('\n✅ Agent completed');
-      return assistantMessage.content || 'Task completed.';
-    }
-
-    // Execute tool calls
-    for (const toolCall of assistantMessage.tool_calls) {
-      const args = JSON.parse(toolCall.function.arguments);
-      const result = await executeTool(toolCall.function.name, args);
-
-      messages.push({
-        role: 'tool',
-        tool_call_id: toolCall.id,
-        content: result,
-      });
+      
+      const textBlock = response.content.find(block => block.type === 'text');
+      return textBlock?.type === 'text' ? textBlock.text : 'Task completed.';
     }
   }
 
