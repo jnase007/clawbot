@@ -1001,6 +1001,187 @@ content
     }
   });
 
+// ============ IMAGE ADS COMMANDS (Nano Banana) ============
+
+const imageAds = program.command('image-ads').description('🍌 Nano Banana Image Ad Generator');
+
+imageAds
+  .command('generate')
+  .description('Generate an ad image with Nano Banana')
+  .requiredOption('-p, --product <product>', 'Product or service name')
+  .requiredOption('-h, --headline <headline>', 'Ad headline text')
+  .option('-s, --style <style>', 'Style: modern, minimal, bold, professional, playful', 'professional')
+  .option('-c, --colors <colors>', 'Color scheme', 'blue and white')
+  .option('--platform <platform>', 'Platform size: meta-feed, meta-story, google-medium-rectangle, linkedin-sponsored', 'meta-feed')
+  .option('-o, --output <path>', 'Save image to path')
+  .action(async (options) => {
+    printSection('NANO BANANA AD IMAGE GENERATOR');
+    
+    const spinner = new Spinner('Generating ad image with Nano Banana...');
+    spinner.start();
+    
+    try {
+      const { generateAdImage, AD_SIZES } = await import('./skills/image_ads/index.js');
+      
+      const result = await generateAdImage({
+        product: options.product,
+        headline: options.headline,
+        style: options.style,
+        colorScheme: options.colors,
+        platform: options.platform,
+        savePath: options.output,
+      });
+      
+      spinner.stop(true);
+      
+      console.log();
+      printSuccess('Ad image generated!');
+      printInfo('Platform', result.size.name);
+      printInfo('Dimensions', `${result.size.width}x${result.size.height}px`);
+      
+      if (result.savedPath) {
+        printInfo('Saved to', result.savedPath);
+      } else if (result.base64Data) {
+        console.log(chalk.green('  ✓ Image data ready (use --output to save)'));
+        console.log(chalk.gray(`    Base64 length: ${result.base64Data.length} chars`));
+      }
+      
+      console.log();
+      console.log(chalk.cyan('  Available platforms:'));
+      Object.entries(AD_SIZES).forEach(([key, size]) => {
+        console.log(chalk.gray(`    • ${key}: ${size.width}x${size.height} (${size.name})`));
+      });
+      
+    } catch (error) {
+      spinner.stop(false);
+      printError(`Error: ${error}`);
+    }
+  });
+
+imageAds
+  .command('set')
+  .description('Generate multiple ad sizes at once')
+  .requiredOption('-p, --product <product>', 'Product or service name')
+  .requiredOption('-h, --headline <headline>', 'Ad headline text')
+  .option('--platforms <platforms>', 'Comma-separated platforms', 'meta-feed,meta-square,linkedin-sponsored')
+  .option('-o, --output-dir <dir>', 'Output directory', './generated-ads')
+  .action(async (options) => {
+    printSection('NANO BANANA AD SET GENERATOR');
+    
+    const platforms = options.platforms.split(',').map((p: string) => p.trim());
+    
+    const spinner = new Spinner(`Generating ${platforms.length} ad variations...`);
+    spinner.start();
+    
+    try {
+      const { generateAdSet } = await import('./skills/image_ads/index.js');
+      
+      const results = await generateAdSet({
+        product: options.product,
+        headline: options.headline,
+        platforms,
+        outputDir: options.outputDir,
+      });
+      
+      spinner.stop(true);
+      
+      console.log();
+      printSuccess(`Generated ${results.length} ad images!`);
+      
+      results.forEach((img) => {
+        console.log(chalk.gray(`  ✓ ${img.size.name} (${img.size.width}x${img.size.height})`));
+        if (img.savedPath) {
+          console.log(chalk.gray(`    → ${img.savedPath}`));
+        }
+      });
+      
+    } catch (error) {
+      spinner.stop(false);
+      printError(`Error: ${error}`);
+    }
+  });
+
+imageAds
+  .command('complete')
+  .description('Generate complete ad with AI copy + image')
+  .requiredOption('-p, --product <product>', 'Product or service')
+  .option('-a, --audience <audience>', 'Target audience', 'dental practice owners')
+  .option('--platform <platform>', 'Platform size', 'meta-feed')
+  .option('-s, --style <style>', 'Image style', 'professional')
+  .action(async (options) => {
+    printSection('COMPLETE AD GENERATOR (COPY + IMAGE)');
+    
+    const spinner = new Spinner('Generating ad copy and image...');
+    spinner.start();
+    
+    try {
+      const { generateCompleteAd } = await import('./skills/image_ads/index.js');
+      
+      const result = await generateCompleteAd({
+        product: options.product,
+        targetAudience: options.audience,
+        platform: options.platform,
+        style: options.style,
+      });
+      
+      spinner.stop(true);
+      
+      console.log();
+      printSuccess('Complete ad generated!');
+      console.log();
+      console.log(chalk.cyan('  📝 Ad Copy:'));
+      console.log(chalk.white(`    Headline: ${result.headline}`));
+      console.log(chalk.gray(`    Description: ${result.description}`));
+      console.log(chalk.green(`    CTA: ${result.cta}`));
+      
+      console.log();
+      console.log(chalk.cyan('  🖼️ Image:'));
+      console.log(chalk.gray(`    Platform: ${result.image.size.name}`));
+      console.log(chalk.gray(`    Size: ${result.image.size.width}x${result.image.size.height}px`));
+      
+      if (result.image.base64Data) {
+        console.log(chalk.green('    ✓ Image generated successfully'));
+      }
+      
+    } catch (error) {
+      spinner.stop(false);
+      printError(`Error: ${error}`);
+    }
+  });
+
+imageAds
+  .command('sizes')
+  .description('List all available ad sizes')
+  .action(async () => {
+    printSection('AVAILABLE AD SIZES');
+    
+    const { AD_SIZES } = await import('./skills/image_ads/index.js');
+    
+    console.log();
+    console.log(chalk.cyan('  📘 Meta (Facebook/Instagram):'));
+    console.log(chalk.gray('    • meta-feed: 1200x628 (Feed Ads)'));
+    console.log(chalk.gray('    • meta-story: 1080x1920 (Stories/Reels)'));
+    console.log(chalk.gray('    • meta-square: 1080x1080 (Square Posts)'));
+    console.log(chalk.gray('    • instagram-post: 1080x1080 (IG Posts)'));
+    
+    console.log();
+    console.log(chalk.cyan('  🔍 Google Display Network:'));
+    console.log(chalk.gray('    • google-leaderboard: 728x90'));
+    console.log(chalk.gray('    • google-medium-rectangle: 300x250'));
+    console.log(chalk.gray('    • google-large-rectangle: 336x280'));
+    console.log(chalk.gray('    • google-skyscraper: 160x600'));
+    
+    console.log();
+    console.log(chalk.cyan('  💼 LinkedIn:'));
+    console.log(chalk.gray('    • linkedin-sponsored: 1200x627'));
+    console.log(chalk.gray('    • linkedin-square: 1200x1200'));
+    
+    console.log();
+    console.log(chalk.cyan('  🌐 General:'));
+    console.log(chalk.gray('    • banner: 1200x300 (Website Banner)'));
+    console.log(chalk.gray('    • hero: 1920x1080 (Hero Image)'));
+  });
+
 // ============ LOGS COMMAND ============
 
 program
