@@ -168,7 +168,7 @@ export function AiDemoWidget() {
             </div>
             <div>
               <h3 className="font-display font-bold text-lg">Try AI Content Generation</h3>
-              <p className="text-sm text-muted-foreground">See how ClawBot creates content for your brand</p>
+              <p className="text-sm text-muted-foreground">See how AI Agent creates content for your brand</p>
             </div>
           </div>
         </div>

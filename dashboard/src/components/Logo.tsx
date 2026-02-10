@@ -23,7 +23,7 @@ export function Logo({ size = 'md', showText = true, className }: LogoProps) {
       {/* Logo Image */}
       <img 
         src={LOGO_URL}
-        alt="ClawBot Logo"
+        alt="AI Agent Logo"
         className="rounded-lg object-cover"
         style={{ width: s.icon, height: s.icon }}
       />
@@ -32,7 +32,7 @@ export function Logo({ size = 'md', showText = true, className }: LogoProps) {
       {showText && (
         <div>
           <h1 className={cn("font-display font-bold gradient-text", s.text)}>
-            ClawBot
+            AI Agent
           </h1>
           <p className="text-[10px] text-muted-foreground -mt-0.5">
             Marketing Automation
@@ -48,7 +48,7 @@ export function LogoIcon({ className }: { className?: string }) {
   return (
     <img 
       src={LOGO_URL}
-      alt="ClawBot"
+      alt="AI Agent"
       className={cn("rounded-lg object-cover", className)}
     />
   );

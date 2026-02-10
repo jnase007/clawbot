@@ -42,7 +42,7 @@ function HelpModal({ onClose }: { onClose: () => void }) {
               <HelpCircle className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h2 className="font-display font-bold">Welcome to ClawBot</h2>
+              <h2 className="font-display font-bold">Welcome to AI Agent</h2>
               <p className="text-sm text-muted-foreground">Your AI-powered outreach engine</p>
             </div>
           </div>
