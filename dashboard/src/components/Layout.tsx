@@ -155,36 +155,37 @@ function NotificationsDropdown() {
 }
 
 // Grouped navigation for better organization
+// Flow: Plan → Create → Execute → Measure
 const navGroups = [
   {
-    label: 'Main',
+    label: 'Plan',
     items: [
       { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
       { to: '/dashboard/clients', icon: UserCircle, label: 'Clients' },
-      { to: '/dashboard/discovery', icon: ClipboardList, label: 'Discovery', isNew: true },
+      { to: '/dashboard/discovery', icon: ClipboardList, label: 'Discovery' },
+      { to: '/dashboard/strategy', icon: Brain, label: 'Strategy' },
     ]
   },
   {
-    label: 'AI Tools',
+    label: 'Create',
     items: [
       { to: '/dashboard/content', icon: PenTool, label: 'Content Studio' },
       { to: '/dashboard/image-ads', icon: Image, label: 'Image Ads' },
-      { to: '/dashboard/strategy', icon: Brain, label: 'AI Strategy' },
-      { to: '/dashboard/apollo', icon: Target, label: 'Apollo Leads' },
+      { to: '/dashboard/templates', icon: FileText, label: 'Templates' },
     ]
   },
   {
-    label: 'Outreach',
+    label: 'Execute',
     items: [
+      { to: '/dashboard/apollo', icon: Target, label: 'Apollo Leads' },
       { to: '/dashboard/contacts', icon: Users, label: 'Contacts' },
-      { to: '/dashboard/templates', icon: FileText, label: 'Templates' },
       { to: '/dashboard/sequences', icon: Workflow, label: 'Sequences' },
       { to: '/dashboard/campaigns', icon: Rocket, label: 'Campaigns' },
       { to: '/dashboard/inbox', icon: Inbox, label: 'Inbox' },
     ]
   },
   {
-    label: 'Reports',
+    label: 'Measure',
     items: [
       { to: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
       { to: '/dashboard/logs', icon: ScrollText, label: 'Activity' },
