@@ -91,27 +91,49 @@ export default function Clients() {
 
     setSaving(true);
     try {
+      // Clean website URL - remove protocol if present, we'll add it when needed
+      let websiteUrl = formData.website.trim();
+      if (websiteUrl) {
+        websiteUrl = websiteUrl.replace(/^https?:\/\//i, '').replace(/\/$/, '');
+      }
+
       const clientData: any = {
         name: formData.name.trim(),
         company: formData.name.trim(),
         email: formData.email.trim() || null,
         phone: formData.phone.trim() || null,
-        website: formData.website.trim() || null,
+        website: websiteUrl || null,
         industry: formData.industry.trim() || 'General',
         goals: formData.goals.trim() || null,
         challenges: formData.challenges.trim() || null,
-        competitor_names: formData.competitors.split(',').map(c => c.trim()).filter(c => c),
-        monthly_budget: formData.budget ? parseFloat(formData.budget) : null,
+        competitor_names: formData.competitors 
+          ? formData.competitors.split(',').map(c => c.trim()).filter(c => c)
+          : [],
+        monthly_budget: formData.budget && formData.budget.trim() 
+          ? parseFloat(formData.budget) 
+          : null,
         status: 'active',
-        stage: 'discovery',
+        stage: editingClient ? undefined : 'discovery', // Don't reset stage on update
       };
 
+      // Remove undefined values
+      Object.keys(clientData).forEach(key => {
+        if (clientData[key] === undefined) {
+          delete clientData[key];
+        }
+      });
+
       if (editingClient) {
-        const { error } = await (supabase.from('clients' as any) as any)
+        const { data, error } = await (supabase.from('clients' as any) as any)
           .update(clientData)
-          .eq('id', editingClient);
+          .eq('id', editingClient)
+          .select()
+          .single();
         
-        if (error) throw error;
+        if (error) {
+          console.error('Update error:', error);
+          throw new Error(error.message || `Failed to update client: ${JSON.stringify(error)}`);
+        }
         success('Client updated successfully');
       } else {
         const { data, error } = await (supabase.from('clients' as any) as any)
@@ -119,7 +141,10 @@ export default function Clients() {
           .select()
           .single();
         
-        if (error) throw error;
+        if (error) {
+          console.error('Insert error:', error);
+          throw new Error(error.message || `Failed to create client: ${JSON.stringify(error)}`);
+        }
         success('Client created successfully');
         // Auto-select the new client
         if (data && data.id) {
@@ -132,7 +157,21 @@ export default function Clients() {
       setEditingClient(null);
     } catch (err) {
       console.error('Save error:', err);
-      toastError(err instanceof Error ? err.message : 'Failed to save client');
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : typeof err === 'string' 
+        ? err 
+        : 'Failed to save client';
+      
+      // Provide helpful hints for common errors
+      let userMessage = errorMessage;
+      if (errorMessage.includes('column') || errorMessage.includes('does not exist')) {
+        userMessage = `${errorMessage}. Please run migration 008_add_client_info_fields.sql in Supabase.`;
+      } else if (errorMessage.includes('permission') || errorMessage.includes('RLS')) {
+        userMessage = `${errorMessage}. Check Supabase Row Level Security policies.`;
+      }
+      
+      toastError(userMessage);
     } finally {
       setSaving(false);
     }
