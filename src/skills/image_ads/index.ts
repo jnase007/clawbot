@@ -1,16 +1,22 @@
 /**
- * Image Ad Generator using Google Nano Banana (Gemini API)
+ * Image Ad Generator using Google Imagen 4.0 (Gemini API)
  * Based on: https://ai.google.dev/gemini-api/docs
  * 
  * Generates professional ad images for Meta, Google Display, LinkedIn, etc.
+ * Uses Imagen 4.0 for image generation and Gemini 2.0 Flash for copy.
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Modality } from '@google/genai';
 import { config } from '../../config/index.js';
 import { logAction } from '../../db/repository.js';
 import type { Platform } from '../../db/types.js';
 import * as fs from 'fs';
 import * as path from 'path';
+
+// Image generation model (Imagen 4.0)
+const IMAGE_MODEL = 'imagen-4.0-generate-001';
+// Text generation model (Gemini)
+const TEXT_MODEL = 'gemini-2.0-flash';
 
 let genAI: GoogleGenAI | null = null;
 
@@ -113,26 +119,25 @@ Make it eye-catching and conversion-focused.
 No watermarks, no stock photo artifacts.`;
 
   try {
-    // Use Nano Banana for image generation
-    const response = await client.models.generateContent({
-      model: 'nano-banana-pro',
-      contents: imagePrompt,
+    // Use Imagen 4.0 for image generation
+    const response = await client.models.generateImages({
+      model: IMAGE_MODEL,
+      prompt: imagePrompt,
       config: {
-        responseModalities: ['image', 'text'],
+        numberOfImages: 1,
+        aspectRatio: size.width > size.height ? '16:9' : size.width < size.height ? '9:16' : '1:1',
       },
     });
 
     let base64Data: string | undefined;
     let mimeType = 'image/png';
 
-    // Extract image from response
-    if (response.candidates && response.candidates[0]?.content?.parts) {
-      for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
-          base64Data = part.inlineData.data;
-          mimeType = part.inlineData.mimeType || 'image/png';
-          break;
-        }
+    // Extract image from Imagen response
+    if (response.generatedImages && response.generatedImages.length > 0) {
+      const image = response.generatedImages[0];
+      if (image.image?.imageBytes) {
+        base64Data = image.image.imageBytes;
+        mimeType = 'image/png';
       }
     }
 
@@ -223,7 +228,7 @@ export async function generateAdSet(options: {
 
 /**
  * Generate ad image with AI-generated copy
- * Combines Gemini text + Nano Banana image
+ * Combines Gemini text + Imagen 4.0 image
  */
 export async function generateCompleteAd(options: {
   product: string;
@@ -281,7 +286,8 @@ Return JSON only:
 }
 
 /**
- * Edit an existing image for ads (image editing with Nano Banana)
+ * Edit an existing image for ads (image editing with Gemini)
+ * Note: Image editing is done via Gemini's multimodal capabilities
  */
 export async function editAdImage(options: {
   imagePath: string;
@@ -299,8 +305,9 @@ export async function editAdImage(options: {
   const base64Image = imageBuffer.toString('base64');
   const mimeType = imagePath.endsWith('.png') ? 'image/png' : 'image/jpeg';
 
+  // Use Gemini 2.0 Flash with image generation for editing
   const response = await client.models.generateContent({
-    model: 'nano-banana-pro',
+    model: 'gemini-2.0-flash-exp-image-generation',
     contents: [
       {
         role: 'user',
@@ -318,7 +325,7 @@ export async function editAdImage(options: {
       },
     ],
     config: {
-      responseModalities: ['image', 'text'],
+      responseModalities: [Modality.IMAGE, Modality.TEXT],
     },
   });
 
