@@ -23,7 +23,8 @@ import {
   PenTool,
   UserCircle,
   Wrench,
-  ClipboardList
+  ClipboardList,
+  Image
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { ThemeToggle } from './ThemeToggle';
@@ -186,6 +187,7 @@ const navItems = [
   { to: '/dashboard/discovery', icon: ClipboardList, label: 'Discovery', isNew: true, highlight: true },
   { to: '/dashboard/apollo', icon: Target, label: 'Apollo Leads', isNew: true },
   { to: '/dashboard/content', icon: PenTool, label: 'Content Studio', isNew: true },
+  { to: '/dashboard/image-ads', icon: Image, label: 'Image Ads', isNew: true },
   { to: '/dashboard/strategy', icon: Brain, label: 'AI Strategy' },
   { to: '/dashboard/contacts', icon: Users, label: 'Contacts' },
   { to: '/dashboard/templates', icon: FileText, label: 'Templates' },

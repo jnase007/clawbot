@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 
 // Brandastic logo URL from Supabase storage
-const LOGO_URL = 'https://ndrhfhdsmjrixxbarymj.supabase.co/storage/v1/object/public/Image/mark.jpg';
+const LOGO_URL = 'https://ndrhfhdsmjrixxbarymj.supabase.co/storage/v1/object/public/Image/mark.png';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg';

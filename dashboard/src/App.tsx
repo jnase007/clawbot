@@ -15,6 +15,7 @@ import ContentStudio from './pages/ContentStudio';
 import ClientWorkflow from './pages/ClientWorkflow';
 import Setup from './pages/Setup';
 import Discovery from './pages/Discovery';
+import ImageAds from './pages/ImageAds';
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="discovery" element={<Discovery />} />
         <Route path="apollo" element={<ApolloLeads />} />
         <Route path="content" element={<ContentStudio />} />
+        <Route path="image-ads" element={<ImageAds />} />
         <Route path="contacts" element={<Contacts />} />
         <Route path="templates" element={<Templates />} />
         <Route path="campaigns" element={<Campaigns />} />
