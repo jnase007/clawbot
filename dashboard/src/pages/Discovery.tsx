@@ -300,8 +300,20 @@ export default function Discovery() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        throw new Error(errorData.message || errorData.error || 'Failed to save discovery');
+        let errorData;
+        try {
+          const text = await response.text();
+          try {
+            errorData = JSON.parse(text);
+          } catch {
+            // If not JSON, use the text as the error message
+            errorData = { error: text || `HTTP ${response.status}: ${response.statusText}` };
+          }
+        } catch {
+          errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
+        }
+        const errorMessage = errorData.message || errorData.error || `Failed to save discovery (${response.status})`;
+        throw new Error(errorMessage);
       }
 
       await response.json();
@@ -318,8 +330,23 @@ export default function Discovery() {
 
     } catch (err) {
       removeToast(loadingId);
-      toastError(err instanceof Error ? err.message : 'Failed to save');
-      setError(err instanceof Error ? err.message : 'Failed to save');
+      let errorMessage = err instanceof Error ? err.message : 'Failed to save';
+      
+      // Try to extract more details from the error if it's a stringified JSON
+      if (errorMessage.includes('{')) {
+        try {
+          const errorObj = JSON.parse(errorMessage);
+          errorMessage = errorObj.message || errorObj.error || errorMessage;
+          if (errorObj.hint) {
+            errorMessage += ` (${errorObj.hint})`;
+          }
+        } catch {
+          // Not JSON, use as is
+        }
+      }
+      
+      toastError(errorMessage);
+      setError(errorMessage);
     } finally {
       setSaving(false);
     }

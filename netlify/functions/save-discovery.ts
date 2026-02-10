@@ -105,12 +105,17 @@ export const handler: Handler = async (event: HandlerEvent) => {
       };
       
       // Check if discovery already exists
-      const { data: existingDiscovery } = await supabase
+      const { data: existingDiscoveries, error: checkError } = await supabase
         .from('client_discoveries')
         .select('id')
         .eq('client_id', client.id)
-        .limit(1)
-        .single();
+        .limit(1);
+      
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned
+        throw checkError;
+      }
+      
+      const existingDiscovery = existingDiscoveries && existingDiscoveries.length > 0 ? existingDiscoveries[0] : null;
       
       let discovery;
       if (existingDiscovery) {
@@ -297,12 +302,24 @@ export const handler: Handler = async (event: HandlerEvent) => {
 
   } catch (error) {
     console.error('Database error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorDetails = error instanceof Error && 'code' in error ? { code: (error as any).code } : {};
+    
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({ 
         error: 'Database operation failed', 
-        message: error instanceof Error ? error.message : 'Unknown error' 
+        message: errorMessage,
+        details: errorDetails,
+        // Include helpful hints for common errors
+        hint: errorMessage.includes('column') 
+          ? 'Database schema mismatch. Run migration 007_fix_discovery_columns.sql'
+          : errorMessage.includes('relation') 
+          ? 'Table does not exist. Run all SQL migrations in order.'
+          : errorMessage.includes('permission') || errorMessage.includes('RLS')
+          ? 'Row Level Security issue. Check Supabase RLS policies.'
+          : undefined
       }),
     };
   }
