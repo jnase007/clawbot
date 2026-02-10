@@ -31,33 +31,6 @@ import { ThemeToggle } from './ThemeToggle';
 import { ClientSelector } from './ClientSelector';
 import { useClient } from './ClientProvider';
 
-// Integration status indicator
-function IntegrationStatus() {
-  const integrations = [
-    { name: 'OpenAI', status: 'connected', icon: '🤖' },
-    { name: 'Email', status: 'connected', icon: '📧' },
-    { name: 'LinkedIn', status: 'pending', icon: '💼' },
-  ];
-
-  return (
-    <div className="px-4 py-3 border-t border-border">
-      <p className="text-[10px] text-muted-foreground mb-2 uppercase tracking-wider">Integrations</p>
-      <div className="space-y-1.5">
-        {integrations.map((int) => (
-          <div key={int.name} className="flex items-center gap-2 text-xs">
-            <span>{int.icon}</span>
-            <span className="flex-1 text-muted-foreground">{int.name}</span>
-            <div className={cn(
-              "w-1.5 h-1.5 rounded-full",
-              int.status === 'connected' ? "bg-green-500" : "bg-yellow-500"
-            )} />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // Help tooltip modal
 function HelpModal({ onClose }: { onClose: () => void }) {
   return (
@@ -181,22 +154,42 @@ function NotificationsDropdown() {
   );
 }
 
-const navItems = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/dashboard/clients', icon: UserCircle, label: 'Clients', isNew: true },
-  { to: '/dashboard/discovery', icon: ClipboardList, label: 'Discovery', isNew: true, highlight: true },
-  { to: '/dashboard/apollo', icon: Target, label: 'Apollo Leads', isNew: true },
-  { to: '/dashboard/content', icon: PenTool, label: 'Content Studio', isNew: true },
-  { to: '/dashboard/image-ads', icon: Image, label: 'Image Ads', isNew: true },
-  { to: '/dashboard/strategy', icon: Brain, label: 'AI Strategy' },
-  { to: '/dashboard/contacts', icon: Users, label: 'Contacts' },
-  { to: '/dashboard/templates', icon: FileText, label: 'Templates' },
-  { to: '/dashboard/sequences', icon: Workflow, label: 'Sequences' },
-  { to: '/dashboard/campaigns', icon: Rocket, label: 'Campaigns' },
-  { to: '/dashboard/inbox', icon: Inbox, label: 'Inbox' },
-  { to: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
-  { to: '/dashboard/logs', icon: ScrollText, label: 'Activity' },
-  { to: '/dashboard/setup', icon: Wrench, label: 'Setup', isNew: true },
+// Grouped navigation for better organization
+const navGroups = [
+  {
+    label: 'Main',
+    items: [
+      { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+      { to: '/dashboard/clients', icon: UserCircle, label: 'Clients' },
+      { to: '/dashboard/discovery', icon: ClipboardList, label: 'Discovery', isNew: true },
+    ]
+  },
+  {
+    label: 'AI Tools',
+    items: [
+      { to: '/dashboard/content', icon: PenTool, label: 'Content Studio' },
+      { to: '/dashboard/image-ads', icon: Image, label: 'Image Ads' },
+      { to: '/dashboard/strategy', icon: Brain, label: 'AI Strategy' },
+      { to: '/dashboard/apollo', icon: Target, label: 'Apollo Leads' },
+    ]
+  },
+  {
+    label: 'Outreach',
+    items: [
+      { to: '/dashboard/contacts', icon: Users, label: 'Contacts' },
+      { to: '/dashboard/templates', icon: FileText, label: 'Templates' },
+      { to: '/dashboard/sequences', icon: Workflow, label: 'Sequences' },
+      { to: '/dashboard/campaigns', icon: Rocket, label: 'Campaigns' },
+      { to: '/dashboard/inbox', icon: Inbox, label: 'Inbox' },
+    ]
+  },
+  {
+    label: 'Reports',
+    items: [
+      { to: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
+      { to: '/dashboard/logs', icon: ScrollText, label: 'Activity' },
+    ]
+  },
 ];
 
 export default function Layout() {
@@ -217,12 +210,12 @@ export default function Layout() {
       {/* Sidebar */}
       <aside 
         className={cn(
-          "fixed left-0 top-0 h-full bg-card/95 backdrop-blur-xl border-r border-border z-50 transition-all duration-300",
+          "fixed left-0 top-0 h-full bg-card/95 backdrop-blur-xl border-r border-border z-50 transition-all duration-300 flex flex-col",
           collapsed ? "w-20" : "w-64"
         )}
       >
         {/* Logo */}
-        <div className="p-5 border-b border-border">
+        <div className="p-5 border-b border-border shrink-0">
           <Link to="/" className="block hover:opacity-80 transition-opacity">
             {collapsed ? (
               <Logo size="sm" showText={false} />
@@ -239,7 +232,7 @@ export default function Layout() {
 
         {/* Current Client Indicator */}
         {!collapsed && currentClient && (
-          <div className="px-5 py-3 border-b border-border">
+          <div className="px-5 py-3 border-b border-border shrink-0">
             <div className="flex items-center gap-2">
               <div 
                 className="w-6 h-6 rounded flex items-center justify-center text-white text-xs font-bold"
@@ -255,40 +248,94 @@ export default function Layout() {
           </div>
         )}
 
-        {/* Navigation */}
-        <nav className="p-3 flex-1">
-          <ul className="space-y-1">
-            {navItems.map((item) => (
-              <li key={item.to}>
-                <NavLink
-                  to={item.to}
-                  className={({ isActive }) =>
-                    cn(
-                      'flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 group',
-                      collapsed ? 'justify-center' : '',
-                      isActive 
-                        ? 'bg-primary/10 text-primary' 
-                        : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
-                    )
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      <item.icon className={cn(
-                        "w-5 h-5 transition-transform group-hover:scale-105",
-                        isActive && "text-primary"
-                      )} />
-                      {!collapsed && (
-                        <span className="font-medium text-sm">
-                          {item.label}
-                        </span>
+        {/* Navigation - Scrollable */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2 scrollbar-thin">
+          {navGroups.map((group, groupIdx) => (
+            <div key={group.label} className={cn("px-3", groupIdx > 0 && "mt-4")}>
+              {/* Group Label */}
+              {!collapsed && (
+                <p className="px-4 mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                  {group.label}
+                </p>
+              )}
+              {collapsed && groupIdx > 0 && (
+                <div className="mx-auto w-8 h-px bg-border mb-2" />
+              )}
+              
+              {/* Group Items */}
+              <ul className="space-y-0.5">
+                {group.items.map((item) => (
+                  <li key={item.to}>
+                    <NavLink
+                      to={item.to}
+                      end={item.to === '/dashboard'}
+                      className={({ isActive }) =>
+                        cn(
+                          'flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group',
+                          collapsed ? 'justify-center' : '',
+                          isActive 
+                            ? 'bg-primary/10 text-primary' 
+                            : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                        )
+                      }
+                    >
+                      {({ isActive }) => (
+                        <>
+                          <item.icon className={cn(
+                            "w-4 h-4 transition-transform group-hover:scale-105 shrink-0",
+                            isActive && "text-primary"
+                          )} />
+                          {!collapsed && (
+                            <span className="font-medium text-sm truncate">
+                              {item.label}
+                            </span>
+                          )}
+                          {!collapsed && item.isNew && (
+                            <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded bg-primary/20 text-primary">
+                              NEW
+                            </span>
+                          )}
+                        </>
                       )}
-                    </>
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+          
+          {/* Setup at bottom of scroll area */}
+          <div className="px-3 mt-4 pb-2">
+            {!collapsed && (
+              <p className="px-4 mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                Settings
+              </p>
+            )}
+            <NavLink
+              to="/dashboard/setup"
+              className={({ isActive }) =>
+                cn(
+                  'flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group',
+                  collapsed ? 'justify-center' : '',
+                  isActive 
+                    ? 'bg-primary/10 text-primary' 
+                    : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                )
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <Wrench className={cn(
+                    "w-4 h-4 transition-transform group-hover:scale-105 shrink-0",
+                    isActive && "text-primary"
+                  )} />
+                  {!collapsed && (
+                    <span className="font-medium text-sm">Setup</span>
                   )}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
+                </>
+              )}
+            </NavLink>
+          </div>
         </nav>
 
         {/* Collapse Toggle */}
@@ -302,23 +349,15 @@ export default function Layout() {
           )} />
         </button>
 
-        {/* Integration Status */}
-        {!collapsed && <IntegrationStatus />}
-
-        {/* Footer */}
+        {/* Footer - Compact */}
         <div className={cn(
-          "absolute bottom-0 left-0 right-0 border-t border-border",
-          collapsed ? "p-2" : "p-4"
+          "shrink-0 border-t border-border",
+          collapsed ? "p-2" : "p-3"
         )}>
-          {!collapsed && (
-            <p className="text-[10px] text-muted-foreground text-center mb-3">
-              Agency Internal Tool · v2.0
-            </p>
-          )}
           <button
             onClick={() => setShowHelp(true)}
             className={cn(
-              "w-full flex items-center gap-2 px-4 py-2.5 rounded-lg bg-secondary/50 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors",
+              "w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary/50 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors",
               collapsed && "justify-center px-2"
             )}
           >
