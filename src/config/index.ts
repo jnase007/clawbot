@@ -12,9 +12,13 @@ const envSchema = z.object({
   // AI Providers
   OPENAI_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
+  GEMINI_API_KEY: z.string().optional(),
   
   // Apollo.io (Lead Generation)
   APOLLO_API_KEY: z.string().optional(),
+  
+  // Image Generation (for ad creatives)
+  BANNERBEAR_API_KEY: z.string().optional(),
   
   // Email
   EMAIL_HOST: z.string().default('smtp.gmail.com'),
