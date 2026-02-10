@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Image, Sparkles, Download, Copy, Check, Loader2,
-  Wand2, Palette, Maximize2, RefreshCw
+  Wand2, Palette, Maximize2, RefreshCw, Info, Lightbulb
 } from 'lucide-react';
+import { useClient } from '@/components/ClientProvider';
+import { CLIENT_PRESETS } from '@/lib/types';
 
 type AdSize = 'square' | 'landscape' | 'portrait' | 'story';
 type Platform = 'meta' | 'google' | 'linkedin';
@@ -27,7 +29,58 @@ const platformStyles: Record<Platform, { label: string; color: string; bgColor: 
   linkedin: { label: 'LinkedIn', color: 'text-sky-400', bgColor: 'bg-sky-500/20' },
 };
 
+// Client-specific ad concepts
+const clientAdConcepts: Record<string, string[]> = {
+  equitymd: [
+    'Confident investor reviewing real estate portfolio on tablet, modern office, wealth visualization',
+    'Beautiful multifamily property exterior, sunset lighting, premium investment opportunity',
+    'Professional syndicator presenting to investors, boardroom setting, trust and expertise',
+    'Passive income visualization, growing graph overlay, lifestyle freedom imagery',
+  ],
+  brandastic: [
+    'AI-powered marketing dashboard with growth metrics, futuristic interface',
+    'Happy business owner seeing ROI results, celebration moment',
+    'Marketing team collaborating with AI assistant visualization',
+    'Before/after marketing transformation, dramatic improvement',
+  ],
+  projecthunter: [
+    'Construction project aerial view, professional contractors at work',
+    'General contractor reviewing blueprints on tablet, modern job site',
+    'New development project breaking ground, opportunity imagery',
+    'Construction bidding success, handshake moment, partnership',
+  ],
+  comply: [
+    'Compliance dashboard showing green checkmarks, peace of mind',
+    'Professional compliance officer confident at work, modern office',
+    'Automated audit process visualization, efficiency imagery',
+    'Risk mitigation success, secure and protected business',
+  ],
+};
+
+// Get preset key from client name
+function getPresetKey(clientName?: string | null): string | null {
+  if (!clientName) return null;
+  const name = clientName.toLowerCase();
+  if (name.includes('equitymd') || name.includes('equity')) return 'equitymd';
+  if (name.includes('projecthunter') || name.includes('hunter')) return 'projecthunter';
+  if (name.includes('comply')) return 'comply';
+  if (name.includes('brandastic')) return 'brandastic';
+  return null;
+}
+
+// Get suggested style based on industry
+function getSuggestedStyle(industry?: string | null): string {
+  if (!industry) return 'modern-minimal';
+  const ind = industry.toLowerCase();
+  if (ind.includes('health') || ind.includes('medical') || ind.includes('dental')) return 'healthcare-trust';
+  if (ind.includes('tech') || ind.includes('software') || ind.includes('ai')) return 'tech-futuristic';
+  if (ind.includes('real estate') || ind.includes('investment')) return 'professional-clean';
+  if (ind.includes('construction')) return 'bold-vibrant';
+  return 'modern-minimal';
+}
+
 export default function ImageAds() {
+  const { currentClient } = useClient();
   const [prompt, setPrompt] = useState('');
   const [brandName, setBrandName] = useState('');
   const [selectedSize, setSelectedSize] = useState<AdSize>('square');
@@ -37,12 +90,26 @@ export default function ImageAds() {
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [copied, setCopied] = useState(false);
 
+  // Get client context
+  const presetKey = getPresetKey(currentClient?.name);
+  const preset = presetKey ? CLIENT_PRESETS[presetKey] : null;
+  const suggestedConcepts = presetKey ? clientAdConcepts[presetKey] : [];
+
+  // Auto-fill from client when it changes
+  useEffect(() => {
+    if (currentClient) {
+      setBrandName(currentClient.name);
+      setStyle(getSuggestedStyle(currentClient.industry || preset?.industry));
+    }
+  }, [currentClient?.id]);
+
   const styles = [
     { id: 'modern-minimal', label: 'Modern Minimal' },
     { id: 'bold-vibrant', label: 'Bold & Vibrant' },
     { id: 'professional-clean', label: 'Professional Clean' },
     { id: 'healthcare-trust', label: 'Healthcare Trust' },
     { id: 'tech-futuristic', label: 'Tech Futuristic' },
+    { id: 'luxury-premium', label: 'Luxury Premium' },
   ];
 
   const handleGenerate = async () => {
@@ -54,15 +121,16 @@ export default function ImageAds() {
     await new Promise(resolve => setTimeout(resolve, 3000));
     
     // Sample generated images (placeholders)
+    const displayName = brandName || currentClient?.name || 'Ad';
     const newImages: GeneratedImage[] = [
       {
-        url: `https://placehold.co/${sizeConfigs[selectedSize].dimensions.replace('x', 'x')}/1e293b/06b6d4?text=${encodeURIComponent(brandName || 'Ad')}`,
+        url: `https://placehold.co/${sizeConfigs[selectedSize].dimensions.replace('x', 'x')}/1e293b/06b6d4?text=${encodeURIComponent(displayName)}`,
         prompt: `${style}: ${prompt}`,
         size: selectedSize,
         platform: selectedPlatform,
       },
       {
-        url: `https://placehold.co/${sizeConfigs[selectedSize].dimensions.replace('x', 'x')}/1e293b/8b5cf6?text=${encodeURIComponent(brandName || 'Ad')}+V2`,
+        url: `https://placehold.co/${sizeConfigs[selectedSize].dimensions.replace('x', 'x')}/1e293b/8b5cf6?text=${encodeURIComponent(displayName)}+V2`,
         prompt: `${style}: ${prompt} (variation)`,
         size: selectedSize,
         platform: selectedPlatform,
@@ -79,25 +147,44 @@ export default function ImageAds() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const useSuggestedConcept = (concept: string) => {
+    setPrompt(concept);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-3xl font-bold text-white flex items-center gap-3">
             <Image className="w-8 h-8 text-pink-500" />
             Image Ad Generator
           </h1>
           <p className="text-gray-400 mt-1">
-            Generate AI-powered ad images with Google Imagen 4.0
+            {currentClient 
+              ? `Creating ad images for ${currentClient.name}` 
+              : 'Generate AI-powered ad images with Google Imagen 4.0'}
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Controls */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Brand Name */}
-            <div className="bg-slate-800/50 backdrop-blur rounded-xl p-6 border border-slate-700">
+          <div className="lg:col-span-1 space-y-4">
+            {/* Client Context Alert */}
+            {currentClient && (
+              <div className="bg-pink-500/10 border border-pink-500/30 rounded-xl p-4">
+                <div className="flex items-center gap-2 text-pink-400 text-sm font-medium mb-1">
+                  <Info className="w-4 h-4" />
+                  Creating for {currentClient.name}
+                </div>
+                <p className="text-xs text-gray-400">
+                  {preset?.industry || currentClient.industry || 'General'} • Style auto-selected
+                </p>
+              </div>
+            )}
+
+            {/* Brand Name - Auto-filled */}
+            <div className="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-slate-700">
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Brand/Company Name
               </label>
@@ -105,27 +192,51 @@ export default function ImageAds() {
                 type="text"
                 value={brandName}
                 onChange={(e) => setBrandName(e.target.value)}
-                placeholder="e.g., Smile Dental Group"
+                placeholder={currentClient?.name || 'e.g., Your Brand'}
                 className="w-full px-4 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-pink-500 focus:outline-none"
               />
+              {currentClient && brandName === currentClient.name && (
+                <p className="text-xs text-green-400 mt-1">✓ Auto-filled from selected client</p>
+              )}
             </div>
 
+            {/* Suggested Concepts */}
+            {suggestedConcepts.length > 0 && (
+              <div className="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-slate-700">
+                <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                  <Lightbulb className="w-4 h-4 text-yellow-400" />
+                  Quick Concepts for {currentClient?.name}
+                </label>
+                <div className="space-y-2">
+                  {suggestedConcepts.slice(0, 3).map((concept, i) => (
+                    <button
+                      key={i}
+                      onClick={() => useSuggestedConcept(concept)}
+                      className="w-full text-left px-3 py-2 bg-slate-700/50 hover:bg-slate-600/50 rounded-lg text-sm text-gray-300 transition-colors"
+                    >
+                      {concept.length > 60 ? concept.substring(0, 60) + '...' : concept}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Prompt */}
-            <div className="bg-slate-800/50 backdrop-blur rounded-xl p-6 border border-slate-700">
+            <div className="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-slate-700">
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Ad Concept / Description *
               </label>
               <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Describe your ad: e.g., 'Happy family at a modern dental office, bright and welcoming atmosphere, professional dentist in background'"
+                placeholder={suggestedConcepts[0] || "Describe your ad concept..."}
                 rows={4}
                 className="w-full px-4 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-pink-500 focus:outline-none"
               />
             </div>
 
             {/* Platform */}
-            <div className="bg-slate-800/50 backdrop-blur rounded-xl p-6 border border-slate-700">
+            <div className="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-slate-700">
               <label className="block text-sm font-medium text-gray-300 mb-3">
                 Platform
               </label>
@@ -147,7 +258,7 @@ export default function ImageAds() {
             </div>
 
             {/* Size */}
-            <div className="bg-slate-800/50 backdrop-blur rounded-xl p-6 border border-slate-700">
+            <div className="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-slate-700">
               <label className="block text-sm font-medium text-gray-300 mb-3">
                 <Maximize2 className="w-4 h-4 inline mr-1" />
                 Size
@@ -171,7 +282,7 @@ export default function ImageAds() {
             </div>
 
             {/* Style */}
-            <div className="bg-slate-800/50 backdrop-blur rounded-xl p-6 border border-slate-700">
+            <div className="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-slate-700">
               <label className="block text-sm font-medium text-gray-300 mb-3">
                 <Palette className="w-4 h-4 inline mr-1" />
                 Visual Style
@@ -185,6 +296,9 @@ export default function ImageAds() {
                   <option key={s.id} value={s.id}>{s.label}</option>
                 ))}
               </select>
+              {currentClient && style === getSuggestedStyle(currentClient.industry) && (
+                <p className="text-xs text-green-400 mt-1">✓ Recommended for {currentClient.industry || 'this industry'}</p>
+              )}
             </div>
 
             {/* Generate Button */}
@@ -205,13 +319,6 @@ export default function ImageAds() {
                 </>
               )}
             </button>
-
-            {/* Info */}
-            <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700">
-              <p className="text-gray-400 text-sm">
-                💡 <span className="text-white">Pro tip:</span> Be specific about mood, colors, and composition for better results.
-              </p>
-            </div>
           </div>
 
           {/* Right Column - Generated Images */}
@@ -237,7 +344,11 @@ export default function ImageAds() {
                 <div className="flex flex-col items-center justify-center h-96 text-gray-500">
                   <Image className="w-16 h-16 mb-4 opacity-50" />
                   <p className="text-lg">No images generated yet</p>
-                  <p className="text-sm mt-1">Enter a prompt and click Generate</p>
+                  <p className="text-sm mt-1">
+                    {suggestedConcepts.length > 0 
+                      ? 'Click a quick concept or enter your own prompt'
+                      : 'Enter a prompt and click Generate'}
+                  </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -278,21 +389,6 @@ export default function ImageAds() {
                   ))}
                 </div>
               )}
-            </div>
-
-            {/* CLI Hint */}
-            <div className="mt-6 bg-slate-800/30 rounded-xl p-4 border border-slate-700">
-              <p className="text-gray-400 text-sm">
-                💻 <span className="text-white">CLI commands:</span>
-              </p>
-              <div className="flex flex-wrap gap-2 mt-2">
-                <code className="text-pink-400 font-mono text-sm bg-slate-900/50 px-3 py-2 rounded-lg">
-                  clawbot image-ads generate --prompt "..."
-                </code>
-                <code className="text-pink-400 font-mono text-sm bg-slate-900/50 px-3 py-2 rounded-lg">
-                  clawbot image-ads sizes
-                </code>
-              </div>
             </div>
           </div>
         </div>
