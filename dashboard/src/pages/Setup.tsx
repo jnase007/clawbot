@@ -260,12 +260,50 @@ export default function Setup() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-3xl font-bold text-white flex items-center gap-3">
             <Settings className="w-8 h-8 text-emerald-500" />
             Setup Checklist
           </h1>
           <p className="text-gray-400 mt-1">Configure these services for ClawBot to work properly</p>
+        </div>
+
+        {/* CRITICAL: Netlify Setup Alert */}
+        <div className="mb-6 p-4 bg-orange-500/20 border-2 border-orange-500 rounded-xl">
+          <h3 className="text-orange-400 font-bold text-lg flex items-center gap-2 mb-2">
+            <AlertCircle className="w-5 h-5" />
+            CRITICAL: Add Environment Variables to Netlify
+          </h3>
+          <p className="text-gray-300 text-sm mb-3">
+            For the dashboard to work, add these environment variables in <strong>Netlify → Site Settings → Environment Variables</strong>:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+            <div className="bg-slate-900/50 p-2 rounded font-mono flex items-center justify-between">
+              <span className="text-cyan-400">ANTHROPIC_API_KEY</span>
+              <span className="text-gray-500">= your-key</span>
+            </div>
+            <div className="bg-slate-900/50 p-2 rounded font-mono flex items-center justify-between">
+              <span className="text-cyan-400">APOLLO_API_KEY</span>
+              <span className="text-gray-500">= your-key</span>
+            </div>
+            <div className="bg-slate-900/50 p-2 rounded font-mono flex items-center justify-between">
+              <span className="text-cyan-400">SUPABASE_URL</span>
+              <span className="text-gray-500">= your-url</span>
+            </div>
+            <div className="bg-slate-900/50 p-2 rounded font-mono flex items-center justify-between">
+              <span className="text-cyan-400">SUPABASE_ANON_KEY</span>
+              <span className="text-gray-500">= your-key</span>
+            </div>
+          </div>
+          <a 
+            href="https://app.netlify.com/sites/clawbot/configuration/env" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="mt-3 inline-flex items-center gap-2 text-orange-400 hover:text-orange-300"
+          >
+            <ExternalLink className="w-4 h-4" />
+            Go to Netlify Environment Variables
+          </a>
         </div>
 
         {/* Progress Overview */}
