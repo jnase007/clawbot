@@ -1,7 +1,58 @@
 import { useClient } from './ClientProvider';
 import { cn } from '@/lib/utils';
-import { Building2, ChevronDown, Plus } from 'lucide-react';
+import { Building2, ChevronDown, Plus, Settings } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+
+// Avatar component with image fallback
+function ClientAvatar({ 
+  name, 
+  logoUrl, 
+  primaryColor, 
+  size = 'md' 
+}: { 
+  name: string; 
+  logoUrl?: string | null; 
+  primaryColor?: string | null;
+  size?: 'sm' | 'md' | 'lg';
+}) {
+  const [imgError, setImgError] = useState(false);
+  
+  // Reset error state when logoUrl changes
+  useEffect(() => {
+    setImgError(false);
+  }, [logoUrl]);
+
+  const sizeClasses = {
+    sm: 'w-6 h-6 text-xs',
+    md: 'w-8 h-8 text-sm',
+    lg: 'w-10 h-10 text-base',
+  };
+
+  // Show letter avatar if no logo or if image failed to load
+  if (!logoUrl || imgError) {
+    return (
+      <div 
+        className={cn(
+          "rounded-lg flex items-center justify-center text-white font-bold shrink-0",
+          sizeClasses[size]
+        )}
+        style={{ backgroundColor: primaryColor || '#3B82F6' }}
+      >
+        {name.charAt(0).toUpperCase()}
+      </div>
+    );
+  }
+
+  return (
+    <img 
+      src={logoUrl} 
+      alt={name}
+      className={cn("rounded-lg object-cover shrink-0", sizeClasses[size])}
+      onError={() => setImgError(true)}
+    />
+  );
+}
 
 export function ClientSelector() {
   const { clients, currentClient, setCurrentClientId, loading } = useClient();
@@ -38,20 +89,12 @@ export function ClientSelector() {
       >
         {currentClient ? (
           <>
-            {currentClient.logo_url ? (
-              <img 
-                src={currentClient.logo_url} 
-                alt={currentClient.name}
-                className="w-8 h-8 rounded-lg object-cover"
-              />
-            ) : (
-              <div 
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
-                style={{ backgroundColor: currentClient.primary_color || '#3B82F6' }}
-              >
-                {currentClient.name.charAt(0).toUpperCase()}
-              </div>
-            )}
+            <ClientAvatar 
+              name={currentClient.name}
+              logoUrl={currentClient.logo_url}
+              primaryColor={currentClient.primary_color}
+              size="md"
+            />
             <div className="flex-1 text-left">
               <p className="text-sm font-medium truncate max-w-[120px]">
                 {currentClient.name}
@@ -102,20 +145,12 @@ export function ClientSelector() {
                       : "hover:bg-secondary"
                   )}
                 >
-                  {client.logo_url ? (
-                    <img 
-                      src={client.logo_url} 
-                      alt={client.name}
-                      className="w-8 h-8 rounded-lg object-cover shrink-0"
-                    />
-                  ) : (
-                    <div 
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold shrink-0"
-                      style={{ backgroundColor: client.primary_color || '#3B82F6' }}
-                    >
-                      {client.name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
+                  <ClientAvatar 
+                    name={client.name}
+                    logoUrl={client.logo_url}
+                    primaryColor={client.primary_color}
+                    size="md"
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{client.name}</p>
                     <p className="text-[10px] text-muted-foreground truncate">
@@ -133,17 +168,25 @@ export function ClientSelector() {
             )}
           </div>
 
-          <div className="p-2 border-t border-border">
-            <button
-              onClick={() => {
-                // TODO: Open add client modal
-                setOpen(false);
-              }}
+          <div className="p-2 border-t border-border space-y-1">
+            {currentClient && (
+              <Link
+                to="/dashboard/client-settings"
+                onClick={() => setOpen(false)}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+              >
+                <Settings className="w-4 h-4" />
+                Client Settings
+              </Link>
+            )}
+            <Link
+              to="/dashboard/discovery"
+              onClick={() => setOpen(false)}
               className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
             >
               <Plus className="w-4 h-4" />
               Add New Client
-            </button>
+            </Link>
           </div>
         </div>
       )}

@@ -16,6 +16,7 @@ import ClientWorkflow from './pages/ClientWorkflow';
 import Setup from './pages/Setup';
 import Discovery from './pages/Discovery';
 import ImageAds from './pages/ImageAds';
+import ClientSettings from './pages/ClientSettings';
 
 export default function App() {
   return (
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="strategy" element={<Strategy />} />
         <Route path="logs" element={<Logs />} />
         <Route path="setup" element={<Setup />} />
+        <Route path="client-settings" element={<ClientSettings />} />
       </Route>
     </Routes>
   );
