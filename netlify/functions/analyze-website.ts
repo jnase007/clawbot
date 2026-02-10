@@ -50,7 +50,15 @@ export const handler: Handler = async (event: HandlerEvent) => {
     }
 
     const body = JSON.parse(event.body || '{}');
-    const { websiteUrl, clientName } = body;
+    const { 
+      websiteUrl, 
+      clientName,
+      clientGoals,
+      clientChallenges,
+      clientCompetitors,
+      clientIndustry,
+      clientBudget
+    } = body;
 
     if (!websiteUrl) {
       return {
@@ -86,6 +94,20 @@ export const handler: Handler = async (event: HandlerEvent) => {
 
     const anthropic = new Anthropic({ apiKey: anthropicKey });
 
+    // Build enhanced prompt with client-provided data
+    let clientContext = '';
+    if (clientGoals || clientChallenges || clientCompetitors || clientIndustry || clientBudget) {
+      clientContext = '\n\nAdditional Client Information Provided:\n';
+      if (clientGoals) clientContext += `Goals: ${clientGoals}\n`;
+      if (clientChallenges) clientContext += `Challenges: ${clientChallenges}\n`;
+      if (clientCompetitors && Array.isArray(clientCompetitors) && clientCompetitors.length > 0) {
+        clientContext += `Competitors: ${clientCompetitors.join(', ')}\n`;
+      }
+      if (clientIndustry) clientContext += `Industry: ${clientIndustry}\n`;
+      if (clientBudget) clientContext += `Monthly Budget: $${clientBudget}\n`;
+      clientContext += '\nUse this information to enhance and validate your analysis.';
+    }
+
     const response = await anthropic.messages.create({
       model: 'claude-3-haiku-20240307',
       max_tokens: 2048,
@@ -93,7 +115,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
       messages: [
         {
           role: 'user',
-          content: `Analyze this website for ${clientName || 'the client'}:\n\nURL: ${websiteUrl}\n\nWebsite Content:\n${websiteContent}`,
+          content: `Analyze this website for ${clientName || 'the client'}:\n\nURL: ${websiteUrl}\n\nWebsite Content:\n${websiteContent}${clientContext}`,
         },
       ],
     });

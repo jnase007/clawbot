@@ -12,7 +12,7 @@ import Sequences from './pages/Sequences';
 import Inbox from './pages/Inbox';
 import ApolloLeads from './pages/ApolloLeads';
 import ContentStudio from './pages/ContentStudio';
-import ClientWorkflow from './pages/ClientWorkflow';
+import Clients from './pages/Clients';
 import Setup from './pages/Setup';
 import Discovery from './pages/Discovery';
 import ImageAds from './pages/ImageAds';
@@ -27,7 +27,7 @@ export default function App() {
       {/* Dashboard - with sidebar layout */}
       <Route path="/dashboard" element={<Layout />}>
         <Route index element={<ClientDashboard />} />
-        <Route path="clients" element={<ClientWorkflow />} />
+        <Route path="clients" element={<Clients />} />
         <Route path="discovery" element={<Discovery />} />
         <Route path="apollo" element={<ApolloLeads />} />
         <Route path="content" element={<ContentStudio />} />

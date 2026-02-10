@@ -105,7 +105,7 @@ export default function Discovery() {
       setClientName(currentClient.name);
       setWebsiteUrl(currentClient.website || '');
     }
-  }, [currentClient]);
+  }, [currentClient?.id]);
 
   // Auto-scroll chat
   useEffect(() => {
@@ -178,8 +178,11 @@ export default function Discovery() {
   };
 
   async function analyzeWebsite() {
-    if (!clientName.trim() || !websiteUrl.trim()) {
-      setError('Please enter both client name and website URL');
+    const name = currentClient?.name || clientName.trim();
+    const url = currentClient?.website || websiteUrl.trim();
+    
+    if (!name || !url) {
+      setError('Client name and website are required. Please add this information in the Clients page.');
       return;
     }
 
@@ -192,10 +195,14 @@ export default function Discovery() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          clientName: clientName.trim(),
-          websiteUrl: websiteUrl.trim().startsWith('http') 
-            ? websiteUrl.trim() 
-            : `https://${websiteUrl.trim()}`,
+          clientName: name,
+          websiteUrl: url.startsWith('http') ? url : `https://${url}`,
+          // Include client data to enhance discovery
+          clientGoals: currentClient?.goals || null,
+          clientChallenges: currentClient?.challenges || null,
+          clientCompetitors: currentClient?.competitor_names || null,
+          clientIndustry: currentClient?.industry || null,
+          clientBudget: currentClient?.monthly_budget || null,
         }),
       });
 
@@ -429,53 +436,76 @@ export default function Discovery() {
                   <Sparkles className="w-8 h-8 text-primary" />
                 </div>
                 <h2 className="text-xl font-bold mb-2">AI-Powered Discovery</h2>
-                <p className="text-muted-foreground">
-                  Just enter the client's name and website. Our AI will analyze their site 
-                  and create a comprehensive discovery document for you.
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Client Name *</label>
-                  <input
-                    type="text"
-                    value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
-                    placeholder="e.g., Acme Dental"
-                    className="w-full px-4 py-3 bg-background border border-border rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Website URL *</label>
-                  <div className="relative">
-                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <input
-                      type="text"
-                      value={websiteUrl}
-                      onChange={(e) => setWebsiteUrl(e.target.value)}
-                      placeholder="e.g., acmedental.com"
-                      className="w-full pl-11 pr-4 py-3 bg-background border border-border rounded-lg focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    />
+                {currentClient && currentClient.website ? (
+                  <div className="space-y-4">
+                    <p className="text-muted-foreground">
+                      Using client data from <strong>{currentClient.name}</strong>. 
+                      AI will analyze their website and create a comprehensive discovery document.
+                    </p>
+                    <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 text-left">
+                      <p className="text-sm font-medium text-green-400 mb-2">Client Information Available:</p>
+                      <ul className="text-xs text-muted-foreground space-y-1">
+                        {currentClient.website && <li>✓ Website: {currentClient.website}</li>}
+                        {currentClient.goals && <li>✓ Goals: {currentClient.goals.substring(0, 50)}...</li>}
+                        {currentClient.challenges && <li>✓ Challenges: {currentClient.challenges.substring(0, 50)}...</li>}
+                        {currentClient.competitor_names && currentClient.competitor_names.length > 0 && (
+                          <li>✓ Competitors: {currentClient.competitor_names.join(', ')}</li>
+                        )}
+                      </ul>
+                    </div>
+                    <Button 
+                      onClick={analyzeWebsite}
+                      disabled={!currentClient.website}
+                      className="w-full gap-2 py-6 text-lg"
+                    >
+                      <Sparkles className="w-5 h-5" />
+                      Generate Discovery from Client Data
+                    </Button>
                   </div>
-                </div>
-
-                {error && (
-                  <div className="flex items-center gap-2 text-destructive bg-destructive/10 px-4 py-3 rounded-lg">
-                    <AlertCircle className="w-5 h-5 shrink-0" />
-                    <span className="text-sm">{error}</span>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-muted-foreground">
+                      Select a client from the dropdown above, or add client information first.
+                    </p>
+                    {!currentClient && (
+                      <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                        <p className="text-sm text-yellow-400 mb-2">
+                          <AlertCircle className="w-4 h-4 inline mr-1" />
+                          No client selected
+                        </p>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          Go to <strong>Clients</strong> page to add client information (name, website, goals, challenges, competitors, budget).
+                          This data will be used to auto-generate the Discovery.
+                        </p>
+                        <Button 
+                          onClick={() => navigate('/dashboard/clients')}
+                          variant="outline"
+                          className="w-full"
+                        >
+                          Go to Clients Page
+                        </Button>
+                      </div>
+                    )}
+                    {currentClient && !currentClient.website && (
+                      <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                        <p className="text-sm text-yellow-400 mb-2">
+                          <AlertCircle className="w-4 h-4 inline mr-1" />
+                          Client website required
+                        </p>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          Please add a website URL for <strong>{currentClient.name}</strong> in the Clients page.
+                        </p>
+                        <Button 
+                          onClick={() => navigate('/dashboard/clients')}
+                          variant="outline"
+                          className="w-full"
+                        >
+                          Edit Client Info
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
-
-                <Button 
-                  onClick={analyzeWebsite}
-                  disabled={!clientName.trim() || !websiteUrl.trim()}
-                  className="w-full gap-2 py-6 text-lg"
-                >
-                  <Sparkles className="w-5 h-5" />
-                  Analyze Website & Generate Discovery
-                </Button>
               </div>
             </div>
           </CardContent>

@@ -10,9 +10,12 @@ export interface Client {
   slug: string | null;
   description: string | null;
   website: string | null;
+  email: string | null;
+  phone: string | null;
   industry: string | null;
   target_audience: string | null;
   goals: string | null;
+  challenges: string | null;
   preferred_channels: Platform[];
   tone: 'professional' | 'casual' | 'bold' | 'friendly';
   compliance_notes: string | null;
