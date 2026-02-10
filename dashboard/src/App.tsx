@@ -10,6 +10,9 @@ import Analytics from './pages/Analytics';
 import Strategy from './pages/Strategy';
 import Sequences from './pages/Sequences';
 import Inbox from './pages/Inbox';
+import ApolloLeads from './pages/ApolloLeads';
+import ContentStudio from './pages/ContentStudio';
+import ClientWorkflow from './pages/ClientWorkflow';
 
 export default function App() {
   return (
@@ -20,6 +23,9 @@ export default function App() {
       {/* Dashboard - with sidebar layout */}
       <Route path="/dashboard" element={<Layout />}>
         <Route index element={<ClientDashboard />} />
+        <Route path="clients" element={<ClientWorkflow />} />
+        <Route path="apollo" element={<ApolloLeads />} />
+        <Route path="content" element={<ContentStudio />} />
         <Route path="contacts" element={<Contacts />} />
         <Route path="templates" element={<Templates />} />
         <Route path="campaigns" element={<Campaigns />} />

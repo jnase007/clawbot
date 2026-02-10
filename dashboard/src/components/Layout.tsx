@@ -18,7 +18,10 @@ import {
   Zap,
   X,
   Workflow,
-  Inbox
+  Inbox,
+  Target,
+  PenTool,
+  UserCircle
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { ThemeToggle } from './ThemeToggle';
@@ -177,12 +180,15 @@ function NotificationsDropdown() {
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/dashboard/clients', icon: UserCircle, label: 'Clients', isNew: true },
+  { to: '/dashboard/apollo', icon: Target, label: 'Apollo Leads', isNew: true },
+  { to: '/dashboard/content', icon: PenTool, label: 'Content Studio', isNew: true },
   { to: '/dashboard/strategy', icon: Brain, label: 'AI Strategy', highlight: true },
   { to: '/dashboard/contacts', icon: Users, label: 'Contacts' },
   { to: '/dashboard/templates', icon: FileText, label: 'Templates' },
-  { to: '/dashboard/sequences', icon: Workflow, label: 'Sequences', isNew: true },
+  { to: '/dashboard/sequences', icon: Workflow, label: 'Sequences' },
   { to: '/dashboard/campaigns', icon: Rocket, label: 'Campaigns' },
-  { to: '/dashboard/inbox', icon: Inbox, label: 'Inbox', isNew: true },
+  { to: '/dashboard/inbox', icon: Inbox, label: 'Inbox' },
   { to: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
   { to: '/dashboard/logs', icon: ScrollText, label: 'Activity' },
 ];
