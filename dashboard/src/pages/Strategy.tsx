@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -22,7 +22,11 @@ import {
   Clock,
   ChevronDown,
   ChevronRight,
-  Download
+  Download,
+  MessageSquare,
+  Send,
+  X,
+  RefreshCw
 } from 'lucide-react';
 
 interface Goal {
@@ -41,16 +45,16 @@ interface ChannelStrategy {
 }
 
 interface Template {
-  name: string;
+    name: string;
   type: string;
-  subject?: string;
-  content: string;
+    subject?: string;
+    content: string;
 }
 
 interface KPI {
-  metric: string;
+    metric: string;
   current?: string;
-  target: string;
+    target: string;
   importance: string;
 }
 
@@ -85,16 +89,106 @@ interface GeneratedStrategy {
 }
 
 const API_URL = '/api/generate-strategy';
+const REFINE_API_URL = '/api/refine-strategy';
+
+interface StrategyRow {
+  id: string;
+  client_id: string;
+  name?: string;
+  status?: string;
+  duration_days?: number;
+  executive_summary?: string;
+  target_persona?: any;
+  channel_strategy?: any[];
+  content_calendar?: any[];
+  sample_templates?: any[];
+  kpi_targets?: any[];
+  timeline?: any;
+  risks?: any[];
+  next_steps?: string[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+}
 
 export default function Strategy() {
   const { currentClient, currentClientId } = useClient();
   const [strategy, setStrategy] = useState<GeneratedStrategy | null>(null);
+  const [strategyId, setStrategyId] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['summary', 'goals', 'channels']));
   const [copiedTemplate, setCopiedTemplate] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  // Chat state
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [refining, setRefining] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Load existing strategy on mount
+  useEffect(() => {
+    async function loadStrategy() {
+      if (!currentClientId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('client_strategies')
+          .select('*')
+          .eq('client_id', currentClientId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single() as { data: StrategyRow | null; error: any };
+
+        if (data && !error) {
+          // Reconstruct strategy from saved data
+          const loadedStrategy: GeneratedStrategy = {
+            executiveSummary: data.executive_summary || '',
+            goals: data.kpi_targets?.map((kpi: any) => ({
+              goal: kpi.metric,
+              metric: kpi.metric,
+              target: kpi.target,
+              timeline: '90 days'
+            })) || [],
+            targetPersona: data.target_persona || { title: '', industry: '', painPoints: [], motivations: [], objections: [] },
+            channelStrategy: data.channel_strategy || [],
+            contentCalendar: data.content_calendar || [],
+            templates: data.sample_templates || [],
+            kpis: data.kpi_targets || [],
+            timeline: data.timeline || { phase1: { name: '', duration: '', focus: '', milestones: [] }, phase2: { name: '', duration: '', focus: '', milestones: [] }, phase3: { name: '', duration: '', focus: '', milestones: [] } },
+            risks: data.risks || [],
+            nextSteps: data.next_steps || []
+          };
+          setStrategy(loadedStrategy);
+          setStrategyId(data.id);
+          setSaved(true);
+        }
+      } catch (err) {
+        console.log('No existing strategy found');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadStrategy();
+  }, [currentClientId]);
+
+  // Scroll chat to bottom
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages]);
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => {
@@ -116,6 +210,71 @@ export default function Strategy() {
     setCopiedTemplate(template.name);
     setTimeout(() => setCopiedTemplate(null), 2000);
   };
+
+  async function refineStrategy() {
+    if (!chatInput.trim() || !strategy || refining) return;
+
+    const userMessage: ChatMessage = {
+      role: 'user',
+      content: chatInput.trim(),
+      timestamp: new Date()
+    };
+
+    setChatMessages(prev => [...prev, userMessage]);
+    setChatInput('');
+    setRefining(true);
+
+    try {
+      const response = await fetch(REFINE_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId: currentClientId,
+          strategyId,
+          currentStrategy: strategy,
+          userFeedback: userMessage.content,
+          clientName: currentClient?.name,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to refine strategy');
+      }
+
+      const result = await response.json();
+      
+      if (result.strategy) {
+        setStrategy(result.strategy);
+        setSaved(true);
+      }
+
+      const assistantMessage: ChatMessage = {
+        role: 'assistant',
+        content: result.message || "I've updated the strategy based on your feedback. The changes are now reflected above.",
+        timestamp: new Date()
+      };
+      setChatMessages(prev => [...prev, assistantMessage]);
+
+    } catch (err) {
+      const errorMessage: ChatMessage = {
+        role: 'assistant',
+        content: "Sorry, I couldn't update the strategy. Please try again or regenerate it.",
+        timestamp: new Date()
+      };
+      setChatMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setRefining(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="p-8 flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+        <p className="text-muted-foreground">Loading strategy...</p>
+      </div>
+    );
+  }
 
   if (!currentClient) {
     return (
@@ -165,13 +324,18 @@ export default function Strategy() {
 
       const result = await response.json();
       setStrategy(result.strategy);
+      if (result.strategyId) {
+        setStrategyId(result.strategyId);
+      }
       setSaved(true); // Strategy is auto-saved by the API
+      // Clear chat when regenerating
+      setChatMessages([]);
 
     } catch (err) {
       console.error('Strategy generation error:', err);
       setError(err instanceof Error ? err.message : 'Failed to generate strategy');
     } finally {
-      setGenerating(false);
+    setGenerating(false);
     }
   }
 
@@ -248,23 +412,23 @@ export default function Strategy() {
         </div>
 
         <div className="flex gap-3">
-          <Button
-            onClick={generateStrategy}
-            disabled={generating}
+        <Button 
+          onClick={generateStrategy} 
+          disabled={generating}
             className="gap-2"
-          >
-            {generating ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
+        >
+          {generating ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
                 Generating Strategy...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4" />
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4" />
                 {strategy ? 'Regenerate Strategy' : 'Generate AI Strategy'}
-              </>
-            )}
-          </Button>
+            </>
+          )}
+        </Button>
         </div>
       </div>
 
@@ -275,8 +439,8 @@ export default function Strategy() {
           <div>
             <p className="text-destructive font-medium">Generation Failed</p>
             <p className="text-destructive/80 text-sm">{error}</p>
-          </div>
-        </div>
+            </div>
+            </div>
       )}
 
       {/* No Strategy Yet */}
@@ -297,9 +461,9 @@ export default function Strategy() {
               <span className="px-3 py-1 bg-muted rounded-full">Content Calendar</span>
               <span className="px-3 py-1 bg-muted rounded-full">Email Templates</span>
               <span className="px-3 py-1 bg-muted rounded-full">Timeline & Phases</span>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CardContent>
+      </Card>
       )}
 
       {/* Generating State */}
@@ -333,7 +497,7 @@ export default function Strategy() {
                     Strategy saved to database
                   </div>
                 )}
-              </CardContent>
+            </CardContent>
             )}
           </Card>
 
@@ -360,10 +524,10 @@ export default function Strategy() {
                           <div>{goal.timeline}</div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
             )}
           </Card>
 
@@ -390,7 +554,7 @@ export default function Strategy() {
                         </li>
                       ))}
                     </ul>
-                  </div>
+                    </div>
                   <div className="p-4 bg-muted/50 rounded-lg">
                     <div className="text-sm text-muted-foreground mb-2">Motivations</div>
                     <ul className="space-y-1">
@@ -436,10 +600,10 @@ export default function Strategy() {
                           <div>{channel.budget}</div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
             )}
           </Card>
 
@@ -479,23 +643,23 @@ export default function Strategy() {
                   ))}
                 </div>
                 <Button onClick={saveTemplates} disabled={saving || saved} className="mt-4 gap-2">
-                  {saving ? (
-                    <>
+                {saving ? (
+                  <>
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Saving Templates...
-                    </>
-                  ) : saved ? (
-                    <>
+                  </>
+                ) : saved ? (
+                  <>
                       <CheckCircle className="w-4 h-4" />
                       Templates Saved
-                    </>
-                  ) : (
-                    <>
+                  </>
+                ) : (
+                  <>
                       <Download className="w-4 h-4" />
                       Save Templates to Library
-                    </>
-                  )}
-                </Button>
+                  </>
+                )}
+              </Button>
               </CardContent>
             )}
           </Card>
@@ -511,10 +675,10 @@ export default function Strategy() {
                       <div className="font-medium mb-1">{kpi.metric}</div>
                       <div className="text-2xl font-bold text-primary mb-1">{kpi.target}</div>
                       <div className="text-sm text-muted-foreground">{kpi.importance}</div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
             )}
           </Card>
 
@@ -532,8 +696,8 @@ export default function Strategy() {
                         <div className="flex items-center gap-3 mb-2">
                           <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
                             {i + 1}
-                          </div>
-                          <div>
+                  </div>
+                  <div>
                             <div className="font-medium">{phase.name}</div>
                             <div className="text-sm text-muted-foreground">{phase.duration}</div>
                           </div>
@@ -548,7 +712,7 @@ export default function Strategy() {
                             ))}
                           </div>
                         </div>
-                      </div>
+                  </div>
                     );
                   })}
                 </div>
@@ -573,8 +737,112 @@ export default function Strategy() {
                 </ol>
               </CardContent>
             )}
-          </Card>
+            </Card>
+
+          {/* AI Chat Refinement Button */}
+          {!chatOpen && (
+            <div className="fixed bottom-6 right-6 z-50">
+              <Button
+                onClick={() => setChatOpen(true)}
+                className="rounded-full w-14 h-14 shadow-lg gap-0"
+              >
+                <MessageSquare className="w-6 h-6" />
+              </Button>
+            </div>
+          )}
         </div>
+      )}
+
+      {/* AI Chat Panel */}
+      {chatOpen && strategy && (
+        <div className="fixed bottom-6 right-6 w-96 max-w-[calc(100vw-3rem)] bg-card border border-border rounded-xl shadow-2xl z-50 flex flex-col max-h-[500px]">
+          {/* Chat Header */}
+          <div className="flex items-center justify-between p-4 border-b border-border">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <Brain className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Strategy Assistant</h3>
+                <p className="text-xs text-muted-foreground">Refine your strategy with AI</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setChatOpen(false)}
+              className="p-2 hover:bg-muted rounded-lg transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Chat Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[200px]">
+            {chatMessages.length === 0 && (
+              <div className="text-center text-muted-foreground text-sm py-8">
+                <MessageSquare className="w-8 h-8 mx-auto mb-3 opacity-50" />
+                <p>Ask me to update your strategy!</p>
+                <p className="mt-2 text-xs">Examples:</p>
+                <ul className="mt-1 space-y-1 text-xs">
+                  <li>"Add more focus on LinkedIn outreach"</li>
+                  <li>"Make the email templates more casual"</li>
+                  <li>"Increase the budget allocation for ads"</li>
+                </ul>
+              </div>
+            )}
+            {chatMessages.map((msg, i) => (
+              <div
+                key={i}
+                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`max-w-[80%] rounded-lg p-3 text-sm ${
+                    msg.role === 'user'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted'
+                  }`}
+                >
+                  {msg.content}
+                </div>
+              </div>
+            ))}
+            {refining && (
+              <div className="flex justify-start">
+                <div className="bg-muted rounded-lg p-3 text-sm flex items-center gap-2">
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  Updating strategy...
+                </div>
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* Chat Input */}
+          <div className="p-4 border-t border-border">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                refineStrategy();
+              }}
+              className="flex gap-2"
+            >
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="What would you like to change?"
+                className="flex-1 px-4 py-2 bg-muted rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                disabled={refining}
+              />
+              <Button
+                type="submit"
+                disabled={!chatInput.trim() || refining}
+                className="px-3"
+              >
+                <Send className="w-4 h-4" />
+              </Button>
+            </form>
+              </div>
+            </div>
       )}
     </div>
   );

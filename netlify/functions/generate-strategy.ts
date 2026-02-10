@@ -198,10 +198,11 @@ Be specific to this client's industry, goals, and constraints. Make all template
     const strategy = JSON.parse(jsonMatch ? jsonMatch[0] : '{}');
 
     // Save strategy to database if we have Supabase
+    let savedStrategyId: string | null = null;
     if (supabaseUrl && supabaseKey && clientId) {
       const supabase = createClient(supabaseUrl, supabaseKey);
       
-      await supabase.from('client_strategies').insert({
+      const { data: insertedStrategy } = await supabase.from('client_strategies').insert({
         client_id: clientId,
         name: `${client.name || 'Client'} Marketing Strategy`,
         status: 'draft',
@@ -212,7 +213,14 @@ Be specific to this client's industry, goals, and constraints. Make all template
         content_calendar: strategy.contentCalendar,
         sample_templates: strategy.templates,
         kpi_targets: strategy.kpis,
-      });
+        timeline: strategy.timeline,
+        risks: strategy.risks,
+        next_steps: strategy.nextSteps,
+      }).select('id').single();
+
+      if (insertedStrategy) {
+        savedStrategyId = insertedStrategy.id;
+      }
 
       // Update client stage to execution
       await supabase
@@ -227,6 +235,7 @@ Be specific to this client's industry, goals, and constraints. Make all template
       body: JSON.stringify({
         success: true,
         strategy,
+        strategyId: savedStrategyId,
         clientName: client.name,
       }),
     };
