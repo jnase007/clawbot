@@ -5,7 +5,7 @@ import { DiscoveryPDF } from '@/components/pdf/DiscoveryPDF';
 import { useClient } from '@/components/ClientProvider';
 import { useToast, ToastContainer } from '@/components/Toast';
 import { 
-  ClipboardList, Building2, Globe, Sparkles, Send,
+  ClipboardList, Building2, Sparkles, Send,
   Save, AlertCircle, Loader2, FileDown, MessageSquare,
   Check, ChevronDown, ChevronRight, RefreshCw,
   Target, Users, Wrench, BarChart3, Lightbulb, X
@@ -83,7 +83,6 @@ export default function Discovery() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   
   // Chat refinement
   const [chatOpen, setChatOpen] = useState(false);
@@ -182,12 +181,11 @@ export default function Discovery() {
     const url = currentClient?.website || websiteUrl.trim();
     
     if (!name || !url) {
-      setError('Client name and website are required. Please add this information in the Clients page.');
+      toastError('Client name and website are required. Please add this information in the Clients page.');
       return;
     }
 
     setAnalyzing(true);
-    setError(null);
     setDiscovery(null);
 
     try {
@@ -227,7 +225,7 @@ export default function Discovery() {
       }
     } catch (err) {
       console.error('Analysis error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to analyze website');
+      toastError(err instanceof Error ? err.message : 'Failed to analyze website');
     } finally {
       setAnalyzing(false);
     }
@@ -291,7 +289,6 @@ export default function Discovery() {
     if (!discovery || !clientName.trim()) return;
 
     setSaving(true);
-    setError(null);
     const loadingId = loading('Saving discovery...');
 
     try {
@@ -353,7 +350,6 @@ export default function Discovery() {
       }
       
       toastError(errorMessage);
-      setError(errorMessage);
     } finally {
       setSaving(false);
     }

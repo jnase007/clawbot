@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useClient } from '@/components/ClientProvider';
 import { supabase } from '@/lib/supabase';
 import { useToast, ToastContainer } from '@/components/Toast';
 import { 
-  Users, Building2, Plus, Search, Edit, Save, X, 
+  Users, Plus, Search, Edit, Save, X, 
   Mail, Phone, Globe, Target, AlertCircle, TrendingDown,
-  DollarSign, Sparkles, ArrowRight, CheckCircle, Loader2
+  DollarSign, Sparkles, ArrowRight, Loader2
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -107,16 +107,14 @@ export default function Clients() {
       };
 
       if (editingClient) {
-        const { error } = await supabase
-          .from('clients')
+        const { error } = await (supabase.from('clients' as any) as any)
           .update(clientData)
           .eq('id', editingClient);
         
         if (error) throw error;
         success('Client updated successfully');
       } else {
-        const { data, error } = await supabase
-          .from('clients')
+        const { data, error } = await (supabase.from('clients' as any) as any)
           .insert(clientData)
           .select()
           .single();
@@ -124,7 +122,7 @@ export default function Clients() {
         if (error) throw error;
         success('Client created successfully');
         // Auto-select the new client
-        if (data) {
+        if (data && data.id) {
           setCurrentClientId(data.id);
         }
       }
