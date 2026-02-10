@@ -127,7 +127,7 @@ export default function Home() {
           </div>
           
           <h1 className="text-5xl md:text-7xl font-display font-bold leading-tight mb-6 animate-slide-up text-white drop-shadow-lg">
-            Automate Your Agency's
+            Automating Client
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500"> Outreach</span>
           </h1>
           
