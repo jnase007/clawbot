@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { 
   Image, Sparkles, Download, Copy, Check, Loader2,
   Wand2, Palette, Maximize2, RefreshCw, Info, Lightbulb,
-  CheckCircle
+  CheckCircle, Globe, Zap
 } from 'lucide-react';
 import { useClient } from '@/components/ClientProvider';
 import { CLIENT_PRESETS } from '@/lib/types';
@@ -16,6 +16,23 @@ interface GeneratedImage {
   prompt: string;
   size: AdSize;
   platform: Platform;
+}
+
+interface BrandAnalysis {
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+  backgroundColor: string;
+  textColor: string;
+  colorPalette: string[];
+  style: string;
+  mood: string;
+  typography: string;
+  visualElements: string[];
+  imageStyle: string;
+  brandPersonality: string;
+  designRecommendations: string[];
+  adStylePrompt: string;
 }
 
 const sizeConfigs: Record<AdSize, { label: string; dimensions: string; aspect: string }> = {
@@ -93,11 +110,73 @@ export default function ImageAds() {
   const [copied, setCopied] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [saved, setSaved] = useState(false);
+  
+  // Brand analysis state
+  const [brandAnalysis, setBrandAnalysis] = useState<BrandAnalysis | null>(null);
+  const [isAnalyzingBrand, setIsAnalyzingBrand] = useState(false);
+  const [brandAnalysisError, setBrandAnalysisError] = useState<string | null>(null);
 
   // Get client context
   const presetKey = getPresetKey(currentClient?.name);
   const preset = presetKey ? CLIENT_PRESETS[presetKey] : null;
   const suggestedConcepts = presetKey ? clientAdConcepts[presetKey] : [];
+
+  // Analyze client's website for brand colors/style
+  const handleAnalyzeBrand = async () => {
+    const websiteUrl = currentClient?.website;
+    if (!websiteUrl) {
+      setBrandAnalysisError('No website URL found for this client');
+      return;
+    }
+
+    setIsAnalyzingBrand(true);
+    setBrandAnalysisError(null);
+
+    try {
+      const response = await fetch('/api/analyze-brand', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          websiteUrl,
+          clientName: currentClient?.name,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Brand analysis failed');
+      }
+
+      if (data.brand) {
+        setBrandAnalysis(data.brand);
+        // Auto-update style based on analysis
+        if (data.brand.style) {
+          const styleMap: Record<string, string> = {
+            'modern': 'modern-minimal',
+            'minimalist': 'modern-minimal',
+            'bold': 'bold-vibrant',
+            'playful': 'bold-vibrant',
+            'corporate': 'professional-clean',
+            'classic': 'professional-clean',
+            'luxury': 'luxury-premium',
+            'sophisticated': 'luxury-premium',
+            'tech': 'tech-futuristic',
+            'innovative': 'tech-futuristic',
+            'organic': 'healthcare-trust',
+            'trustworthy': 'healthcare-trust',
+          };
+          const mappedStyle = styleMap[data.brand.style.toLowerCase()] || style;
+          setStyle(mappedStyle);
+        }
+      }
+    } catch (err) {
+      console.error('Brand analysis error:', err);
+      setBrandAnalysisError(err instanceof Error ? err.message : 'Failed to analyze brand');
+    } finally {
+      setIsAnalyzingBrand(false);
+    }
+  };
 
   // Load saved images from database
   useEffect(() => {
@@ -172,6 +251,17 @@ export default function ImageAds() {
           style,
           size: sizeConfigs[selectedSize].dimensions,
           platform: selectedPlatform,
+          // Include brand analysis for on-brand imagery
+          brandAnalysis: brandAnalysis ? {
+            primaryColor: brandAnalysis.primaryColor,
+            secondaryColor: brandAnalysis.secondaryColor,
+            accentColor: brandAnalysis.accentColor,
+            colorPalette: brandAnalysis.colorPalette,
+            style: brandAnalysis.style,
+            mood: brandAnalysis.mood,
+            visualElements: brandAnalysis.visualElements,
+            adStylePrompt: brandAnalysis.adStylePrompt,
+          } : null,
         }),
       });
 
@@ -274,6 +364,94 @@ export default function ImageAds() {
                 <p className="text-xs text-muted-foreground">
                   {preset?.industry || currentClient.industry || 'General'} • Style auto-selected
                 </p>
+              </div>
+            )}
+
+            {/* Brand Analysis */}
+            {currentClient?.website && (
+              <div className="bg-card backdrop-blur rounded-xl p-4 border border-border">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-yellow-400" />
+                    Brand Analysis
+                  </label>
+                  <button
+                    onClick={handleAnalyzeBrand}
+                    disabled={isAnalyzingBrand}
+                    className="px-3 py-1.5 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 hover:from-yellow-500/30 hover:to-orange-500/30 text-yellow-400 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                  >
+                    {isAnalyzingBrand ? (
+                      <>
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        Analyzing...
+                      </>
+                    ) : (
+                      <>
+                        <Globe className="w-3 h-3" />
+                        Analyze Website
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {brandAnalysisError && (
+                  <p className="text-xs text-red-400 mb-2">{brandAnalysisError}</p>
+                )}
+
+                {brandAnalysis ? (
+                  <div className="space-y-3">
+                    {/* Color Palette */}
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-2">Brand Colors</p>
+                      <div className="flex gap-1.5">
+                        {brandAnalysis.colorPalette?.slice(0, 5).map((color, i) => (
+                          <div
+                            key={i}
+                            className="w-8 h-8 rounded-lg border border-border shadow-sm"
+                            style={{ backgroundColor: color }}
+                            title={color}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Style & Mood */}
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-secondary/50 rounded-lg p-2">
+                        <span className="text-muted-foreground">Style:</span>
+                        <span className="text-foreground ml-1 capitalize">{brandAnalysis.style}</span>
+                      </div>
+                      <div className="bg-secondary/50 rounded-lg p-2">
+                        <span className="text-muted-foreground">Mood:</span>
+                        <span className="text-foreground ml-1 capitalize">{brandAnalysis.mood}</span>
+                      </div>
+                    </div>
+
+                    {/* Recommendations */}
+                    {brandAnalysis.designRecommendations?.length > 0 && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Design Tips</p>
+                        <ul className="text-xs text-foreground space-y-0.5">
+                          {brandAnalysis.designRecommendations.slice(0, 2).map((rec, i) => (
+                            <li key={i} className="flex items-start gap-1">
+                              <span className="text-green-400">•</span>
+                              {rec.length > 50 ? rec.substring(0, 50) + '...' : rec}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    <p className="text-xs text-green-400 flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" />
+                      Brand analysis applied to generation
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Click "Analyze Website" to extract brand colors, style, and visual guidelines from {currentClient.name}'s website.
+                  </p>
+                )}
               </div>
             )}
 

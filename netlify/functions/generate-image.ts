@@ -1,11 +1,23 @@
 import type { Handler, HandlerEvent } from '@netlify/functions';
 
+interface BrandAnalysis {
+  primaryColor?: string;
+  secondaryColor?: string;
+  accentColor?: string;
+  colorPalette?: string[];
+  style?: string;
+  mood?: string;
+  visualElements?: string[];
+  adStylePrompt?: string;
+}
+
 interface RequestBody {
   prompt: string;
   brandName?: string;
   style?: string;
   size?: string;
   platform?: string;
+  brandAnalysis?: BrandAnalysis | null;
 }
 
 export const handler: Handler = async (event: HandlerEvent) => {
@@ -39,7 +51,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
     }
 
     const body: RequestBody = JSON.parse(event.body || '{}');
-    const { prompt, brandName, style = 'modern-minimal', size = '1024x1024', platform = 'meta' } = body;
+    const { prompt, brandName, style = 'modern-minimal', size = '1024x1024', platform = 'meta', brandAnalysis } = body;
 
     if (!prompt) {
       return {
@@ -49,8 +61,8 @@ export const handler: Handler = async (event: HandlerEvent) => {
       };
     }
 
-    // Build enhanced prompt for ad imagery
-    const enhancedPrompt = buildAdPrompt(prompt, brandName, style, platform);
+    // Build enhanced prompt for ad imagery, incorporating brand analysis
+    const enhancedPrompt = buildAdPrompt(prompt, brandName, style, platform, brandAnalysis);
 
     // Try Imagen 3 (the currently available model)
     const imageUrl = await generateWithImagen(geminiKey, enhancedPrompt);
@@ -93,7 +105,13 @@ export const handler: Handler = async (event: HandlerEvent) => {
   }
 };
 
-function buildAdPrompt(prompt: string, brandName?: string, style?: string, platform?: string): string {
+function buildAdPrompt(
+  prompt: string, 
+  brandName?: string, 
+  style?: string, 
+  platform?: string,
+  brandAnalysis?: BrandAnalysis | null
+): string {
   const styleGuides: Record<string, string> = {
     'modern-minimal': 'clean, minimalist design, white space, modern typography, subtle gradients',
     'bold-vibrant': 'bold colors, high contrast, dynamic composition, energetic feel',
@@ -112,11 +130,39 @@ function buildAdPrompt(prompt: string, brandName?: string, style?: string, platf
   const parts = [
     'Create a professional advertisement image:',
     prompt,
-    styleGuides[style || 'modern-minimal'],
-    platformGuides[platform || 'meta'],
-    'photorealistic, high quality, 4K resolution',
-    'DO NOT include any text or words in the image',
   ];
+
+  // If we have brand analysis, use the AI-generated style prompt
+  if (brandAnalysis?.adStylePrompt) {
+    parts.push(brandAnalysis.adStylePrompt);
+  } else {
+    parts.push(styleGuides[style || 'modern-minimal']);
+  }
+
+  // Add brand colors if available
+  if (brandAnalysis?.colorPalette?.length) {
+    const colors = brandAnalysis.colorPalette.slice(0, 3).join(', ');
+    parts.push(`Use brand colors: ${colors}`);
+  } else if (brandAnalysis?.primaryColor) {
+    parts.push(`Primary brand color: ${brandAnalysis.primaryColor}`);
+    if (brandAnalysis.accentColor) {
+      parts.push(`Accent color: ${brandAnalysis.accentColor}`);
+    }
+  }
+
+  // Add visual elements from brand analysis
+  if (brandAnalysis?.visualElements?.length) {
+    parts.push(`Visual style elements: ${brandAnalysis.visualElements.slice(0, 3).join(', ')}`);
+  }
+
+  // Add mood from brand analysis
+  if (brandAnalysis?.mood) {
+    parts.push(`Overall mood: ${brandAnalysis.mood}`);
+  }
+
+  parts.push(platformGuides[platform || 'meta']);
+  parts.push('photorealistic, high quality, 4K resolution');
+  parts.push('DO NOT include any text or words in the image');
 
   if (brandName) {
     parts.push(`Brand context: ${brandName}`);
