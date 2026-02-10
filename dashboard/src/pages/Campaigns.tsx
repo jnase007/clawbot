@@ -17,7 +17,8 @@ import {
   ArrowRight,
   Building2,
 } from 'lucide-react';
-import { cn, getPlatformIcon, formatDate } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
+import { PlatformIcon } from '@/components/PlatformIcon';
 import type { Template, Platform, Campaign } from '@/lib/types';
 
 // Animated progress bar
@@ -216,7 +217,7 @@ export default function Campaigns() {
                       "text-4xl",
                       campaign.status === 'running' && "animate-pulse"
                     )}>
-                      {getPlatformIcon(campaign.platform)}
+                      <PlatformIcon platform={campaign.platform} size="lg" />
                     </div>
                     {campaign.status === 'running' && (
                       <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-ping" />
@@ -342,7 +343,7 @@ export default function Campaigns() {
                             : "border-border hover:border-primary/50"
                         )}
                       >
-                        <span className="text-2xl">{getPlatformIcon(p)}</span>
+                        <PlatformIcon platform={p} size="lg" />
                         <p className="text-xs font-mono mt-1 uppercase">{p}</p>
                       </button>
                     ))}

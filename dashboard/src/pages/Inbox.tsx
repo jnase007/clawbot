@@ -18,7 +18,8 @@ import {
   Building2,
   Sparkles
 } from 'lucide-react';
-import { cn, getPlatformIcon, formatDate } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
+import { PlatformIcon } from '@/components/PlatformIcon';
 
 interface Message {
   id: string;
@@ -253,9 +254,9 @@ export default function Inbox() {
         <Tabs value={platformFilter} onValueChange={(v) => setPlatformFilter(v as typeof platformFilter)}>
           <TabsList>
             <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="email">📧 Email</TabsTrigger>
-            <TabsTrigger value="linkedin">💼 LinkedIn</TabsTrigger>
-            <TabsTrigger value="reddit">🔴 Reddit</TabsTrigger>
+            <TabsTrigger value="email" className="gap-2"><PlatformIcon platform="email" size="sm" /> Email</TabsTrigger>
+            <TabsTrigger value="linkedin" className="gap-2"><PlatformIcon platform="linkedin" size="sm" /> LinkedIn</TabsTrigger>
+            <TabsTrigger value="reddit" className="gap-2"><PlatformIcon platform="reddit" size="sm" /> Reddit</TabsTrigger>
           </TabsList>
         </Tabs>
         <Button
@@ -301,8 +302,8 @@ export default function Inbox() {
                   >
                     <div className="flex items-start gap-3">
                       {/* Avatar */}
-                      <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-lg shrink-0">
-                        {getPlatformIcon(message.platform)}
+                      <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center shrink-0">
+                        <PlatformIcon platform={message.platform} size="md" />
                       </div>
                       
                       {/* Content */}
@@ -353,8 +354,8 @@ export default function Inbox() {
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-2xl">
-                      {getPlatformIcon(selectedMessage.platform)}
+                    <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
+                      <PlatformIcon platform={selectedMessage.platform} size="lg" />
                     </div>
                     <div>
                       <CardTitle>{selectedMessage.from_name}</CardTitle>

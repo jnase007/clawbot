@@ -18,6 +18,7 @@ import {
   Building2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PlatformIcon } from '@/components/PlatformIcon';
 import type { OutreachLog } from '@/lib/types';
 
 interface ChannelStats {
@@ -437,12 +438,7 @@ export default function Analytics() {
                 <tr key={channel.platform} className="border-t border-primary/10">
                   <td className="p-4">
                     <div className="flex items-center gap-3">
-                      <span className="text-xl">
-                        {channel.platform === 'email' && '📧'}
-                        {channel.platform === 'linkedin' && '💼'}
-                        {channel.platform === 'reddit' && '🔴'}
-                        {channel.platform === 'twitter' && '𝕏'}
-                      </span>
+                      <PlatformIcon platform={channel.platform} size="md" />
                       <span className="font-mono uppercase">{channel.platform}</span>
                     </div>
                   </td>

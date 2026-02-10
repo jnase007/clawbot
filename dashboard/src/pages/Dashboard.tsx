@@ -20,6 +20,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PlatformIcon } from '@/components/PlatformIcon';
 import type { OutreachLog } from '@/lib/types';
 
 interface Stats {
@@ -213,17 +214,6 @@ export default function Dashboard() {
     { platform: 'reddit', icon: Radio, label: 'Reddit', count: stats.byPlatform.reddit, color: 'text-orange-400', bgColor: 'bg-orange-500/10' },
   ];
 
-  const getPlatformIcon = (platform: string) => {
-    const icons: Record<string, string> = {
-      email: '📧',
-      linkedin: '💼',
-      reddit: '🔴',
-      twitter: '𝕏',
-      github: '🐙',
-      discord: '💬',
-    };
-    return icons[platform] || '📌';
-  };
 
   return (
     <div className="space-y-6">
@@ -438,10 +428,10 @@ export default function Dashboard() {
                   )}
                 >
                   <div className={cn(
-                    "w-10 h-10 rounded-lg flex items-center justify-center text-lg",
+                    "w-10 h-10 rounded-lg flex items-center justify-center",
                     log.success ? "bg-green-500/10" : "bg-red-500/10"
                   )}>
-                    {getPlatformIcon(log.platform)}
+                    <PlatformIcon platform={log.platform} size="md" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">

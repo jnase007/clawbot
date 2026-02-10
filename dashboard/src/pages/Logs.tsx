@@ -13,7 +13,8 @@ import {
   Clock,
   Building2
 } from 'lucide-react';
-import { getPlatformIcon, formatDate } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
+import { PlatformIcon } from '@/components/PlatformIcon';
 import type { OutreachLog, Platform } from '@/lib/types';
 
 export default function Logs() {
@@ -130,9 +131,9 @@ export default function Logs() {
       <Tabs value={platform} onValueChange={(v) => setPlatform(v as Platform | 'all')}>
         <TabsList>
           <TabsTrigger value="all">All Platforms</TabsTrigger>
-          <TabsTrigger value="email">📧 Email</TabsTrigger>
-          <TabsTrigger value="linkedin">💼 LinkedIn</TabsTrigger>
-          <TabsTrigger value="reddit">🔴 Reddit</TabsTrigger>
+          <TabsTrigger value="email" className="gap-2"><PlatformIcon platform="email" size="sm" /> Email</TabsTrigger>
+          <TabsTrigger value="linkedin" className="gap-2"><PlatformIcon platform="linkedin" size="sm" /> LinkedIn</TabsTrigger>
+          <TabsTrigger value="reddit" className="gap-2"><PlatformIcon platform="reddit" size="sm" /> Reddit</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -178,8 +179,8 @@ export default function Logs() {
                   </div>
 
                   {/* Platform */}
-                  <div className="text-2xl">
-                    {getPlatformIcon(log.platform)}
+                  <div>
+                    <PlatformIcon platform={log.platform} size="lg" />
                   </div>
 
                   {/* Details */}

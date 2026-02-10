@@ -13,7 +13,8 @@ import {
   UserPlus,
   Building2
 } from 'lucide-react';
-import { cn, getPlatformIcon, getStatusColor, formatDate } from '@/lib/utils';
+import { cn, getStatusColor, formatDate } from '@/lib/utils';
+import { PlatformIcon } from '@/components/PlatformIcon';
 import type { OutreachContact, Platform } from '@/lib/types';
 
 export default function Contacts() {
@@ -151,9 +152,9 @@ export default function Contacts() {
         <Tabs value={platform} onValueChange={(v) => setPlatform(v as Platform | 'all')}>
           <TabsList>
             <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="email">📧 Email</TabsTrigger>
-            <TabsTrigger value="linkedin">💼 LinkedIn</TabsTrigger>
-            <TabsTrigger value="reddit">🔴 Reddit</TabsTrigger>
+            <TabsTrigger value="email" className="gap-2"><PlatformIcon platform="email" size="sm" /> Email</TabsTrigger>
+            <TabsTrigger value="linkedin" className="gap-2"><PlatformIcon platform="linkedin" size="sm" /> LinkedIn</TabsTrigger>
+            <TabsTrigger value="reddit" className="gap-2"><PlatformIcon platform="reddit" size="sm" /> Reddit</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -200,7 +201,7 @@ export default function Contacts() {
                     className="border-t border-border hover:bg-secondary/30 transition-colors"
                   >
                     <td className="p-4">
-                      <span className="text-xl">{getPlatformIcon(contact.platform)}</span>
+                      <PlatformIcon platform={contact.platform} size="md" />
                     </td>
                     <td className="p-4">
                       <div>
@@ -270,7 +271,7 @@ export default function Contacts() {
                         onClick={() => setNewContact({ ...newContact, platform: p })}
                         className="flex-1"
                       >
-                        {getPlatformIcon(p)} {p}
+                        <PlatformIcon platform={p} size="sm" /> <span className="capitalize">{p}</span>
                       </Button>
                     ))}
                   </div>

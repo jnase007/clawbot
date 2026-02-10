@@ -14,7 +14,7 @@ import {
   Eye,
   Building2
 } from 'lucide-react';
-import { getPlatformIcon } from '@/lib/utils';
+import { PlatformIcon } from '@/components/PlatformIcon';
 import type { Template, Platform, TemplateType } from '@/lib/types';
 
 export default function Templates() {
@@ -153,9 +153,9 @@ export default function Templates() {
       <Tabs value={platform} onValueChange={(v) => setPlatform(v as Platform | 'all')}>
         <TabsList>
           <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="email">📧 Email</TabsTrigger>
-          <TabsTrigger value="linkedin">💼 LinkedIn</TabsTrigger>
-          <TabsTrigger value="reddit">🔴 Reddit</TabsTrigger>
+          <TabsTrigger value="email" className="gap-2"><PlatformIcon platform="email" size="sm" /> Email</TabsTrigger>
+          <TabsTrigger value="linkedin" className="gap-2"><PlatformIcon platform="linkedin" size="sm" /> LinkedIn</TabsTrigger>
+          <TabsTrigger value="reddit" className="gap-2"><PlatformIcon platform="reddit" size="sm" /> Reddit</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -182,7 +182,7 @@ export default function Templates() {
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-xl">{getPlatformIcon(template.platform)}</span>
+                    <PlatformIcon platform={template.platform} size="md" />
                     <div>
                       <CardTitle className="text-base">{template.name}</CardTitle>
                       <p className="text-xs text-muted-foreground capitalize">{template.type}</p>
@@ -267,8 +267,10 @@ export default function Templates() {
                           variant={newTemplate.platform === p ? 'default' : 'outline'}
                           onClick={() => setNewTemplate({ ...newTemplate, platform: p })}
                           size="sm"
+                          className="gap-2"
                         >
-                          {getPlatformIcon(p)}
+                          <PlatformIcon platform={p} size="sm" />
+                          <span className="capitalize">{p}</span>
                         </Button>
                       ))}
                     </div>
@@ -355,7 +357,7 @@ export default function Templates() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl">{getPlatformIcon(selectedTemplate.platform)}</span>
+                  <PlatformIcon platform={selectedTemplate.platform} size="lg" />
                   <div>
                     <CardTitle>{selectedTemplate.name}</CardTitle>
                     <p className="text-sm text-muted-foreground capitalize">{selectedTemplate.type}</p>

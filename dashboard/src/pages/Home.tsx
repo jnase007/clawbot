@@ -22,6 +22,7 @@ import {
   Globe
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PlatformIcon } from '@/components/PlatformIcon';
 
 const features = [
   {
@@ -76,12 +77,12 @@ const stats = [
 ];
 
 const channels = [
-  { icon: '📧', name: 'Email', status: 'Ready' },
-  { icon: '💼', name: 'LinkedIn', status: 'Ready' },
-  { icon: '🔴', name: 'Reddit', status: 'Ready' },
-  { icon: '𝕏', name: 'Twitter/X', status: 'Ready' },
-  { icon: '🐙', name: 'GitHub', status: 'Coming Soon' },
-  { icon: '💬', name: 'Discord', status: 'Coming Soon' },
+  { platform: 'email', name: 'Email', status: 'Ready' },
+  { platform: 'linkedin', name: 'LinkedIn', status: 'Ready' },
+  { platform: 'reddit', name: 'Reddit', status: 'Ready' },
+  { platform: 'twitter', name: 'Twitter/X', status: 'Ready' },
+  { platform: 'github', name: 'GitHub', status: 'Coming Soon' },
+  { platform: 'discord', name: 'Discord', status: 'Coming Soon' },
 ];
 
 export default function Home() {
@@ -206,7 +207,7 @@ export default function Home() {
             {channels.map((channel) => (
               <Card key={channel.name} className="text-center card-hover">
                 <CardContent className="p-6">
-                  <span className="text-4xl mb-3 block">{channel.icon}</span>
+                  <div className="mb-3 flex justify-center"><PlatformIcon platform={channel.platform} size="xl" /></div>
                   <p className="font-medium">{channel.name}</p>
                   <p className={cn(
                     "text-xs mt-1",

@@ -24,7 +24,8 @@ import {
   ArrowRight,
   Zap
 } from 'lucide-react';
-import { cn, getPlatformIcon, formatDate } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
+import { PlatformIcon } from '@/components/PlatformIcon';
 import type { Template, Campaign } from '@/lib/types';
 
 interface ClientStats {
@@ -329,7 +330,7 @@ export default function ClientDashboard() {
                   key={channel}
                   className="text-center p-4 rounded-lg bg-secondary/30 border border-border"
                 >
-                  <span className="text-3xl">{getPlatformIcon(channel)}</span>
+                  <PlatformIcon platform={channel} size="xl" />
                   <p className="text-sm font-medium mt-2 capitalize">{channel}</p>
                   <Badge variant="success" className="mt-2 text-[10px]">
                     Active
@@ -369,7 +370,7 @@ export default function ClientDashboard() {
                 key={plan.id}
                 className="flex items-center gap-4 p-4 rounded-lg bg-secondary/30 border border-border hover:border-primary/30 transition-colors"
               >
-                <div className="text-2xl">{getPlatformIcon(plan.channel)}</div>
+                <PlatformIcon platform={plan.channel} size="lg" />
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <p className="font-medium">{plan.action}</p>
@@ -435,7 +436,7 @@ export default function ClientDashboard() {
                   key={campaign.id}
                   className="flex items-center gap-4 p-4 rounded-lg bg-secondary/30 border border-border"
                 >
-                  <div className="text-2xl">{getPlatformIcon(campaign.platform)}</div>
+                  <PlatformIcon platform={campaign.platform} size="lg" />
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <p className="font-medium">{campaign.name}</p>
@@ -509,7 +510,7 @@ export default function ClientDashboard() {
                   className="p-4 rounded-lg bg-secondary/30 border border-border hover:border-primary/30 transition-colors"
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-lg">{getPlatformIcon(template.platform)}</span>
+                    <PlatformIcon platform={template.platform} size="md" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{template.name}</p>
                       <p className="text-[10px] text-muted-foreground capitalize">{template.type}</p>
