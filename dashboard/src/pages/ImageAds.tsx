@@ -112,33 +112,67 @@ export default function ImageAds() {
     { id: 'luxury-premium', label: 'Luxury Premium' },
   ];
 
+  const [error, setError] = useState<string | null>(null);
+  const [generatedPrompt, setGeneratedPrompt] = useState<string | null>(null);
+
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
     
     setIsGenerating(true);
+    setError(null);
+    setGeneratedPrompt(null);
     
-    // Simulate image generation (in production, calls Imagen 4.0 API)
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    // Sample generated images (placeholders)
-    const displayName = brandName || currentClient?.name || 'Ad';
-    const newImages: GeneratedImage[] = [
-      {
-        url: `https://placehold.co/${sizeConfigs[selectedSize].dimensions.replace('x', 'x')}/1e293b/06b6d4?text=${encodeURIComponent(displayName)}`,
+    try {
+      const response = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: prompt.trim(),
+          brandName: brandName || currentClient?.name,
+          style,
+          size: sizeConfigs[selectedSize].dimensions,
+          platform: selectedPlatform,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // If API fails, show the enhanced prompt for manual use
+        if (data.prompt) {
+          setGeneratedPrompt(data.prompt);
+        }
+        throw new Error(data.message || data.error || 'Generation failed');
+      }
+
+      if (data.images && data.images.length > 0) {
+        const newImages: GeneratedImage[] = data.images.map((img: { url: string; prompt: string }) => ({
+          url: img.url,
+          prompt: img.prompt,
+          size: selectedSize,
+          platform: selectedPlatform,
+        }));
+        setGeneratedImages(prev => [...newImages, ...prev]);
+      } else {
+        throw new Error('No images returned');
+      }
+
+    } catch (err) {
+      console.error('Image generation error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to generate image');
+      
+      // Show fallback placeholder so user can still see format
+      const displayName = brandName || currentClient?.name || 'Ad';
+      const fallbackImage: GeneratedImage = {
+        url: `https://placehold.co/${sizeConfigs[selectedSize].dimensions}/1a1a2e/06b6d4?text=${encodeURIComponent('Preview: ' + displayName)}`,
         prompt: `${style}: ${prompt}`,
         size: selectedSize,
         platform: selectedPlatform,
-      },
-      {
-        url: `https://placehold.co/${sizeConfigs[selectedSize].dimensions.replace('x', 'x')}/1e293b/8b5cf6?text=${encodeURIComponent(displayName)}+V2`,
-        prompt: `${style}: ${prompt} (variation)`,
-        size: selectedSize,
-        platform: selectedPlatform,
-      },
-    ];
-    
-    setGeneratedImages(prev => [...newImages, ...prev]);
-    setIsGenerating(false);
+      };
+      setGeneratedImages(prev => [fallbackImage, ...prev]);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleCopyPrompt = (img: GeneratedImage) => {
@@ -310,7 +344,7 @@ export default function ImageAds() {
               {isGenerating ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Generating with Imagen 4.0...
+                  Generating with AI...
                 </>
               ) : (
                 <>
@@ -319,6 +353,32 @@ export default function ImageAds() {
                 </>
               )}
             </button>
+
+            {/* Error Display */}
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+                <p className="text-red-400 text-sm font-medium mb-2">⚠️ {error}</p>
+                {generatedPrompt && (
+                  <div className="mt-2">
+                    <p className="text-xs text-gray-400 mb-1">Use this prompt in Midjourney, DALL-E, or Canva:</p>
+                    <div className="bg-slate-900 rounded-lg p-3 text-xs text-gray-300 font-mono">
+                      {generatedPrompt}
+                    </div>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(generatedPrompt);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      }}
+                      className="mt-2 text-pink-400 hover:text-pink-300 text-xs flex items-center gap-1"
+                    >
+                      {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                      Copy prompt
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Right Column - Generated Images */}
