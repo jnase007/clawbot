@@ -1001,6 +1001,349 @@ content
     }
   });
 
+// ============ CLIENT WORKFLOW COMMANDS ============
+
+const clients = program.command('clients').description('👥 Client Workflow Management');
+
+clients
+  .command('create')
+  .description('Create a new client')
+  .requiredOption('-n, --name <name>', 'Contact name')
+  .requiredOption('-c, --company <company>', 'Company name')
+  .requiredOption('-i, --industry <industry>', 'Industry (e.g., dental, healthcare)')
+  .option('-e, --email <email>', 'Email address')
+  .option('-w, --website <website>', 'Website URL')
+  .option('-p, --phone <phone>', 'Phone number')
+  .option('--notes <notes>', 'Additional notes')
+  .action(async (options) => {
+    printSection('CREATE CLIENT');
+    
+    const spinner = new Spinner('Creating client...');
+    spinner.start();
+    
+    try {
+      const { createClient } = await import('./skills/client_workflow/index.js');
+      
+      const client = await createClient({
+        name: options.name,
+        company: options.company,
+        industry: options.industry,
+        email: options.email,
+        website: options.website,
+        phone: options.phone,
+        notes: options.notes,
+      });
+      
+      spinner.stop(true);
+      
+      printSuccess(`Client created: ${client.company}`);
+      printInfo('ID', client.id);
+      printInfo('Stage', client.stage);
+      printInfo('Status', client.status);
+      
+      console.log();
+      console.log(chalk.cyan('  Next step: ') + chalk.white('clawbot clients discovery --id ' + client.id));
+      
+    } catch (error) {
+      spinner.stop(false);
+      printError(`Error: ${error}`);
+    }
+  });
+
+clients
+  .command('list')
+  .description('List all clients')
+  .option('-s, --stage <stage>', 'Filter by stage: discovery, strategy, execution, optimization')
+  .option('-i, --industry <industry>', 'Filter by industry')
+  .option('-l, --limit <number>', 'Max results', '20')
+  .action(async (options) => {
+    printSection('CLIENT LIST');
+    
+    const spinner = new Spinner('Loading clients...');
+    spinner.start();
+    
+    try {
+      const { listClients } = await import('./skills/client_workflow/index.js');
+      
+      const clients = await listClients({
+        stage: options.stage,
+        industry: options.industry,
+        limit: parseInt(options.limit),
+      });
+      
+      spinner.stop(true);
+      
+      if (clients.length === 0) {
+        printInfo('Clients', 'None found');
+      } else {
+        printTable(
+          ['Company', 'Industry', 'Stage', 'Status', 'Created'],
+          clients.map(c => [
+            c.company.substring(0, 25),
+            c.industry.substring(0, 15),
+            c.stage,
+            c.status,
+            new Date(c.created_at).toLocaleDateString(),
+          ])
+        );
+      }
+      
+    } catch (error) {
+      spinner.stop(false);
+      printError(`Error: ${error}`);
+    }
+  });
+
+clients
+  .command('pipeline')
+  .description('View client pipeline by stage')
+  .action(async () => {
+    printSection('CLIENT PIPELINE');
+    
+    const spinner = new Spinner('Loading pipeline...');
+    spinner.start();
+    
+    try {
+      const { getClientPipeline } = await import('./skills/client_workflow/index.js');
+      
+      const pipeline = await getClientPipeline();
+      
+      spinner.stop(true);
+      
+      console.log();
+      console.log(chalk.cyan('  📋 DISCOVERY ') + chalk.gray(`(${pipeline.discovery.length} clients)`));
+      pipeline.discovery.forEach(c => console.log(chalk.gray(`     • ${c.company}`)));
+      
+      console.log();
+      console.log(chalk.cyan('  📊 STRATEGY ') + chalk.gray(`(${pipeline.strategy.length} clients)`));
+      pipeline.strategy.forEach(c => console.log(chalk.gray(`     • ${c.company}`)));
+      
+      console.log();
+      console.log(chalk.cyan('  🚀 EXECUTION ') + chalk.gray(`(${pipeline.execution.length} clients)`));
+      pipeline.execution.forEach(c => console.log(chalk.gray(`     • ${c.company}`)));
+      
+      console.log();
+      console.log(chalk.cyan('  ⚡ OPTIMIZATION ') + chalk.gray(`(${pipeline.optimization.length} clients)`));
+      pipeline.optimization.forEach(c => console.log(chalk.gray(`     • ${c.company}`)));
+      
+    } catch (error) {
+      spinner.stop(false);
+      printError(`Error: ${error}`);
+    }
+  });
+
+clients
+  .command('discovery')
+  .description('Create/update discovery document for a client')
+  .requiredOption('--id <clientId>', 'Client ID')
+  .option('--business <description>', 'Business description')
+  .option('--audience <audience>', 'Target audience')
+  .option('--uvp <uvp>', 'Unique value proposition')
+  .option('--channels <channels>', 'Current marketing channels (comma-separated)')
+  .option('--budget <budget>', 'Current monthly budget')
+  .option('--pain-points <points>', 'Pain points (comma-separated)')
+  .option('--competitors <competitors>', 'Competitors (comma-separated)')
+  .option('--goals <goals>', 'Primary goals (comma-separated)')
+  .option('--metrics <metrics>', 'Success metrics (comma-separated)')
+  .option('--timeline <timeline>', 'Timeline')
+  .option('--tools <tools>', 'Existing tools (comma-separated)')
+  .option('--notes <notes>', 'Discovery notes')
+  .action(async (options) => {
+    printSection('CLIENT DISCOVERY');
+    
+    const spinner = new Spinner('Saving discovery data...');
+    spinner.start();
+    
+    try {
+      const { createDiscovery, getClient } = await import('./skills/client_workflow/index.js');
+      
+      const client = await getClient(options.id);
+      if (!client) {
+        spinner.stop(false);
+        printError('Client not found');
+        return;
+      }
+      
+      const discovery = await createDiscovery(options.id, {
+        business_description: options.business,
+        target_audience: options.audience,
+        unique_value_proposition: options.uvp,
+        current_marketing_channels: options.channels?.split(',').map((s: string) => s.trim()) || [],
+        current_monthly_budget: options.budget ? parseFloat(options.budget) : undefined,
+        current_pain_points: options.painPoints?.split(',').map((s: string) => s.trim()) || [],
+        competitors: options.competitors?.split(',').map((s: string) => s.trim()) || [],
+        primary_goals: options.goals?.split(',').map((s: string) => s.trim()) || [],
+        success_metrics: options.metrics?.split(',').map((s: string) => s.trim()) || [],
+        timeline: options.timeline,
+        existing_tools: options.tools?.split(',').map((s: string) => s.trim()) || [],
+        discovery_notes: options.notes,
+      });
+      
+      spinner.stop(true);
+      
+      printSuccess(`Discovery saved for ${client.company}`);
+      printInfo('Discovery ID', discovery.id);
+      
+      console.log();
+      console.log(chalk.cyan('  Next step: ') + chalk.white('clawbot clients strategy --id ' + options.id));
+      
+    } catch (error) {
+      spinner.stop(false);
+      printError(`Error: ${error}`);
+    }
+  });
+
+clients
+  .command('strategy')
+  .description('Generate AI-powered strategy from discovery')
+  .requiredOption('--id <clientId>', 'Client ID')
+  .action(async (options) => {
+    printSection('GENERATE STRATEGY');
+    
+    const spinner = new Spinner('Generating AI-powered strategy...');
+    spinner.start();
+    
+    try {
+      const { generateStrategy, getClient } = await import('./skills/client_workflow/index.js');
+      
+      const client = await getClient(options.id);
+      if (!client) {
+        spinner.stop(false);
+        printError('Client not found');
+        return;
+      }
+      
+      const strategy = await generateStrategy(options.id);
+      
+      spinner.stop(true);
+      
+      printSuccess(`Strategy generated for ${client.company}`);
+      
+      console.log();
+      console.log(chalk.cyan('  📊 Strategic Goals:'));
+      strategy.strategic_goals?.forEach((g: string) => console.log(chalk.gray(`     • ${g}`)));
+      
+      console.log();
+      console.log(chalk.cyan('  📈 KPIs:'));
+      strategy.kpis?.forEach((k: any) => console.log(chalk.gray(`     • ${k.name}: ${k.target}`)));
+      
+      console.log();
+      console.log(chalk.cyan('  📢 Recommended Channels:'));
+      strategy.recommended_channels?.forEach((c: string) => console.log(chalk.gray(`     • ${c}`)));
+      
+      console.log();
+      console.log(chalk.cyan('  💡 AI Recommendations:'));
+      console.log(chalk.gray(`     ${strategy.ai_recommendations?.substring(0, 200)}...`));
+      
+      console.log();
+      console.log(chalk.cyan('  Next step: ') + chalk.white('clawbot clients approve --id ' + options.id));
+      
+    } catch (error) {
+      spinner.stop(false);
+      printError(`Error: ${error}`);
+    }
+  });
+
+clients
+  .command('approve')
+  .description('Approve strategy and move to execution')
+  .requiredOption('--id <clientId>', 'Client ID')
+  .option('--by <name>', 'Approved by', 'Brandastic Team')
+  .action(async (options) => {
+    printSection('APPROVE STRATEGY');
+    
+    const spinner = new Spinner('Approving strategy...');
+    spinner.start();
+    
+    try {
+      const { approveStrategy, getClient } = await import('./skills/client_workflow/index.js');
+      
+      const client = await getClient(options.id);
+      if (!client) {
+        spinner.stop(false);
+        printError('Client not found');
+        return;
+      }
+      
+      await approveStrategy(options.id, options.by);
+      
+      spinner.stop(true);
+      
+      printSuccess(`Strategy approved for ${client.company}`);
+      printInfo('Approved by', options.by);
+      printInfo('New Stage', 'Execution');
+      
+      console.log();
+      console.log(chalk.cyan('  Ready to create campaigns!'));
+      console.log(chalk.gray('  Use: clawbot clients campaign --id ' + options.id + ' --name "Campaign Name" --platform email'));
+      
+    } catch (error) {
+      spinner.stop(false);
+      printError(`Error: ${error}`);
+    }
+  });
+
+clients
+  .command('dashboard')
+  .description('View full client dashboard')
+  .requiredOption('--id <clientId>', 'Client ID')
+  .action(async (options) => {
+    printSection('CLIENT DASHBOARD');
+    
+    const spinner = new Spinner('Loading dashboard...');
+    spinner.start();
+    
+    try {
+      const { getClientDashboard } = await import('./skills/client_workflow/index.js');
+      
+      const dashboard = await getClientDashboard(options.id);
+      
+      spinner.stop(true);
+      
+      console.log();
+      console.log(chalk.cyan('  🏢 ') + chalk.white.bold(dashboard.client.company));
+      console.log(chalk.gray(`     Industry: ${dashboard.client.industry}`));
+      console.log(chalk.gray(`     Stage: ${dashboard.client.stage} | Status: ${dashboard.client.status}`));
+      
+      console.log();
+      console.log(chalk.cyan('  📋 Progress:'));
+      console.log(chalk.gray(`     Discovery: ${dashboard.progress.discoveryComplete ? '✅ Complete' : '⏳ In Progress'}`));
+      console.log(chalk.gray(`     Strategy: ${dashboard.progress.strategyApproved ? '✅ Approved' : '⏳ Pending'}`));
+      console.log(chalk.gray(`     Active Campaigns: ${dashboard.progress.activeCampaigns}`));
+      
+      if (dashboard.discovery) {
+        console.log();
+        console.log(chalk.cyan('  🔍 Discovery Highlights:'));
+        if (dashboard.discovery.primary_goals?.length) {
+          console.log(chalk.gray(`     Goals: ${dashboard.discovery.primary_goals.join(', ')}`));
+        }
+        if (dashboard.discovery.current_monthly_budget) {
+          console.log(chalk.gray(`     Budget: $${dashboard.discovery.current_monthly_budget}/mo`));
+        }
+      }
+      
+      if (dashboard.strategy) {
+        console.log();
+        console.log(chalk.cyan('  📊 Strategy Highlights:'));
+        if (dashboard.strategy.recommended_channels?.length) {
+          console.log(chalk.gray(`     Channels: ${dashboard.strategy.recommended_channels.join(', ')}`));
+        }
+      }
+      
+      if (dashboard.campaigns.length > 0) {
+        console.log();
+        console.log(chalk.cyan('  🚀 Campaigns:'));
+        dashboard.campaigns.forEach((c: any) => {
+          console.log(chalk.gray(`     • ${c.name} (${c.platform}) - ${c.status}`));
+        });
+      }
+      
+    } catch (error) {
+      spinner.stop(false);
+      printError(`Error: ${error}`);
+    }
+  });
+
 // ============ IMAGE ADS COMMANDS (Nano Banana) ============
 
 const imageAds = program.command('image-ads').description('🍌 Nano Banana Image Ad Generator');

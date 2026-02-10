@@ -1,6 +1,8 @@
 export type Platform = 'email' | 'linkedin' | 'reddit' | 'twitter' | 'github' | 'discord';
 export type ContactStatus = 'pending' | 'sent' | 'engaged' | 'replied' | 'unsubscribed' | 'bounced';
 export type TemplateType = 'post' | 'message' | 'email' | 'comment';
+export type ClientStage = 'discovery' | 'strategy' | 'execution' | 'optimization' | 'completed';
+export type ClientStatus = 'prospect' | 'active' | 'paused' | 'churned';
 
 export interface OutreachContact {
   id: string;
@@ -55,6 +57,98 @@ export interface Campaign {
   sent_count: number;
   success_count: number;
   error_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// ============ CLIENT WORKFLOW TYPES ============
+
+export interface Client {
+  id: string;
+  name: string;
+  company: string;
+  industry: string;
+  website: string | null;
+  email: string | null;
+  phone: string | null;
+  stage: ClientStage;
+  status: ClientStatus;
+  assigned_to: string | null;
+  notes: string | null;
+  tags: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ClientDiscovery {
+  id: string;
+  client_id: string;
+  // Business Overview
+  business_description: string | null;
+  target_audience: string | null;
+  unique_value_proposition: string | null;
+  // Current State
+  current_marketing_channels: string[];
+  current_monthly_budget: number | null;
+  current_pain_points: string[];
+  // Competitors
+  competitors: string[];
+  competitor_analysis: string | null;
+  // Goals
+  primary_goals: string[];
+  success_metrics: string[];
+  timeline: string | null;
+  // Technical
+  existing_tools: string[];
+  website_analytics: Record<string, unknown> | null;
+  social_presence: Record<string, unknown> | null;
+  // Notes
+  discovery_notes: string | null;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ClientStrategy {
+  id: string;
+  client_id: string;
+  // Goals & KPIs
+  strategic_goals: string[];
+  kpis: Record<string, unknown>[];
+  // Audience
+  target_personas: Record<string, unknown>[];
+  audience_segments: string[];
+  // Channels & Tactics
+  recommended_channels: string[];
+  tactics: Record<string, unknown>[];
+  // Content Strategy
+  content_themes: string[];
+  content_calendar: Record<string, unknown> | null;
+  // Budget & Timeline
+  proposed_budget: number | null;
+  budget_allocation: Record<string, unknown> | null;
+  timeline_phases: Record<string, unknown>[];
+  // AI Recommendations
+  ai_recommendations: string | null;
+  // Approval
+  approved_by: string | null;
+  approved_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ClientCampaign {
+  id: string;
+  client_id: string;
+  name: string;
+  platform: Platform;
+  type: 'awareness' | 'traffic' | 'leads' | 'conversions' | 'retention';
+  status: 'draft' | 'scheduled' | 'active' | 'paused' | 'completed';
+  budget: number | null;
+  start_date: string | null;
+  end_date: string | null;
+  goals: Record<string, unknown> | null;
+  results: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 }
