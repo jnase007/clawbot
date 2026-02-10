@@ -104,20 +104,34 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-6">
-        <div className="max-w-5xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm mb-8 animate-fade-in">
+      {/* Hero Section with Background Image */}
+      <section 
+        className="relative pt-32 pb-24 px-6 min-h-[90vh] flex items-center"
+        style={{
+          backgroundImage: `url('https://ndrhfhdsmjrixxbarymj.supabase.co/storage/v1/object/public/Image/C_DSC03021_Edited%20(5).jpg')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+        }}
+      >
+        {/* Dark Gradient Overlay for Text Contrast */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-background" />
+        
+        {/* Additional radial gradient for depth */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)]" />
+        
+        <div className="relative z-10 max-w-5xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm mb-8 animate-fade-in">
             <Sparkles className="w-4 h-4" />
             <span>AI-Powered Agency Outreach Engine</span>
           </div>
           
-          <h1 className="text-5xl md:text-7xl font-display font-bold leading-tight mb-6 animate-slide-up">
+          <h1 className="text-5xl md:text-7xl font-display font-bold leading-tight mb-6 animate-slide-up text-white drop-shadow-lg">
             Automate Your Agency's
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent"> Outreach</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500"> Outreach</span>
           </h1>
           
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10 animate-slide-up stagger-1">
+          <p className="text-xl text-white/90 max-w-2xl mx-auto mb-10 animate-slide-up stagger-1 drop-shadow-md">
             ClawBot is your AI-powered marketing automation platform. 
             Generate strategies, launch multi-channel campaigns, and manage 
             unlimited clients—all from one intelligent dashboard.
@@ -125,19 +139,22 @@ export default function Home() {
           
           <div className="flex items-center justify-center gap-4 animate-slide-up stagger-2">
             <Link to="/dashboard">
-              <Button size="lg" className="btn-gradient gap-2 text-lg px-8">
+              <Button size="lg" className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white gap-2 text-lg px-8 shadow-lg shadow-cyan-500/25">
                 <Rocket className="w-5 h-5" />
                 Get Started
               </Button>
             </Link>
             <a href="#features">
-              <Button size="lg" variant="outline" className="gap-2 text-lg px-8">
+              <Button size="lg" variant="outline" className="gap-2 text-lg px-8 border-white/30 text-white hover:bg-white/10 backdrop-blur-sm">
                 Learn More
                 <ArrowRight className="w-5 h-5" />
               </Button>
             </a>
           </div>
         </div>
+        
+        {/* Bottom fade to blend with next section */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
       </section>
 
       {/* Stats Section */}
